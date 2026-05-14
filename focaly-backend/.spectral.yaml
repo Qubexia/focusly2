@@ -1,0 +1,9 @@
+extends: spectral:oas
+rules:
+  operation-description: off
+  operation-tags: off
+  tag-description: off
+  operation-default-response: error
+  operation-2xx-response:
+    severity: error
+    description: Every endpoint must define at least one 2xx response

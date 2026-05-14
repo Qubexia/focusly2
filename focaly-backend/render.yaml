@@ -1,0 +1,81 @@
+services:
+  - type: web
+    name: focaly-api
+    runtime: node
+    plan: starter
+    region: oregon
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/main.js
+    healthCheckPath: /v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_PRIVATE_KEY
+        sync: false
+      - key: JWT_PUBLIC_KEY
+        sync: false
+      - key: EMAIL_TOKEN_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: FCM_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_REGION
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+
+  - type: worker
+    name: focaly-worker
+    runtime: node
+    plan: starter
+    region: oregon
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/worker.js
+    autoDeploy: true
+    envVars:
+      - fromService:
+          type: web
+          name: focaly-api
+          envVarKey: MONGO_URI
+      - fromService:
+          type: web
+          name: focaly-api
+          envVarKey: REDIS_URL
+      - fromService:
+          type: web
+          name: focaly-api
+          envVarKey: FCM_SERVICE_ACCOUNT_JSON
+      - fromService:
+          type: web
+          name: focaly-api
+          envVarKey: OPENAI_API_KEY
+      - fromService:
+          type: web
+          name: focaly-api
+          envVarKey: STRIPE_SECRET_KEY
+      - fromService:
+          type: web
+          name: focaly-api
+          envVarKey: STRIPE_WEBHOOK_SECRET

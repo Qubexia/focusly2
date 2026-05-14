@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(& \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\.specify\\\\extensions\\\\git\\\\scripts\\\\powershell\\\\create-new-feature.ps1\" -Json -ShortName \"focaly-backend\" \"Focaly study management mobile app backend implementation based on docs/architecture.md\")",
+      "Bash(mkdir -p \"C:/Users/zezo/Desktop/work/focaly/specs/001-focaly-backend/checklists\")",
+      "Bash(cp \"C:/Users/zezo/Desktop/work/focaly/.specify/templates/spec-template.md\" \"C:/Users/zezo/Desktop/work/focaly/specs/001-focaly-backend/spec.md\")",
+      "PowerShell(& \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json -PathsOnly)",
+      "PowerShell(& \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\.specify\\\\scripts\\\\powershell\\\\setup-plan.ps1\" -Json)",
+      "PowerShell(& \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\.specify\\\\scripts\\\\powershell\\\\update-agent-context.ps1\" -AgentType claude)",
+      "PowerShell(& \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json)",
+      "PowerShell(& \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json -RequireTasks -IncludeTasks)",
+      "PowerShell(npm *)",
+      "Bash(chmod +x \"C:/Users/zezo/Desktop/work/focaly/focaly-backend/.husky/pre-commit\" \"C:/Users/zezo/Desktop/work/focaly/focaly-backend/.husky/commit-msg\")",
+      "Bash(npm install *)",
+      "PowerShell(Get-Content \"C:\\\\Users\\\\zezo\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-zezo-Desktop-work-focaly\\\\bc670564-846b-48cc-a4cd-bcaf821c43e1\\\\tasks\\\\bmd9uqqo3.output\" -ErrorAction SilentlyContinue | Select-Object -Last 30; Write-Output \"---\"; if \\(Test-Path \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\focaly-backend\\\\node_modules\"\\) { \\(Get-ChildItem \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\focaly-backend\\\\node_modules\" -Directory | Measure-Object\\).Count.ToString\\(\\) + \" packages installed so far\" } else { \"node_modules not yet created\" })",
+      "PowerShell(if \\(Test-Path \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\focaly-backend\\\\node_modules\"\\) { \\(Get-ChildItem \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\focaly-backend\\\\node_modules\" -Directory | Measure-Object\\).Count.ToString\\(\\) + \" package dirs\"; Test-Path \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\focaly-backend\\\\package-lock.json\" } else { \"no node_modules yet\" })",
+      "Bash(npx tsc *)",
+      "Bash(npx nest *)"
+    ]
+  }
+}

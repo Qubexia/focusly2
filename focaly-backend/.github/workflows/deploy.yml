@@ -1,0 +1,23 @@
+name: Deploy
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  trigger-render:
+    name: Trigger Render deploy hook
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger API service deploy
+        run: |
+          curl -fsSL -X POST "$RENDER_API_DEPLOY_HOOK_URL"
+        env:
+          RENDER_API_DEPLOY_HOOK_URL: ${{ secrets.RENDER_API_DEPLOY_HOOK_URL }}
+
+      - name: Trigger Worker service deploy
+        run: |
+          curl -fsSL -X POST "$RENDER_WORKER_DEPLOY_HOOK_URL"
+        env:
+          RENDER_WORKER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_WORKER_DEPLOY_HOOK_URL }}
