@@ -1,9 +1,6 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
-
-import { QUEUE_NOTIFICATIONS } from '../../infrastructure/queue/queue.constants';
 import { AuthModule } from '../auth/auth.module';
 import { PomodoroModule } from '../pomodoro/pomodoro.module';
 import { UsersModule } from '../users/users.module';
@@ -27,7 +24,6 @@ import { NotificationsWorker } from './workers/notifications.worker';
       { name: Notification.name, schema: NotificationSchema },
       { name: NotificationJob.name, schema: NotificationJobSchema },
     ]),
-    BullModule.registerQueue({ name: QUEUE_NOTIFICATIONS }),
     CqrsModule,
     AuthModule,
     UsersModule,

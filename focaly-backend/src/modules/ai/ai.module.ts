@@ -1,9 +1,6 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
-
-import { QUEUE_AI } from '../../infrastructure/queue/queue.constants';
 
 import { AiArtifactsRepository } from './ai-artifacts.repository';
 import { AiController } from './ai.controller';
@@ -22,7 +19,6 @@ import { NotificationsModule } from '../notifications/notifications.module';
       { name: AiJob.name, schema: AiJobSchema },
       { name: AiArtifact.name, schema: AiArtifactSchema },
     ]),
-    BullModule.registerQueue({ name: QUEUE_AI }),
     CqrsModule,
     NotificationsModule,
   ],

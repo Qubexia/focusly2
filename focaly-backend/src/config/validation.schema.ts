@@ -11,6 +11,7 @@ export const validationSchema = Joi.object({
   MONGO_MAX_POOL: Joi.number().integer().min(1).default(50),
 
   REDIS_URL: Joi.string().uri({ scheme: ['redis', 'rediss'] }).required(),
+  FOCALY_DISABLE_REDIS: Joi.boolean().truthy('true', '1', 'yes', 'on').falsy('false', '0', 'no', 'off').default(false),
 
   JWT_PRIVATE_KEY: Joi.string().required(),
   JWT_PUBLIC_KEY: Joi.string().required(),
