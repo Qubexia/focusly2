@@ -130,6 +130,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     if (data is Map<String, dynamic>) {
       return (data['message'] as String?) ?? 'Something went wrong';
     }
+    if (e.type == DioExceptionType.connectionError) {
+      return 'Unable to reach the server. If you are using Flutter Web, check API_BASE_URL and backend CORS settings.';
+    }
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
       return 'Connection timed out. Please check your internet.';

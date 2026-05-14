@@ -10,6 +10,11 @@ import type { Request, Response } from 'express';
 
 import { ERROR_CODES, ErrorResponse } from '../dto/api-response';
 
+interface MongoLikeError extends Error {
+  code?: number;
+  keyValue?: unknown;
+}
+
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
@@ -32,6 +37,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private normalize(exception: unknown): { status: number; body: ErrorResponse } {
+    if (this.isMongoDuplicateKeyError(exception)) {
+      return {
+        status: HttpStatus.CONFLICT,
+        body: {
+          code: ERROR_CODES.DUPLICATE_KEY,
+          message: 'Duplicate key',
+          details: { keyValue: (exception as MongoLikeError).keyValue },
+        },
+      };
+    }
+
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const payload = exception.getResponse();
@@ -81,5 +97,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       default:
         return ERROR_CODES.INTERNAL;
     }
+  }
+
+  private isMongoDuplicateKeyError(exception: unknown): exception is MongoLikeError {
+    return (
+      typeof exception === 'object' &&
+      exception !== null &&
+      (exception as MongoLikeError).name === 'MongoServerError' &&
+      (exception as MongoLikeError).code === 11000
+    );
   }
 }

@@ -21,8 +21,9 @@ function isMongoServerError(value: unknown): value is MongoLikeError {
 export class MongoExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     if (!isMongoServerError(exception)) {
-      throw exception;
+      return;
     }
+
     const res = host.switchToHttp().getResponse<Response>();
 
     if (exception.code === 11000) {

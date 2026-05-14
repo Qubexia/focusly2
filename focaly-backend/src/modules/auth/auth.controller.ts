@@ -38,30 +38,30 @@ export class AuthController {
   @Public()
   async register(@Body() dto: RegisterDto, @Req() req: Request): Promise<unknown> {
     const deviceId = req.get('x-device-id') ?? undefined;
-    return this.authService.register(dto, getRequestMeta(req), deviceId);
+    return await this.authService.register(dto, getRequestMeta(req), deviceId);
   }
 
   @Post('login')
   @Public()
-  login(@Body() dto: LoginDto, @Req() req: Request): Promise<unknown> {
-    return this.authService.login(dto, getRequestMeta(req));
+  async login(@Body() dto: LoginDto, @Req() req: Request): Promise<unknown> {
+    return await this.authService.login(dto, getRequestMeta(req));
   }
 
   @Post('google')
   @Public()
-  google(@Body() dto: GoogleLoginDto, @Req() req: Request): Promise<unknown> {
-    return this.authService.googleLogin(dto, getRequestMeta(req));
+  async google(@Body() dto: GoogleLoginDto, @Req() req: Request): Promise<unknown> {
+    return await this.authService.googleLogin(dto, getRequestMeta(req));
   }
 
   @Post('refresh')
   @Public()
   @UseGuards(JwtRefreshGuard)
   @ApiBearerAuth('bearerRefresh')
-  refresh(
+  async refresh(
     @Body() dto: RefreshDto,
     @Req() req: Request & { refreshTokenPayload?: RefreshTokenClaims },
   ): Promise<unknown> {
-    return this.authService.refresh(dto, req.refreshTokenPayload!, getRequestMeta(req));
+    return await this.authService.refresh(dto, req.refreshTokenPayload!, getRequestMeta(req));
   }
 
   @Post('logout')
@@ -98,8 +98,8 @@ export class AuthController {
   }
 
   @Get('sessions')
-  sessions(@CurrentUser() user: CurrentUserPayload): Promise<unknown> {
-    return this.authService.listSessions(user);
+  async sessions(@CurrentUser() user: CurrentUserPayload): Promise<unknown> {
+    return await this.authService.listSessions(user);
   }
 
   @Delete('sessions/:id')

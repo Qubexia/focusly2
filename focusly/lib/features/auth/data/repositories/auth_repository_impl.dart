@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 import '../../../../core/storage/secure_storage.dart';
 import '../datasources/auth_remote_datasource.dart';
@@ -15,7 +15,10 @@ class AuthRepository {
   Future<String> _getOrCreateDeviceId() async {
     var deviceId = await SecureStorage.getDeviceId();
     if (deviceId == null) {
-      deviceId = 'flutter-${Platform.operatingSystem}-${DateTime.now().millisecondsSinceEpoch}';
+      final platformName = kIsWeb
+          ? 'web'
+          : defaultTargetPlatform.name.toLowerCase();
+      deviceId = 'flutter-$platformName-${DateTime.now().millisecondsSinceEpoch}';
       await SecureStorage.saveDeviceId(deviceId);
     }
     return deviceId;

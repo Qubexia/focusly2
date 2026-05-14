@@ -51,8 +51,8 @@ export class User {
   @Prop({ type: String, default: null })
   passwordHash!: string | null;
 
-  @Prop({ type: String, sparse: true, unique: true, default: null })
-  googleId!: string | null;
+  @Prop({ type: String, sparse: true, unique: true })
+  googleId?: string;
 
   @Prop({ required: true, trim: true })
   name!: string;

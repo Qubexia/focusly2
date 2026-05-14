@@ -22,7 +22,7 @@ export class UsersRepository {
       email: input.email.toLowerCase(),
       passwordHash: input.passwordHash,
       name: input.name,
-      googleId: input.googleId ?? null,
+      googleId: input.googleId ?? undefined,
       avatarUrl: input.avatarUrl ?? null,
       emailVerified: input.emailVerified ?? false,
     }).save();

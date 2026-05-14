@@ -1,15 +1,32 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 /// All backend API endpoint paths (v1).
 class ApiEndpoints {
   ApiEndpoints._();
 
+  static const String _configuredBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: '',
+  );
+
   // Base
   static String get baseUrl {
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:3000'; // Android emulator
+    if (_configuredBaseUrl.isNotEmpty) {
+      return _configuredBaseUrl;
     }
-    return 'http://localhost:3000'; // Windows/iOS/Web
+
+    if (kIsWeb) {
+      final host = Uri.base.host.isEmpty ? 'localhost' : Uri.base.host;
+      final scheme = Uri.base.scheme.isEmpty ? 'http' : Uri.base.scheme;
+      return '$scheme://$host:5000';
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      return 'http://10.0.2.2:5000'; // Android emulator
+      default:
+        return 'http://localhost:5000'; // Desktop/iOS
+    }
   }
 
   // Auth
