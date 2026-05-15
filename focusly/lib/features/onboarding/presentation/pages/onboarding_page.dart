@@ -19,21 +19,21 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final List<_OnboardingData> _pages = const [
     _OnboardingData(
       icon: Icons.menu_book_rounded,
-      iconColor: Color(0xFF6C5CE7),
+      iconColor: AppColors.primary,
       title: 'Organize Your\nStudy Life',
       subtitle:
           'Manage subjects, schedules, tasks, and exams all in one place. Stay on top of every deadline.',
     ),
     _OnboardingData(
       icon: Icons.timer_rounded,
-      iconColor: Color(0xFF00B894),
+      iconColor: AppColors.secondary,
       title: 'Deep Focus\nSessions',
       subtitle:
           'Use the Pomodoro timer to build laser-sharp focus. Track your study hours and build streaks.',
     ),
     _OnboardingData(
       icon: Icons.auto_awesome_rounded,
-      iconColor: Color(0xFFFDCB6E),
+      iconColor: AppColors.premium,
       title: 'AI-Powered\nStudy Notes',
       subtitle:
           'Snap your lecture notes and let AI generate summaries, flashcards, and practice questions.',

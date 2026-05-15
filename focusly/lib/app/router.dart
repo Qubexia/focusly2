@@ -3,8 +3,10 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
-import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/home/presentation/pages/main_shell.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
+import '../../features/subjects/presentation/pages/subject_detail_page.dart';
+import '../../features/subjects/presentation/pages/subjects_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 
 final GoRouter appRouter = GoRouter(
@@ -32,7 +34,16 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/home',
-      builder: (context, state) => const HomePage(),
+      builder: (context, state) => const MainShell(),
+    ),
+    GoRoute(
+      path: '/subjects',
+      builder: (context, state) => const SubjectsPage(),
+    ),
+    GoRoute(
+      path: '/subjects/:id',
+      builder: (context, state) =>
+          SubjectDetailPage(subjectId: state.pathParameters['id']!),
     ),
   ],
 );

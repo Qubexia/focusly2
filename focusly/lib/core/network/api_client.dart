@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 
 import '../constants/api_endpoints.dart';
@@ -28,6 +29,23 @@ class ApiClient {
     );
 
     dio.interceptors.add(_AuthInterceptor(dio));
+    
+    // Add a simple logger for debugging
+    dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        debugPrint('🌐 DIO [${options.method}] → ${options.uri}');
+        return handler.next(options);
+      },
+      onResponse: (response, handler) {
+        debugPrint('✅ DIO [${response.requestOptions.method}] ← ${response.statusCode} ${response.requestOptions.uri}');
+        return handler.next(response);
+      },
+      onError: (err, handler) {
+        debugPrint('❌ DIO [${err.requestOptions.method}] ERROR: ${err.message}');
+        debugPrint('🔗 URL: ${err.requestOptions.uri}');
+        return handler.next(err);
+      },
+    ));
 
     return dio;
   }

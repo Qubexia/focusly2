@@ -48,8 +48,8 @@ async function bootstrap(): Promise<void> {
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(
     new LoggingInterceptor(),
-    new TransformInterceptor(),
     new ClassSerializerInterceptor(app.get(Reflector)),
+    new TransformInterceptor(),
   );
 
   if (env === 'production') {
@@ -66,7 +66,11 @@ async function bootstrap(): Promise<void> {
   const document = buildSwaggerDocument(app);
   SwaggerModule.setup('docs', app, document, swaggerUiOptions);
 
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
+  const logger = app.get(PinoLogger);
+  const url = await app.getUrl();
+  logger.log(`Application is running on: ${url}`);
+  logger.log(`Swagger documentation: ${url}/docs`);
 }
 
 void bootstrap();

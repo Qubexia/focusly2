@@ -21,11 +21,20 @@ class ApiEndpoints {
       return '$scheme://$host:5000';
     }
 
+    // IMPORTANT: If testing on a physical Android device, use your PC's local IP (e.g., 192.168.1.3)
+    // 10.0.2.2 is only for the standard Android Emulator.
+    const String localIp = '192.168.1.3'; 
+
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-      return 'http://10.0.2.2:5000'; // Android emulator
+        // Try local IP first, then fallback to emulator loopback
+        return 'http://$localIp:5000'; 
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
       default:
-        return 'http://localhost:5000'; // Desktop/iOS
+        return 'http://localhost:5000';
     }
   }
 
@@ -46,4 +55,13 @@ class ApiEndpoints {
   static const String usersSettings = '/v1/users/me/settings';
   static const String usersAvatar = '/v1/users/me/avatar';
   static const String usersFcmToken = '/v1/users/me/fcm-token';
+
+  // Subjects
+  static const String subjects = '/v1/subjects';
+
+  static String subjectById(String id) => '$subjects/$id';
+  static String subjectProgress(String id) => '$subjects/$id/progress';
+  static String subjectChapters(String id) => '$subjects/$id/chapters';
+  static String subjectChapterById(String subjectId, String chapterId) =>
+      '$subjects/$subjectId/chapters/$chapterId';
 }
