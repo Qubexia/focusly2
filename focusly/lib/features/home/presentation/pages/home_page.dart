@@ -52,8 +52,9 @@ class _HomeContent extends StatelessWidget {
                 const SizedBox(height: 24),
                 BlocBuilder<AuthBloc, AuthState>(
                   builder: (context, authState) {
-                    final user =
-                        authState is AuthAuthenticated ? authState.user : null;
+                    final user = authState is AuthAuthenticated
+                        ? authState.user
+                        : null;
                     final name = user?.name.isNotEmpty == true
                         ? user!.name
                         : 'Student';
@@ -68,13 +69,14 @@ class _HomeContent extends StatelessWidget {
                 ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2),
                 const SizedBox(height: 28),
                 _DynamicProgressCard(
-                  averageProgress: averageProgress,
-                  subjectsCount: subjects.length,
-                  completedSubjects: completedSubjects,
-                  isLoading: homeState.isLoading,
-                ).animate().fadeIn(delay: 200.ms, duration: 600.ms).scale(
-                      begin: const Offset(0.95, 0.95),
-                    ),
+                      averageProgress: averageProgress,
+                      subjectsCount: subjects.length,
+                      completedSubjects: completedSubjects,
+                      isLoading: homeState.isLoading,
+                    )
+                    .animate()
+                    .fadeIn(delay: 200.ms, duration: 600.ms)
+                    .scale(begin: const Offset(0.95, 0.95)),
                 const SizedBox(height: 32),
                 Row(
                   children: [
@@ -99,10 +101,9 @@ class _HomeContent extends StatelessWidget {
                   children: [
                     Text(
                       'Your Subjects',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w800),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     TextButton(
                       onPressed: () => context.push('/subjects'),
@@ -211,29 +212,20 @@ class _HomeHeader extends StatelessWidget {
                   Text(
                     greeting,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: subduedText,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      color: subduedText,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Hey ${_firstName(name)}!',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.headlineMedium
-                        ?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -1.0,
-                          height: 1.05,
-                        ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    '$subjectsCount active subject${subjectsCount == 1 ? '' : 's'}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: subduedText,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1.0,
+                      height: 1.05,
+                    ),
                   ),
                 ],
               ),
@@ -261,10 +253,7 @@ class _HomeHeader extends StatelessWidget {
 }
 
 class _SubjectsBadge extends StatelessWidget {
-  const _SubjectsBadge({
-    required this.compact,
-    required this.subjectsCount,
-  });
+  const _SubjectsBadge({required this.compact, required this.subjectsCount});
 
   final bool compact;
   final int subjectsCount;
@@ -293,9 +282,9 @@ class _SubjectsBadge extends StatelessWidget {
           Text(
             compact ? '$subjectsCount' : '$subjectsCount Subjects',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w800,
-                ),
+              color: AppColors.primary,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),
@@ -361,7 +350,9 @@ class _DynamicProgressCard extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            isLoading ? 'Loading your progress...' : '$averageProgress% Progress',
+            isLoading
+                ? 'Loading your progress...'
+                : '$averageProgress% Progress',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 24,
@@ -395,10 +386,7 @@ class _DynamicProgressCard extends StatelessWidget {
 }
 
 class _HeaderAvatar extends StatelessWidget {
-  const _HeaderAvatar({
-    required this.avatarUrl,
-    required this.fallbackName,
-  });
+  const _HeaderAvatar({required this.avatarUrl, required this.fallbackName});
 
   final String? avatarUrl;
   final String fallbackName;
@@ -439,9 +427,9 @@ class _AvatarFallback extends StatelessWidget {
       child: Text(
         _initials(name),
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w800,
-            ),
+          color: AppColors.primary,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
@@ -500,10 +488,7 @@ class _StatItem extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               value,
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 20,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
             ),
             Text(
               label,
@@ -572,10 +557,10 @@ class _SubjectPreviewCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                  ),
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
             ),
             const SizedBox(height: 10),
             ClipRRect(
@@ -714,19 +699,19 @@ class _HomeMessageCard extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             subtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ),
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
             textAlign: TextAlign.center,
           ),
           if (actionLabel != null && onTap != null) ...[

@@ -73,4 +73,29 @@ class ApiEndpoints {
   static String pomodoroResume(String id) => '/v1/pomodoro/$id/resume';
   static String pomodoroComplete(String id) => '/v1/pomodoro/$id/complete';
   static String pomodoroAbort(String id) => '/v1/pomodoro/$id/abort';
+
+  // Tasks
+  static const String tasks = '/v1/tasks';
+  static String taskById(String id) => '$tasks/$id';
+  static String taskComplete(String id) => '$tasks/$id/complete';
+
+  // Revisions
+  static const String revisions = '/v1/revisions';
+  static String revisionById(String id) => '$revisions/$id';
+  static String revisionComplete(String id) => '$revisions/$id/complete';
+
+  // Lectures
+  static const String lectures = '/v1/lectures';
+  static String lectureById(String id) => '$lectures/$id';
+  static String lectureComplete(String id) => '$lectures/$id/complete';
+
+  // Exams
+  static const String exams = '/v1/exams';
+  static String examById(String id) => '$exams/$id';
+  static String examComplete(String id) => '$exams/$id/complete';
+
+  // Schedules
+  static const String schedules = '/v1/schedules';
+  static const String schedulesCalendar = '/v1/schedules/calendar';
+  static String scheduleById(String id) => '$schedules/$id';
 }

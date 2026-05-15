@@ -9,6 +9,7 @@ import '../../../auth/presentation/bloc/auth_event_state.dart';
 import 'home_page.dart';
 import '../../../pomodoro/presentation/pages/pomodoro_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../planner/presentation/pages/planner_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -23,7 +24,7 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget Function()> _viewBuilders = [
     () => const HomeView(),
-    () => const Center(child: Text('Schedule View')),
+    () => const PlannerPage(),
     () => const PomodoroPage(),
     () => const Center(child: Text('Analytics View')),
     () => const ProfilePage(),
