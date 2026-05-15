@@ -19,13 +19,31 @@ class SubjectModel {
 
   factory SubjectModel.fromJson(Map<String, dynamic> json) {
     return SubjectModel(
-      id: (json['id'] ?? json['_id'] ?? '') as String,
-      name: (json['name'] ?? '') as String,
-      color: json['color'] as String?,
-      icon: json['icon'] as String?,
-      dailyTargetMinutes: (json['dailyTargetMinutes'] ?? 0) as int,
-      progressPercent: (json['progressPercent'] ?? 0) as int,
+      id: _stringifyId(json['id'] ?? json['_id']),
+      name: _stringifyId(json['name']),
+      color: _nullableString(json['color']),
+      icon: _nullableString(json['icon']),
+      dailyTargetMinutes: _asInt(json['dailyTargetMinutes'], fallback: 0),
+      progressPercent: _asInt(json['progressPercent'], fallback: 0),
       isArchived: (json['isArchived'] ?? false) as bool,
     );
+  }
+
+  static String _stringifyId(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value;
+    return value.toString();
+  }
+
+  static String? _nullableString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    return value.toString();
+  }
+
+  static int _asInt(dynamic value, {required int fallback}) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return fallback;
   }
 }

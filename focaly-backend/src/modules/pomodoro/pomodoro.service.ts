@@ -115,9 +115,10 @@ export class PomodoroService {
     const endOfDay = new Date(startOfDay.getTime() + 86_400_000);
 
     const sessions = await this.repository.findTodayByUser(userId, startOfDay, endOfDay);
+    const activeSession = await this.repository.findActiveByUser(userId);
     const totalFocusMinutes = sessions.reduce((sum, s) => sum + (s.totalFocusMinutes || 0), 0);
 
-    return { sessions, totalFocusMinutes };
+    return { sessions, totalFocusMinutes, activeSession };
   }
 
   async history(userId: string, from: string, to: string, cursor?: string, limit = 20) {

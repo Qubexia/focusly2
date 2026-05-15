@@ -64,4 +64,13 @@ class ApiEndpoints {
   static String subjectChapters(String id) => '$subjects/$id/chapters';
   static String subjectChapterById(String subjectId, String chapterId) =>
       '$subjects/$subjectId/chapters/$chapterId';
+
+  // Pomodoro
+  static const String pomodoroStart = '/v1/pomodoro/start';
+  static const String pomodoroToday = '/v1/pomodoro/today';
+  static const String pomodoroHistory = '/v1/pomodoro/history';
+  static String pomodoroPause(String id) => '/v1/pomodoro/$id/pause';
+  static String pomodoroResume(String id) => '/v1/pomodoro/$id/resume';
+  static String pomodoroComplete(String id) => '/v1/pomodoro/$id/complete';
+  static String pomodoroAbort(String id) => '/v1/pomodoro/$id/abort';
 }

@@ -2,9 +2,25 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nes
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+function isMongoIdLike(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false;
+
+  const candidate = value as {
+    _bsontype?: unknown;
+    constructor?: { name?: unknown };
+    toHexString?: unknown;
+  };
+
+  return candidate._bsontype === 'ObjectId' ||
+      candidate.constructor?.name === 'ObjectId' ||
+      typeof candidate.toHexString === 'function';
+}
+
 function stripMongoFields(value: unknown): unknown {
   if (value === null || value === undefined) return value;
   if (Array.isArray(value)) return value.map(stripMongoFields);
+  if (value instanceof Date) return value.toISOString();
+  if (isMongoIdLike(value)) return String(value);
   if (typeof value !== 'object') return value;
 
   const src = value as Record<string, unknown>;

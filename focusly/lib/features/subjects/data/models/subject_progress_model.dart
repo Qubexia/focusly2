@@ -11,9 +11,15 @@ class SubjectProgressModel {
 
   factory SubjectProgressModel.fromJson(Map<String, dynamic> json) {
     return SubjectProgressModel(
-      progressPercent: (json['progressPercent'] ?? 0) as int,
-      chaptersTotal: (json['chaptersTotal'] ?? 0) as int,
-      chaptersCompleted: (json['chaptersCompleted'] ?? 0) as int,
+      progressPercent: _asInt(json['progressPercent'], fallback: 0),
+      chaptersTotal: _asInt(json['chaptersTotal'], fallback: 0),
+      chaptersCompleted: _asInt(json['chaptersCompleted'], fallback: 0),
     );
+  }
+
+  static int _asInt(dynamic value, {required int fallback}) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return fallback;
   }
 }

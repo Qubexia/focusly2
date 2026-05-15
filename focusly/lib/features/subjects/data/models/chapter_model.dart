@@ -17,14 +17,30 @@ class ChapterModel {
 
   factory ChapterModel.fromJson(Map<String, dynamic> json) {
     return ChapterModel(
-      id: (json['id'] ?? json['_id'] ?? '') as String,
-      subjectId: (json['subjectId'] ?? '') as String,
+      id: _stringifyId(json['id'] ?? json['_id']),
+      subjectId: _stringifyId(json['subjectId']),
       title: (json['title'] ?? '') as String,
-      order: (json['order'] ?? 0) as int,
+      order: _asInt(json['order'], fallback: 0),
       completed: (json['completed'] ?? false) as bool,
-      completedAt: json['completedAt'] != null
-          ? DateTime.tryParse(json['completedAt'] as String)
-          : null,
+      completedAt: _parseDate(json['completedAt']),
     );
+  }
+
+  static String _stringifyId(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value;
+    return value.toString();
+  }
+
+  static int _asInt(dynamic value, {required int fallback}) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return fallback;
+  }
+
+  static DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
   }
 }

@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
 import 'home_page.dart';
+import '../../../pomodoro/presentation/pages/pomodoro_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 
 class MainShell extends StatefulWidget {
@@ -18,19 +19,20 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
+  final Set<int> _loadedTabs = {0};
 
-  // Placeholder views for other tabs
-  final List<Widget> _views = [
-    const HomeView(),
-    const Center(child: Text('Schedule View')),
-    const Center(child: Text('Focus View')),
-    const Center(child: Text('Analytics View')),
-    const ProfilePage(),
+  final List<Widget Function()> _viewBuilders = [
+    () => const HomeView(),
+    () => const Center(child: Text('Schedule View')),
+    () => const PomodoroPage(),
+    () => const Center(child: Text('Analytics View')),
+    () => const ProfilePage(),
   ];
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      _loadedTabs.add(index);
     });
   }
 
@@ -44,7 +46,15 @@ class _MainShellState extends State<MainShell> {
       },
       child: Scaffold(
         extendBody: true, // Allows content to flow behind the floating nav bar
-        body: IndexedStack(index: _selectedIndex, children: _views),
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: List.generate(_viewBuilders.length, (index) {
+            if (!_loadedTabs.contains(index)) {
+              return const SizedBox.shrink();
+            }
+            return _viewBuilders[index]();
+          }),
+        ),
         bottomNavigationBar: _FloatingBottomNavBar(
           selectedIndex: _selectedIndex,
           onItemTapped: _onItemTapped,

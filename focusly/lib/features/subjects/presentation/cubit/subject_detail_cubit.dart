@@ -19,18 +19,16 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
   Future<void> load(String subjectId) async {
     emit(state.copyWith(isLoading: true, clearFeedback: true));
     try {
-      final results = await Future.wait<dynamic>([
-        _repository.getSubjectById(subjectId),
-        _repository.getSubjectProgress(subjectId),
-        _repository.getSubjectChapters(subjectId),
-      ]);
+      final subject = await _repository.getSubjectById(subjectId);
+      final progress = await _repository.getSubjectProgress(subjectId);
+      final chapters = await _repository.getSubjectChapters(subjectId);
 
       emit(
         state.copyWith(
           isLoading: false,
-          subject: results[0] as SubjectModel,
-          progress: results[1] as SubjectProgressModel,
-          chapters: results[2] as List<ChapterModel>,
+          subject: subject,
+          progress: progress,
+          chapters: chapters,
           errorMessage: null,
         ),
       );
@@ -43,12 +41,12 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
           feedbackType: SubjectDetailFeedbackType.error,
         ),
       );
-    } catch (_) {
+    } catch (e) {
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: 'Failed to load subject details.',
-          feedbackMessage: 'Failed to load subject details.',
+          errorMessage: 'Failed to load subject details: $e',
+          feedbackMessage: 'Failed to load subject details: $e',
           feedbackType: SubjectDetailFeedbackType.error,
         ),
       );
@@ -61,18 +59,28 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
 
     emit(state.copyWith(isSaving: true, clearFeedback: true));
     try {
-      await _repository.createChapter(
+      final chapter = await _repository.createChapter(
         subjectId: subject.id,
         title: title,
         order: state.chapters.length + 1,
       );
-      await load(subject.id);
+
+      final chapters = [...state.chapters, chapter]..sort(
+        (first, second) => first.order.compareTo(second.order),
+      );
+
       emit(
         state.copyWith(
+          isSaving: false,
+          chapters: chapters,
+          progress: _buildProgress(chapters),
           feedbackType: SubjectDetailFeedbackType.success,
           feedbackMessage: 'Chapter added successfully.',
         ),
       );
+
+      await _refreshSubjectDetails(subject.id);
+
       return true;
     } on DioException catch (e) {
       emit(
@@ -83,12 +91,12 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
         ),
       );
       return false;
-    } catch (_) {
+    } catch (e) {
       emit(
         state.copyWith(
           isSaving: false,
           feedbackType: SubjectDetailFeedbackType.error,
-          feedbackMessage: 'Failed to add chapter.',
+          feedbackMessage: 'Failed to add chapter: $e',
         ),
       );
       return false;
@@ -104,18 +112,29 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
 
     emit(state.copyWith(isSaving: true, clearFeedback: true));
     try {
-      await _repository.updateChapter(
+      final updated = await _repository.updateChapter(
         subjectId: subject.id,
         chapterId: chapterId,
         title: title,
       );
-      await load(subject.id);
+
+      final chapters = state.chapters
+          .map((chapter) => chapter.id == chapterId ? updated : chapter)
+          .toList()
+        ..sort((first, second) => first.order.compareTo(second.order));
+
       emit(
         state.copyWith(
+          isSaving: false,
+          chapters: chapters,
+          progress: _buildProgress(chapters),
           feedbackType: SubjectDetailFeedbackType.success,
           feedbackMessage: 'Chapter updated successfully.',
         ),
       );
+
+      await _refreshSubjectDetails(subject.id);
+
       return true;
     } on DioException catch (e) {
       emit(
@@ -126,12 +145,12 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
         ),
       );
       return false;
-    } catch (_) {
+    } catch (e) {
       emit(
         state.copyWith(
           isSaving: false,
           feedbackType: SubjectDetailFeedbackType.error,
-          feedbackMessage: 'Failed to update chapter.',
+          feedbackMessage: 'Failed to update chapter: $e',
         ),
       );
       return false;
@@ -242,10 +261,47 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
     emit(state.copyWith(clearFeedback: true));
   }
 
+  Future<void> _refreshSubjectDetails(String subjectId) async {
+    try {
+      final results = await Future.wait<dynamic>([
+        _repository.getSubjectById(subjectId),
+        _repository.getSubjectProgress(subjectId),
+        _repository.getSubjectChapters(subjectId),
+      ]);
+
+      emit(
+        state.copyWith(
+          isSaving: false,
+          subject: results[0] as SubjectModel,
+          progress: results[1] as SubjectProgressModel,
+          chapters: results[2] as List<ChapterModel>,
+        ),
+      );
+    } catch (_) {
+      emit(state.copyWith(isSaving: false));
+    }
+  }
+
+  SubjectProgressModel _buildProgress(List<ChapterModel> chapters) {
+    final completedCount = chapters.where((item) => item.completed).length;
+    final progressPercent = chapters.isEmpty
+        ? 0
+        : ((completedCount / chapters.length) * 100).round();
+
+    return SubjectProgressModel(
+      progressPercent: progressPercent,
+      chaptersTotal: chapters.length,
+      chaptersCompleted: completedCount,
+    );
+  }
+
   String _extractMessage(DioException e) {
     final data = e.response?.data;
     if (data is Map<String, dynamic>) {
-      return (data['message'] as String?) ?? 'Something went wrong.';
+      final message = data['message'];
+      if (message is String) return message;
+      if (message is List && message.isNotEmpty) return message.first.toString();
+      return 'Something went wrong.';
     }
     return 'Something went wrong.';
   }
