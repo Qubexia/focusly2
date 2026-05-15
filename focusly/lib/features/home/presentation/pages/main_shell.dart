@@ -10,6 +10,7 @@ import 'home_page.dart';
 import '../../../pomodoro/presentation/pages/pomodoro_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../planner/presentation/pages/planner_page.dart';
+import '../../../analytics/presentation/pages/analytics_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -26,7 +27,7 @@ class _MainShellState extends State<MainShell> {
     () => const HomeView(),
     () => const PlannerPage(),
     () => const PomodoroPage(),
-    () => const Center(child: Text('Analytics View')),
+    () => const AnalyticsPage(),
     () => const ProfilePage(),
   ];
 

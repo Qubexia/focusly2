@@ -98,4 +98,11 @@ class ApiEndpoints {
   static const String schedules = '/v1/schedules';
   static const String schedulesCalendar = '/v1/schedules/calendar';
   static String scheduleById(String id) => '$schedules/$id';
+
+  // Analytics
+  static const String analytics = '/v1/analytics';
+  static const String analyticsSummary = '$analytics/summary';
+  static const String analyticsBySubject = '$analytics/by-subject';
+  static const String analyticsHeatmap = '$analytics/heatmap';
+  static const String analyticsPerformance = '$analytics/performance';
 }

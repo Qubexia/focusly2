@@ -20,7 +20,8 @@ export class AnalyticsService {
     const toDate = dayjs(to).endOf('day').toDate();
 
     if (dayjs(to).diff(dayjs(from), 'day') <= 7) {
-      const live = await this.pomodoroModel
+      const [live, streakRows, dailyRows] = await Promise.all([
+        this.pomodoroModel
         .aggregate([
           { $match: { userId: userId as any, startedAt: { $gte: fromDate, $lte: toDate } } },
           {
@@ -31,25 +32,69 @@ export class AnalyticsService {
             },
           },
         ])
-        .exec();
+        .exec(),
+        this.pomodoroModel
+          .aggregate([
+            {
+              $match: {
+                userId: userId as any,
+                startedAt: { $gte: fromDate, $lte: toDate },
+                totalFocusMinutes: { $gt: 0 },
+              },
+            },
+            {
+              $group: {
+                _id: {
+                  $dateToString: { format: '%Y-%m-%d', date: '$startedAt' },
+                },
+              },
+            },
+          ])
+          .exec(),
+        this.pomodoroModel
+          .aggregate([
+            { $match: { userId: userId as any, startedAt: { $gte: fromDate, $lte: toDate } } },
+            {
+              $group: {
+                _id: {
+                  $dateToString: { format: '%Y-%m-%d', date: '$startedAt' },
+                },
+                minutes: { $sum: '$totalFocusMinutes' },
+              },
+            },
+            { $sort: { _id: 1 } },
+          ])
+          .exec(),
+      ]);
 
       const s = live[0] ?? { totalFocusMinutes: 0, totalSessions: 0 };
       return {
-        totals: { minutes: s.totalFocusMinutes, sessions: s.totalSessions },
-        range: { from: from.toISOString(), to: to.toISOString() },
+        totalFocusMinutes: s.totalFocusMinutes ?? 0,
+        totalSessions: s.totalSessions ?? 0,
+        totalTasksCompleted: 0,
+        streak: streakRows.length,
+        dailyFocus: dailyRows.map((row) => ({
+          date: String(row._id ?? ''),
+          minutes: Number(row.minutes ?? 0),
+        })),
+        range: { from: fromDate.toISOString(), to: toDate.toISOString() },
       };
     }
 
     const rollup = await this.analyticsRepo.getSummary(userId, fromDate, toDate);
     return {
-      totals: { minutes: rollup.totalFocusMinutes, sessions: rollup.totalSessions },
-      range: { from: from.toISOString(), to: to.toISOString() },
+      totalFocusMinutes: rollup.totalFocusMinutes,
+      totalSessions: rollup.totalSessions,
+      totalTasksCompleted: rollup.totalPlannedItems,
+      streak: rollup.streakDays,
+      dailyFocus: [],
+      range: { from: fromDate.toISOString(), to: toDate.toISOString() },
     };
   }
 
   async bySubject(userId: string, from: Date, to: Date) {
     const subjects = await this.analyticsRepo.getBySubject(userId, from, to);
-    return { subjects, range: { from: from.toISOString(), to: to.toISOString() } };
+    return subjects;
   }
 
   async heatmap(userId: string, year: number) {
@@ -64,7 +109,7 @@ export class AnalyticsService {
     const rollup = await this.analyticsRepo.getSummary(userId, fromDate, toDate);
     return {
       totals: rollup,
-      range: { from: from.toISOString(), to: to.toISOString() },
+      range: { from: fromDate.toISOString(), to: toDate.toISOString() },
     };
   }
 }

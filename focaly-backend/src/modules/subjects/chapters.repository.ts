@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { Chapter, ChapterDocument } from './schemas/chapter.schema';
 
@@ -46,9 +46,13 @@ export class ChaptersRepository {
   }
 
   async getStats(subjectId: string): Promise<ChapterStats> {
+    const normalizedSubjectId = Types.ObjectId.isValid(subjectId)
+      ? new Types.ObjectId(subjectId)
+      : subjectId;
+
     const [result] = await this.chapterModel
       .aggregate<ChapterStats>([
-        { $match: { subjectId: subjectId } },
+        { $match: { subjectId: normalizedSubjectId } },
         {
           $group: {
             _id: null,
