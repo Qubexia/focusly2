@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/data/models/user_model.dart';
@@ -23,7 +24,7 @@ class ProfilePage extends StatelessWidget {
             title: const Text('Profile'),
             actions: [
               IconButton(
-                onPressed: () => _showComingSoon(context, 'Settings'),
+                onPressed: () => context.push('/profile/settings'),
                 icon: const Icon(Icons.settings_outlined),
                 tooltip: 'Settings',
               ),
@@ -88,52 +89,6 @@ class ProfilePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   const _SectionTitle(
-                    title: 'Quick Actions',
-                    subtitle: 'Shortcuts for the most common profile tasks.',
-                  ),
-                  const SizedBox(height: 14),
-                  GridView.count(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1,
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    children: [
-                      _ActionCard(
-                        title: 'Edit Profile',
-                        subtitle: 'Update your name and avatar.',
-                        icon: Icons.draw_rounded,
-                        color: AppColors.primary,
-                        onTap: () => _showComingSoon(context, 'Edit Profile'),
-                      ),
-                      _ActionCard(
-                        title: 'Notifications',
-                        subtitle: 'Manage reminders and alerts.',
-                        icon: Icons.notifications_active_outlined,
-                        color: AppColors.secondary,
-                        onTap: () => _showComingSoon(context, 'Notifications'),
-                      ),
-                      _ActionCard(
-                        title: 'Go Premium',
-                        subtitle: 'Unlock full analytics and AI tools.',
-                        icon: Icons.auto_awesome_rounded,
-                        color: AppColors.premium,
-                        onTap: () => _showComingSoon(context, 'Premium'),
-                      ),
-                      _ActionCard(
-                        title: 'Security',
-                        subtitle: 'Review sessions and device access.',
-                        icon: Icons.shield_moon_outlined,
-                        color: isDark
-                            ? AppColors.primaryLight
-                            : AppColors.textPrimaryLight,
-                        onTap: () => _showComingSoon(context, 'Security'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  const _SectionTitle(
                     title: 'Study Identity',
                     subtitle:
                         'What your Focusly account says about your progress.',
@@ -165,6 +120,12 @@ class ProfilePage extends StatelessWidget {
                         icon: Icons.star_outline_rounded,
                         title: 'Current Plan',
                         value: _planLabel(user),
+                      ),
+                      _InfoActionTile(
+                        icon: Icons.settings_outlined,
+                        title: 'Settings',
+                        subtitle: 'Manage account actions and preferences.',
+                        onTap: () => context.push('/profile/settings'),
                       ),
                     ],
                   ),
@@ -783,6 +744,54 @@ class _InfoTile extends StatelessWidget {
               : AppColors.textSecondaryLight,
         ),
       ),
+    );
+  }
+}
+
+class _InfoActionTile extends StatelessWidget {
+  const _InfoActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: Container(
+        height: 42,
+        width: 42,
+        decoration: BoxDecoration(
+          color: AppColors.secondary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(icon, color: AppColors.secondary),
+      ),
+      title: Text(
+        title,
+        style: Theme.of(
+          context,
+        ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: isDark
+              ? AppColors.textSecondaryDark
+              : AppColors.textSecondaryLight,
+        ),
+      ),
+      trailing: const Icon(Icons.chevron_right_rounded),
+      onTap: onTap,
     );
   }
 }

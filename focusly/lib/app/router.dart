@@ -5,6 +5,7 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/home/presentation/pages/main_shell.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
+import '../../features/profile/presentation/pages/settings_page.dart';
 import '../../features/subjects/presentation/pages/subject_detail_page.dart';
 import '../../features/subjects/presentation/pages/subjects_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
@@ -44,6 +45,10 @@ final GoRouter appRouter = GoRouter(
       path: '/subjects/:id',
       builder: (context, state) =>
           SubjectDetailPage(subjectId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/profile/settings',
+      builder: (context, state) => const SettingsPage(),
     ),
   ],
 );

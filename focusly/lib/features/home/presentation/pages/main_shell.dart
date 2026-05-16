@@ -11,6 +11,7 @@ import '../../../pomodoro/presentation/pages/pomodoro_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../planner/presentation/pages/planner_page.dart';
 import '../../../analytics/presentation/pages/analytics_page.dart';
+import '../../../schedules/presentation/pages/schedules_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -25,7 +26,7 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget Function()> _viewBuilders = [
     () => const HomeView(),
-    () => const PlannerPage(),
+    () => const SchedulesPage(),
     () => const PomodoroPage(),
     () => const AnalyticsPage(),
     () => const ProfilePage(),
@@ -121,8 +122,8 @@ class _FloatingBottomNavBar extends StatelessWidget {
                   onTap: () => onItemTapped(0),
                 ),
                 _NavBarItem(
-                  icon: Icons.calendar_today_rounded,
-                  label: 'Plan',
+                  icon: Icons.calendar_month_rounded,
+                  label: 'Schedule',
                   isSelected: selectedIndex == 1,
                   onTap: () => onItemTapped(1),
                 ),

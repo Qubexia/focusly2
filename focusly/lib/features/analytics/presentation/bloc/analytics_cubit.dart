@@ -17,20 +17,13 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
     DateTime? to,
   }) async {
     final newRange = range ?? state.dateRange;
-    DateTime? finalFrom = from ?? state.fromDate;
-    DateTime? finalTo = to ?? state.toDate;
-
-    if (range != null && range != AnalyticsDateRange.custom) {
-      final now = DateTime.now();
-      finalTo = now;
-      if (range == AnalyticsDateRange.week) {
-        finalFrom = _startOfCurrentWeek(now);
-      } else if (range == AnalyticsDateRange.month) {
-        finalFrom = DateTime(now.year, now.month, 1);
-      } else if (range == AnalyticsDateRange.year) {
-        finalFrom = DateTime(now.year, 1, 1);
-      }
-    }
+    final resolvedRange = _resolveDateRange(
+      range: newRange,
+      from: from ?? state.fromDate,
+      to: to ?? state.toDate,
+    );
+    final finalFrom = resolvedRange.$1;
+    final finalTo = resolvedRange.$2;
 
     emit(state.copyWith(
       isLoading: true,
@@ -56,7 +49,7 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
       ));
     } on DioException catch (e) {
       final message = _extractMessage(e);
-      final isPremiumError = message.toLowerCase().contains('premium');
+      final isPremiumError = _isPremiumError(e);
       if (isPremiumError && newRange != AnalyticsDateRange.week) {
         await _loadWeeklyFallback(message);
         return;
@@ -88,9 +81,33 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  DateTime _startOfCurrentWeek(DateTime date) {
-    final startOfDay = DateTime(date.year, date.month, date.day);
-    final daysSinceSunday = date.weekday % 7;
+  (DateTime, DateTime) _resolveDateRange({
+    required AnalyticsDateRange range,
+    DateTime? from,
+    DateTime? to,
+  }) {
+    if (range == AnalyticsDateRange.custom && from != null && to != null) {
+      return (from, to);
+    }
+
+    final nowUtc = DateTime.now().toUtc();
+    final end = DateTime(nowUtc.year, nowUtc.month, nowUtc.day);
+
+    switch (range) {
+      case AnalyticsDateRange.week:
+        return (_startOfCurrentWeekUtc(end), end);
+      case AnalyticsDateRange.month:
+        return (DateTime.utc(end.year, end.month, 1), end);
+      case AnalyticsDateRange.year:
+        return (DateTime.utc(end.year, 1, 1), end);
+      case AnalyticsDateRange.custom:
+        return (from ?? _startOfCurrentWeekUtc(end), to ?? end);
+    }
+  }
+
+  DateTime _startOfCurrentWeekUtc(DateTime date) {
+    final startOfDay = DateTime.utc(date.year, date.month, date.day);
+    final daysSinceSunday = startOfDay.weekday % 7;
     return startOfDay.subtract(Duration(days: daysSinceSunday));
   }
 
@@ -102,10 +119,27 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
     return 'Something went wrong.';
   }
 
+  bool _isPremiumError(DioException e) {
+    final data = e.response?.data;
+    if (data is Map<String, dynamic>) {
+      final code = data['code'] as String?;
+      if (code == 'PREMIUM_REQUIRED') {
+        return true;
+      }
+
+      final message = data['message'] as String?;
+      if (message != null && message.toLowerCase().contains('premium')) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   Future<void> _loadWeeklyFallback(String upgradeMessage) async {
-    final now = DateTime.now();
-    final fromDate = _startOfCurrentWeek(now);
-    final toDate = now;
+    final resolvedRange = _resolveDateRange(range: AnalyticsDateRange.week);
+    final fromDate = resolvedRange.$1;
+    final toDate = resolvedRange.$2;
     final fromStr = _formatDate(fromDate);
     final toStr = _formatDate(toDate);
 
@@ -126,7 +160,7 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
       ));
     } on DioException catch (fallbackError) {
       final fallbackMessage = _extractMessage(fallbackError);
-      final isPremiumError = fallbackMessage.toLowerCase().contains('premium');
+      final isPremiumError = _isPremiumError(fallbackError);
       if (isPremiumError) {
         emit(state.copyWith(
           isLoading: false,
