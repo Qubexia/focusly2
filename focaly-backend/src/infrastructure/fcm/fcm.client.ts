@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
+import { readFileSync } from 'node:fs';
 
 import { FcmClient, FcmMessage, FcmSendResult } from './fcm.tokens';
 
@@ -12,19 +13,39 @@ export class FcmRealClient implements FcmClient, OnModuleInit {
   constructor(private readonly config: ConfigService) {}
 
   onModuleInit(): void {
-    const json = this.config.get<string>('fcm.serviceAccountJson');
-    if (!json) {
-      this.logger.warn('FCM_SERVICE_ACCOUNT_JSON is empty — real FCM client will not initialize.');
+    const inlineJson = this.config.get<string>('fcm.serviceAccountJson');
+    const jsonPath = this.config.get<string>('fcm.serviceAccountPath');
+
+    if (!inlineJson && !jsonPath) {
+      this.logger.warn(
+        'FCM credentials are missing. Set FCM_SERVICE_ACCOUNT_JSON or FCM_SERVICE_ACCOUNT_PATH.',
+      );
       return;
     }
+
+    const json = inlineJson || readFileSync(jsonPath!, 'utf8');
     const credentials = JSON.parse(json) as admin.ServiceAccount;
-    this.app = admin.initializeApp({ credential: admin.credential.cert(credentials) }, 'focaly');
+    const existingApp = admin.apps.find(
+      (app): app is admin.app.App => app != null && app.name === 'focaly',
+    );
+    if (existingApp) {
+      this.app = existingApp;
+      return;
+    }
+
+    this.app = admin.initializeApp(
+      { credential: admin.credential.cert(credentials) },
+      'focaly',
+    );
   }
 
   async send(messages: FcmMessage[]): Promise<FcmSendResult> {
     if (!this.app) {
-      throw new Error('FCM client not initialized; check FCM_SERVICE_ACCOUNT_JSON');
+      throw new Error(
+        'FCM client not initialized; check FCM_SERVICE_ACCOUNT_JSON or FCM_SERVICE_ACCOUNT_PATH',
+      );
     }
+
     const failureTokens: FcmSendResult['failureTokens'] = [];
     let successCount = 0;
 
@@ -44,6 +65,7 @@ export class FcmRealClient implements FcmClient, OnModuleInit {
         failureTokens.push({ token: msg.token, permanent, reason: code });
       }
     }
+
     return { successCount, failureTokens };
   }
 }

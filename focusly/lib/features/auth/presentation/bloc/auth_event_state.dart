@@ -56,6 +56,19 @@ class AuthLogoutRequested extends AuthEvent {
   const AuthLogoutRequested();
 }
 
+class AuthProfileUpdateRequested extends AuthEvent {
+  final String name;
+  final String? avatarPath;
+
+  const AuthProfileUpdateRequested({
+    required this.name,
+    this.avatarPath,
+  });
+
+  @override
+  List<Object?> get props => [name, avatarPath];
+}
+
 /// All possible auth states
 abstract class AuthState extends Equatable {
   const AuthState();

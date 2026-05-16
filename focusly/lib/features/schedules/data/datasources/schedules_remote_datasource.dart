@@ -7,6 +7,10 @@ import '../models/schedule_model.dart';
 class SchedulesRemoteDataSource {
   final Dio _dio = ApiClient.instance;
 
+  int _uiWeekdayToApiWeekday(int weekday) {
+    return weekday % 7;
+  }
+
   Future<List<StudyScheduleModel>> getSchedules({
     required DateTime from,
     required DateTime to,
@@ -42,7 +46,7 @@ class SchedulesRemoteDataSource {
         'title': title,
         'startAt': startAt.toIso8601String(),
         if (endAt != null) 'endAt': endAt.toIso8601String(),
-        'daysOfWeek': daysOfWeek,
+        'daysOfWeek': daysOfWeek.map(_uiWeekdayToApiWeekday).toList(),
         'reminderMinutesBefore': reminderMinutesBefore,
         'reminderEnabled': reminderEnabled,
       },
@@ -67,7 +71,8 @@ class SchedulesRemoteDataSource {
         if (title != null) 'title': title,
         if (startAt != null) 'startAt': startAt.toIso8601String(),
         if (endAt != null) 'endAt': endAt.toIso8601String(),
-        if (daysOfWeek != null) 'daysOfWeek': daysOfWeek,
+        if (daysOfWeek != null)
+          'daysOfWeek': daysOfWeek.map(_uiWeekdayToApiWeekday).toList(),
         if (reminderMinutesBefore != null)
           'reminderMinutesBefore': reminderMinutesBefore,
         if (reminderEnabled != null) 'reminderEnabled': reminderEnabled,

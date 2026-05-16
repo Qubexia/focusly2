@@ -9,7 +9,6 @@ import '../../../auth/presentation/bloc/auth_event_state.dart';
 import 'home_page.dart';
 import '../../../pomodoro/presentation/pages/pomodoro_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
-import '../../../planner/presentation/pages/planner_page.dart';
 import '../../../analytics/presentation/pages/analytics_page.dart';
 import '../../../schedules/presentation/pages/schedules_page.dart';
 

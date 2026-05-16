@@ -18,6 +18,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthGoogleLoginRequested>(_onGoogleLogin);
     on<AuthForgotPasswordRequested>(_onForgotPassword);
     on<AuthLogoutRequested>(_onLogout);
+    on<AuthProfileUpdateRequested>(_onProfileUpdate);
   }
 
   Future<void> _onCheckStatus(
@@ -123,6 +124,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     await _authRepository.logout();
     emit(const AuthUnauthenticated());
+  }
+
+  Future<void> _onProfileUpdate(
+    AuthProfileUpdateRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! AuthAuthenticated) return;
+
+    try {
+      final updatedUser = await _authRepository.updateProfile(
+        name: event.name,
+        avatarPath: event.avatarPath,
+      );
+      emit(AuthAuthenticated(user: updatedUser));
+    } on DioException catch (e) {
+      emit(AuthError(message: _extractErrorMessage(e)));
+      emit(currentState);
+    } catch (e) {
+      emit(AuthError(message: e.toString()));
+      emit(currentState);
+    }
   }
 
   String _extractErrorMessage(DioException e) {

@@ -288,9 +288,8 @@ class _SchedulesViewState extends State<_SchedulesView> {
     }
 
     final daySchedules = state.schedules.where((s) {
-      // Check if the schedule applies to the focused day's weekday (1=Mon, 7=Sun)
-      // Note: backend uses 0-6 or 1-7? Usually 1-7 in ISO.
-      return s.daysOfWeek.contains(state.focusedDay.weekday);
+      final focusedApiWeekday = state.focusedDay.weekday % 7;
+      return s.daysOfWeek.contains(focusedApiWeekday);
     }).toList();
 
     if (daySchedules.isEmpty) {

@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../auth/data/models/user_model.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
+import '../widgets/edit_profile_sheet.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -15,7 +16,20 @@ class ProfilePage extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return BlocBuilder<AuthBloc, AuthState>(
+    return BlocConsumer<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthError) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+        }
+      },
       builder: (context, state) {
         final user = state is AuthAuthenticated ? state.user : null;
 
@@ -87,14 +101,6 @@ class ProfilePage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                  const _SectionTitle(
-                    title: 'Study Identity',
-                    subtitle:
-                        'What your Focusly account says about your progress.',
-                  ),
-                  const SizedBox(height: 14),
-                  _InsightCard(user: user),
                   const SizedBox(height: 24),
                   const _SectionTitle(
                     title: 'Account',
@@ -192,15 +198,6 @@ class ProfilePage extends StatelessWidget {
   static String _planLabel(UserModel? user) {
     if (user == null) return 'Free plan';
     return user.isPremium ? 'Premium plan' : 'Free plan';
-  }
-
-  static void _showComingSoon(BuildContext context, String featureName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$featureName is coming soon.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   static Future<void> _confirmLogout(BuildContext context) async {
@@ -324,8 +321,7 @@ class _ProfileHeroCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () =>
-                      ProfilePage._showComingSoon(context, 'Edit Profile'),
+                  onPressed: () => showEditProfileSheet(context, user),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
                     side: BorderSide(
@@ -334,8 +330,8 @@ class _ProfileHeroCard extends StatelessWidget {
                     backgroundColor: Colors.white.withValues(alpha: 0.08),
                     minimumSize: const Size.fromHeight(54),
                   ),
-                  icon: const Icon(Icons.camera_alt_outlined),
-                  label: const Text('Change Avatar'),
+                  icon: const Icon(Icons.draw_rounded),
+                  label: const Text('Edit Profile'),
                 ),
               ),
             ],
@@ -353,7 +349,6 @@ class _ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initials = _initials(user?.name);
     final hasAvatar = user?.avatarUrl?.isNotEmpty == true;
 
     return Container(
@@ -371,25 +366,13 @@ class _ProfileAvatar extends StatelessWidget {
         backgroundImage: hasAvatar ? NetworkImage(user!.avatarUrl!) : null,
         child: hasAvatar
             ? null
-            : Text(
-                initials,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
+            : const Icon(
+                Icons.person_rounded,
+                color: Colors.white,
+                size: 30,
               ),
       ),
     );
-  }
-
-  static String _initials(String? name) {
-    if (name == null || name.trim().isEmpty) return 'FS';
-    final parts = name.trim().split(RegExp(r'\s+'));
-    final first = parts.first.characters.first.toUpperCase();
-    final second = parts.length > 1
-        ? parts.last.characters.first.toUpperCase()
-        : '';
-    return '$first$second';
   }
 }
 
@@ -519,168 +502,6 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _ActionCard extends StatelessWidget {
-  const _ActionCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.surfaceDark : Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: isDark ? AppColors.borderDark : AppColors.borderLight,
-            ),
-          ),
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                height: 44,
-                width: 44,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(icon, color: color),
-              ),
-              const Spacer(),
-              Text(
-                title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                subtitle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _InsightCard extends StatelessWidget {
-  const _InsightCard({required this.user});
-
-  final UserModel? user;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final planMessage = user?.isPremium == true
-        ? 'You have premium access, so advanced insights and AI workflows are available as soon as those screens are connected.'
-        : 'You are currently on the free plan. Upgrade later to unlock deeper analytics and AI-powered study tools.';
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                height: 44,
-                width: 44,
-                decoration: BoxDecoration(
-                  gradient: AppColors.premiumGradient,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.insights_rounded, color: Colors.white),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Profile Insight',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            planMessage,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
-          ),
-          if (user?.premiumUntil != null) ...[
-            const SizedBox(height: 14),
-            Text(
-              'Premium access until ${_formatDate(user!.premiumUntil!)}',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: AppColors.premium,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  static String _formatDate(DateTime date) {
-    final month = _monthNames[date.month - 1];
-    return '$month ${date.day}, ${date.year}';
-  }
-
-  static const List<String> _monthNames = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-}
 
 class _InfoListCard extends StatelessWidget {
   const _InfoListCard({required this.children});

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
+import '../../../notifications/presentation/pages/notifications_inbox_page.dart';
 import '../../../subjects/data/models/subject_model.dart';
 import '../cubit/home_cubit.dart';
 
@@ -61,7 +62,6 @@ class _HomeContent extends StatelessWidget {
                     return _HomeHeader(
                       greeting: _getGreeting(),
                       name: name,
-                      avatarUrl: user?.avatarUrl,
                       isDark: isDark,
                       subjectsCount: subjects.length,
                     );
@@ -78,10 +78,9 @@ class _HomeContent extends StatelessWidget {
                     .fadeIn(delay: 200.ms, duration: 600.ms)
                     .scale(begin: const Offset(0.95, 0.95)),
                 const SizedBox(height: 24),
-                _StreaksWidget(streak: homeState.streak)
-                    .animate()
-                    .fadeIn(delay: 250.ms)
-                    .slideX(begin: -0.1),
+                _StreaksWidget(
+                  streak: homeState.streak,
+                ).animate().fadeIn(delay: 250.ms).slideX(begin: -0.1),
                 const SizedBox(height: 32),
                 const _QuickActions()
                     .animate()
@@ -191,14 +190,12 @@ class _HomeHeader extends StatelessWidget {
   const _HomeHeader({
     required this.greeting,
     required this.name,
-    required this.avatarUrl,
     required this.isDark,
     required this.subjectsCount,
   });
 
   final String greeting;
   final String name;
-  final String? avatarUrl;
   final bool isDark;
   final int subjectsCount;
 
@@ -246,7 +243,24 @@ class _HomeHeader extends StatelessWidget {
               children: [
                 _SubjectsBadge(compact: compact, subjectsCount: subjectsCount),
                 const SizedBox(width: 10),
-                _HeaderAvatar(avatarUrl: avatarUrl, fallbackName: name),
+                IconButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationsInboxPage(),
+                    ),
+                  ),
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white10
+                          : Colors.black.withValues(alpha: 0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.notifications_outlined, size: 22),
+                  ),
+                ),
               ],
             ),
           ],
@@ -538,76 +552,14 @@ class _QuickActionCard extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               label,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
           ],
         ),
       ),
     );
-  }
-}
-
-class _HeaderAvatar extends StatelessWidget {
-  const _HeaderAvatar({required this.avatarUrl, required this.fallbackName});
-
-  final String? avatarUrl;
-  final String fallbackName;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasAvatar = avatarUrl != null && avatarUrl!.isNotEmpty;
-
-    return Container(
-      width: 46,
-      height: 46,
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: hasAvatar
-            ? Image.network(
-                avatarUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => _AvatarFallback(name: fallbackName),
-              )
-            : _AvatarFallback(name: fallbackName),
-      ),
-    );
-  }
-}
-
-class _AvatarFallback extends StatelessWidget {
-  const _AvatarFallback({required this.name});
-
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        _initials(name),
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-
-  static String _initials(String name) {
-    final parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((part) => part.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) return 'S';
-    if (parts.length == 1) return parts.first.characters.first.toUpperCase();
-    return '${parts.first.characters.first}${parts.last.characters.first}'
-        .toUpperCase();
   }
 }
 

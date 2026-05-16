@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "264301190550",
+    "project_id": "focusly-9ac6a",
+    "storage_bucket": "focusly-9ac6a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:264301190550:android:6293e9b7847256a6f751b7",
+        "android_client_info": {
+          "package_name": "com.example.focusly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkz9nF_Iby0_jawCJBXMqbZN28lGDdjaQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

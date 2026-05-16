@@ -9,6 +9,7 @@ import '../../../subjects/data/repositories/subjects_repository.dart';
 import '../../data/models/pomodoro_session_model.dart';
 import '../../data/models/pomodoro_today_model.dart';
 import '../../data/repositories/pomodoro_repository.dart';
+import '../../../../core/services/notification_service.dart';
 
 part 'pomodoro_state.dart';
 
@@ -22,6 +23,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
 
   final PomodoroRepository _repository;
   final SubjectsRepository _subjectsRepository;
+  final NotificationService _notificationService = NotificationService();
   Timer? _ticker;
 
   Future<void> load() async {
@@ -353,6 +355,10 @@ class PomodoroCubit extends Cubit<PomodoroState> {
           ),
         );
         _stopTicker();
+        _notificationService.showNotification(
+          title: 'Time is up!',
+          body: 'Great job! Take a well-deserved break.',
+        );
         return;
       }
       emit(state.copyWith(remainingSeconds: next));

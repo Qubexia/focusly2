@@ -85,6 +85,39 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
     });
   }
 
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  DateTime _combineDateAndTime(DateTime date, TimeOfDay time) {
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+  }
+
+  bool _isPastStartTime(TimeOfDay time) {
+    final now = DateTime.now();
+    if (!_isSameDay(widget.selectedDate, now)) {
+      return false;
+    }
+
+    final selectedDateTime = _combineDateAndTime(widget.selectedDate, time);
+    return selectedDateTime.isBefore(now);
+  }
+
+  void _showValidationMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -150,7 +183,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                 _isLoadingSubjects
                     ? const Center(child: LinearProgressIndicator())
                     : DropdownButtonFormField<String>(
-                        value: _selectedSubjectId,
+                        initialValue: _selectedSubjectId,
                         decoration: const InputDecoration(
                           contentPadding:
                               EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -199,7 +232,24 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                             context: context,
                             initialTime: _startTime,
                           );
-                          if (time != null) setState(() => _startTime = time);
+                          if (time == null) return;
+                          if (_isPastStartTime(time)) {
+                            _showValidationMessage(
+                              'You cannot choose a start time before the current time.',
+                            );
+                            return;
+                          }
+
+                          setState(() {
+                            _startTime = time;
+                            if (!_combineDateAndTime(widget.selectedDate, _endTime)
+                                .isAfter(_combineDateAndTime(widget.selectedDate, _startTime))) {
+                              _endTime = TimeOfDay(
+                                hour: (time.hour + 1) % 24,
+                                minute: time.minute,
+                              );
+                            }
+                          });
                         },
                       ),
                     ),
@@ -213,7 +263,24 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                             context: context,
                             initialTime: _endTime,
                           );
-                          if (time != null) setState(() => _endTime = time);
+                          if (time == null) return;
+                          final selectedEnd = _combineDateAndTime(
+                            widget.selectedDate,
+                            time,
+                          );
+                          final selectedStart = _combineDateAndTime(
+                            widget.selectedDate,
+                            _startTime,
+                          );
+
+                          if (!selectedEnd.isAfter(selectedStart)) {
+                            _showValidationMessage(
+                              'End time must be after start time.',
+                            );
+                            return;
+                          }
+
+                          setState(() => _endTime = time);
                         },
                       ),
                     ),
@@ -233,7 +300,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                     const _SectionLabel(label: 'Reminders'),
                     Switch.adaptive(
                       value: _reminderEnabled,
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       onChanged: (val) => setState(() => _reminderEnabled = val),
                     ),
                   ],
@@ -241,7 +308,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                 if (_reminderEnabled) ...[
                   const SizedBox(height: 8),
                   DropdownButtonFormField<int>(
-                    value: _reminderOffset,
+                    initialValue: _reminderOffset,
                     decoration: const InputDecoration(
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -286,37 +353,22 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
     final selectedDay = _dateOnly(widget.selectedDate);
 
     if (selectedDay.isBefore(today)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You cannot create a schedule for a past day.'),
-          behavior: SnackBarBehavior.floating,
-        ),
+      _showValidationMessage('You cannot create a schedule for a past day.');
+      return;
+    }
+
+    final start = _combineDateAndTime(selectedDay, _startTime);
+    final end = _combineDateAndTime(selectedDay, _endTime);
+
+    if (_isSameDay(selectedDay, today) && start.isBefore(DateTime.now())) {
+      _showValidationMessage(
+        'You cannot create a schedule with a start time before the current time.',
       );
       return;
     }
 
-    final start = DateTime(
-      selectedDay.year,
-      selectedDay.month,
-      selectedDay.day,
-      _startTime.hour,
-      _startTime.minute,
-    );
-    final end = DateTime(
-      selectedDay.year,
-      selectedDay.month,
-      selectedDay.day,
-      _endTime.hour,
-      _endTime.minute,
-    );
-
     if (!end.isAfter(start)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('End time must be after start time.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showValidationMessage('End time must be after start time.');
       return;
     }
 

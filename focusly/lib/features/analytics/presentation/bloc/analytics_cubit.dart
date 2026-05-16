@@ -33,8 +33,8 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
       toDate: finalTo,
     ));
 
-    final fromStr = finalFrom != null ? _formatDate(finalFrom) : null;
-    final toStr = finalTo != null ? _formatDate(finalTo) : null;
+    final fromStr = _formatDate(finalFrom);
+    final toStr = _formatDate(finalTo);
 
     try {
       final results = await Future.wait([

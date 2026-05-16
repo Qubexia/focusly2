@@ -14,7 +14,9 @@ import { FCM_CLIENT } from './fcm.tokens';
       provide: FCM_CLIENT,
       inject: [ConfigService, FcmRealClient, FcmFakeClient],
       useFactory: (config: ConfigService, real: FcmRealClient, fake: FcmFakeClient) =>
-        config.get<string>('fcm.serviceAccountJson') ? real : fake,
+        config.get<string>('fcm.serviceAccountJson') || config.get<string>('fcm.serviceAccountPath')
+          ? real
+          : fake,
     },
   ],
   exports: [FCM_CLIENT],

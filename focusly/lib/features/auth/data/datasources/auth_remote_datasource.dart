@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'dart:io';
 
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/api_client.dart';
@@ -90,5 +91,42 @@ class AuthRemoteDataSource {
   Future<UserModel> getMe() async {
     final response = await _dio.get(ApiEndpoints.usersMe);
     return UserModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<void> updateFcmToken({required String fcmToken}) async {
+    await _dio.post(
+      ApiEndpoints.usersFcmToken,
+      data: {'fcmToken': fcmToken},
+    );
+  }
+
+  Future<UserModel> updateProfile({
+    required String name,
+  }) async {
+    final response = await _dio.patch(
+      ApiEndpoints.usersMe,
+      data: {'name': name},
+    );
+    return UserModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<String> uploadAvatar({
+    required String filePath,
+  }) async {
+    final fileName = filePath.split(Platform.pathSeparator).last;
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath, filename: fileName),
+    });
+
+    final response = await _dio.post(
+      ApiEndpoints.usersAvatar,
+      data: formData,
+      options: Options(
+        headers: {'Content-Type': 'multipart/form-data'},
+      ),
+    );
+
+    final data = response.data as Map<String, dynamic>;
+    return (data['avatarUrl'] ?? '') as String;
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../datasources/auth_remote_datasource.dart';
 import '../models/auth_response.dart';
@@ -8,6 +9,7 @@ import '../models/user_model.dart';
 /// Repository that orchestrates auth data source calls + token persistence.
 class AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
+  final NotificationService _notificationService = NotificationService();
 
   AuthRepository({AuthRemoteDataSource? remoteDataSource})
       : _remoteDataSource = remoteDataSource ?? AuthRemoteDataSource();
@@ -37,6 +39,7 @@ class AuthRepository {
       deviceId: deviceId,
     );
     await _persistTokens(response);
+    await _syncFcmToken();
     return response;
   }
 
@@ -45,10 +48,12 @@ class AuthRepository {
     required String password,
   }) async {
     final deviceId = await _getOrCreateDeviceId();
+    final fcmToken = await _notificationService.getFcmToken();
     final response = await _remoteDataSource.login(
       email: email,
       password: password,
       deviceId: deviceId,
+      fcmToken: fcmToken,
     );
     await _persistTokens(response);
     return response;
@@ -56,9 +61,11 @@ class AuthRepository {
 
   Future<AuthResponse> googleLogin({required String idToken}) async {
     final deviceId = await _getOrCreateDeviceId();
+    final fcmToken = await _notificationService.getFcmToken();
     final response = await _remoteDataSource.googleLogin(
       idToken: idToken,
       deviceId: deviceId,
+      fcmToken: fcmToken,
     );
     await _persistTokens(response);
     return response;
@@ -91,7 +98,9 @@ class AuthRepository {
     final token = await SecureStorage.getAccessToken();
     if (token == null) return null;
     try {
-      return await _remoteDataSource.getMe();
+      final user = await _remoteDataSource.getMe();
+      await _syncFcmToken();
+      return user;
     } catch (_) {
       return null;
     }
@@ -102,10 +111,31 @@ class AuthRepository {
     return token != null;
   }
 
+  Future<UserModel> updateProfile({
+    required String name,
+    String? avatarPath,
+  }) async {
+    if (avatarPath != null && avatarPath.isNotEmpty) {
+      await _remoteDataSource.uploadAvatar(filePath: avatarPath);
+    }
+
+    return _remoteDataSource.updateProfile(name: name);
+  }
+
   Future<void> _persistTokens(AuthResponse response) async {
     await SecureStorage.saveTokens(
       accessToken: response.tokens.accessToken,
       refreshToken: response.tokens.refreshToken,
     );
+  }
+
+  Future<void> _syncFcmToken() async {
+    try {
+      final fcmToken = await _notificationService.getFcmToken();
+      if (fcmToken == null || fcmToken.isEmpty) return;
+      await _remoteDataSource.updateFcmToken(fcmToken: fcmToken);
+    } catch (_) {
+      // FCM sync should not block auth flow
+    }
   }
 }

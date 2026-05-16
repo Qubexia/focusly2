@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/data/models/user_model.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event_state.dart';
+import '../widgets/edit_profile_sheet.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -10,9 +15,30 @@ class SettingsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-          children: const [SizedBox(height: 14), _SettingsActionsCard()],
+        child: BlocConsumer<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthError) {
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: AppColors.error,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+            }
+          },
+          builder: (context, state) {
+            final user = state is AuthAuthenticated ? state.user : null;
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+              children: [
+                const SizedBox(height: 14),
+                _SettingsActionsCard(user: user),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -20,7 +46,9 @@ class SettingsPage extends StatelessWidget {
 }
 
 class _SettingsActionsCard extends StatelessWidget {
-  const _SettingsActionsCard();
+  const _SettingsActionsCard({required this.user});
+
+  final UserModel? user;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +69,7 @@ class _SettingsActionsCard extends StatelessWidget {
             subtitle: 'Update your name and avatar.',
             icon: Icons.draw_rounded,
             color: AppColors.primary,
-            onTap: () => _showComingSoon(context, 'Edit Profile'),
+            onTap: () => showEditProfileSheet(context, user),
           ),
           _SettingsActionTile(
             title: 'Notifications',
@@ -125,39 +153,6 @@ class _SettingsActionTile extends StatelessWidget {
       ),
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
-        ),
-      ],
     );
   }
 }
