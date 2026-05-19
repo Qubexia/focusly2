@@ -6,6 +6,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../auth/data/models/user_model.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
+import '../../../streaks/presentation/cubit/streak_cubit.dart';
+import '../../../streaks/presentation/cubit/streak_state.dart';
 import '../widgets/edit_profile_sheet.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -58,46 +60,37 @@ class ProfilePage extends StatelessWidget {
                         'A quick snapshot of your account and study pace.',
                   ),
                   const SizedBox(height: 14),
-                  Row(
+                  _InfoListCard(
                     children: [
-                      Expanded(
-                        child: _StatCard(
-                          label: 'Total Points',
-                          value: '${user?.totalPoints ?? 0}',
-                          icon: Icons.workspace_premium_rounded,
-                          color: AppColors.premium,
-                        ),
+                      _InfoTile(
+                        icon: Icons.workspace_premium_rounded,
+                        title: 'Total Points',
+                        value: '${user?.totalPoints ?? 0}',
+                        color: AppColors.premium,
                       ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: _StatCard(
-                          label: 'Current Streak',
-                          value: '5 days',
-                          icon: Icons.local_fire_department_rounded,
-                          color: Colors.orange,
-                        ),
+                      BlocBuilder<StreakCubit, StreakState>(
+                        builder: (context, streakState) {
+                          final streakDays = streakState.current;
+                          return _InfoTile(
+                            icon: Icons.local_fire_department_rounded,
+                            title: 'Current Streak',
+                            value:
+                                '$streakDays day${streakDays == 1 ? '' : 's'}',
+                            color: Colors.orange,
+                          );
+                        },
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: const [
-                      Expanded(
-                        child: _StatCard(
-                          label: 'Focus Sessions',
-                          value: '24',
-                          icon: Icons.timer_outlined,
-                          color: AppColors.primary,
-                        ),
+                      const _InfoTile(
+                        icon: Icons.timer_outlined,
+                        title: 'Focus Sessions',
+                        value: '24',
+                        color: AppColors.primary,
                       ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: _StatCard(
-                          label: 'Plan Status',
-                          value: 'Active',
-                          icon: Icons.verified_rounded,
-                          color: AppColors.secondary,
-                        ),
+                      const _InfoTile(
+                        icon: Icons.verified_rounded,
+                        title: 'Plan Status',
+                        value: 'Active',
+                        color: AppColors.secondary,
                       ),
                     ],
                   ),
@@ -442,66 +435,6 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 42,
-            width: 42,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: color),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 
 class _InfoListCard extends StatelessWidget {
   const _InfoListCard({required this.children});
@@ -530,15 +463,18 @@ class _InfoTile extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.value,
+    this.color,
   });
 
   final IconData icon;
   final String title;
   final String value;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tileColor = color ?? AppColors.primary;
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
@@ -546,10 +482,10 @@ class _InfoTile extends StatelessWidget {
         height: 42,
         width: 42,
         decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.12),
+          color: tileColor.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(14),
         ),
-        child: Icon(icon, color: AppColors.primary),
+        child: Icon(icon, color: tileColor),
       ),
       title: Text(
         title,

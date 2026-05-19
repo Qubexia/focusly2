@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import dayjs from 'dayjs';
 
 import { AnalyticsDaily, AnalyticsDailyDocument } from './schemas/analytics-daily.schema';
@@ -21,9 +21,11 @@ export class AnalyticsRepository {
   ) {}
 
   async getSummary(userId: string, from: Date, to: Date): Promise<AnalyticsSummary> {
+    const normalizedUserId = toObjectIdIfPossible(userId);
+
     const results = await this.model
       .aggregate([
-        { $match: { userId: userId as any, date: { $gte: from, $lte: to } } },
+        { $match: { userId: normalizedUserId, date: { $gte: from, $lte: to } } },
         {
           $group: {
             _id: null,
@@ -41,7 +43,11 @@ export class AnalyticsRepository {
     }
 
     const daysActive = await this.model
-      .countDocuments({ userId: userId as any, date: { $gte: from, $lte: to }, focusMinutes: { $gt: 0 } })
+      .countDocuments({
+        userId: normalizedUserId,
+        date: { $gte: from, $lte: to },
+        focusMinutes: { $gt: 0 },
+      })
       .exec();
 
     return {
@@ -60,9 +66,10 @@ export class AnalyticsRepository {
   async getHeatmap(userId: string, year: number): Promise<Array<{ date: string; focusMinutes: number }>> {
     const start = dayjs().year(year).startOf('year').toDate();
     const end = dayjs().year(year).endOf('year').toDate();
+    const normalizedUserId = toObjectIdIfPossible(userId);
 
     return this.model
-      .find({ userId: userId as any, date: { $gte: start, $lte: end } })
+      .find({ userId: normalizedUserId, date: { $gte: start, $lte: end } })
       .sort({ date: 1 })
       .lean()
       .exec()
@@ -80,12 +87,18 @@ export class AnalyticsRepository {
     data: { focusMinutes: number; completedCycles: number; plannedItemsCompleted: number; sessionsCount: number },
   ): Promise<void> {
     const dateStart = dayjs(date).startOf('day').toDate();
+    const normalizedUserId = toObjectIdIfPossible(userId);
+
     await this.model
       .updateOne(
-        { userId: userId as any, date: dateStart },
-        { $set: { userId: userId as any, date: dateStart }, $inc: data },
+        { userId: normalizedUserId, date: dateStart },
+        { $set: { userId: normalizedUserId, date: dateStart }, $inc: data },
         { upsert: true },
       )
       .exec();
   }
+}
+
+function toObjectIdIfPossible(value: string): Types.ObjectId | string {
+  return Types.ObjectId.isValid(value) ? new Types.ObjectId(value) : value;
 }

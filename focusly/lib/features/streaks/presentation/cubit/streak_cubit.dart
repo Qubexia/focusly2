@@ -1,29 +1,24 @@
 import 'package:dio/dio.dart';
-import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../subjects/data/models/subject_model.dart';
-import '../../../subjects/data/repositories/subjects_repository.dart';
+import '../../data/repositories/streaks_repository.dart';
+import 'streak_state.dart';
 
-part 'home_state.dart';
+class StreakCubit extends Cubit<StreakState> {
+  StreakCubit({StreaksRepository? repository})
+      : _repository = repository ?? StreaksRepository(),
+        super(const StreakState());
 
-class HomeCubit extends Cubit<HomeState> {
-  HomeCubit({
-    SubjectsRepository? repository,
-  })  : _repository = repository ?? SubjectsRepository(),
-        super(const HomeState());
+  final StreaksRepository _repository;
 
-  final SubjectsRepository _repository;
-
-  Future<void> loadHome() async {
+  Future<void> loadStreak() async {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
-      final subjects = await _repository.getSubjects();
-
+      final streak = await _repository.getMyStreak();
       emit(
         state.copyWith(
           isLoading: false,
-          subjects: subjects,
+          current: streak.current,
         ),
       );
     } on DioException catch (e) {
@@ -37,7 +32,7 @@ class HomeCubit extends Cubit<HomeState> {
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: 'Failed to load home data.',
+          errorMessage: 'Failed to load streak.',
         ),
       );
     }

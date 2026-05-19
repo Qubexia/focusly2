@@ -11,6 +11,7 @@ import '../../../pomodoro/presentation/pages/pomodoro_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../analytics/presentation/pages/analytics_page.dart';
 import '../../../schedules/presentation/pages/schedules_page.dart';
+import '../../../streaks/presentation/cubit/streak_cubit.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -40,26 +41,38 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is AuthUnauthenticated) {
-          context.go('/login');
+    return BlocProvider(
+      create: (context) {
+        final cubit = StreakCubit();
+        if (context.read<AuthBloc>().state is AuthAuthenticated) {
+          cubit.loadStreak();
         }
+        return cubit;
       },
-      child: Scaffold(
-        extendBody: true, // Allows content to flow behind the floating nav bar
-        body: IndexedStack(
-          index: _selectedIndex,
-          children: List.generate(_viewBuilders.length, (index) {
-            if (!_loadedTabs.contains(index)) {
-              return const SizedBox.shrink();
-            }
-            return _viewBuilders[index]();
-          }),
-        ),
-        bottomNavigationBar: _FloatingBottomNavBar(
-          selectedIndex: _selectedIndex,
-          onItemTapped: _onItemTapped,
+      child: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthAuthenticated) {
+            context.read<StreakCubit>().loadStreak();
+          }
+          if (state is AuthUnauthenticated) {
+            context.go('/login');
+          }
+        },
+        child: Scaffold(
+          extendBody: true, // Allows content to flow behind the floating nav bar
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: List.generate(_viewBuilders.length, (index) {
+              if (!_loadedTabs.contains(index)) {
+                return const SizedBox.shrink();
+              }
+              return _viewBuilders[index]();
+            }),
+          ),
+          bottomNavigationBar: _FloatingBottomNavBar(
+            selectedIndex: _selectedIndex,
+            onItemTapped: _onItemTapped,
+          ),
         ),
       ),
     );

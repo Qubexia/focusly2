@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/presentation/bloc/auth_event_state.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../bloc/analytics_cubit.dart';
 import '../bloc/analytics_state.dart';
 import '../widgets/kpi_card.dart';
@@ -25,6 +27,10 @@ class _AnalyticsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthBloc>().state;
+    final isPremiumUser =
+        authState is AuthAuthenticated && authState.user.isPremium;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Statistics'),
@@ -57,7 +63,10 @@ class _AnalyticsView extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
               children: [
-                _DateRangeSelector(currentRange: state.dateRange),
+                _DateRangeSelector(
+                  currentRange: state.dateRange,
+                  isPremiumUser: isPremiumUser,
+                ),
                 if (state.summary != null) ...[
                   const SizedBox(height: 16),
                   _InsightsTeaserCard(
@@ -103,9 +112,57 @@ class _AnalyticsView extends StatelessWidget {
 }
 
 class _DateRangeSelector extends StatelessWidget {
-  const _DateRangeSelector({required this.currentRange});
+  const _DateRangeSelector({
+    required this.currentRange,
+    required this.isPremiumUser,
+  });
 
   final AnalyticsDateRange currentRange;
+  final bool isPremiumUser;
+
+  void _showPremiumAnalyticsSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Premium analytics',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Month and Year insights are available for premium users only. Upgrade to unlock broader trends and comparisons.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                      height: 1.45,
+                    ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(sheetContext).pop(),
+                  child: const Text('Upgrade to Premium'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,12 +187,30 @@ class _DateRangeSelector extends StatelessWidget {
           _RangeButton(
             label: 'Month',
             isSelected: currentRange == AnalyticsDateRange.month,
-            onTap: () => context.read<AnalyticsCubit>().loadAnalytics(range: AnalyticsDateRange.month),
+            isLocked: !isPremiumUser,
+            onTap: () {
+              if (!isPremiumUser) {
+                _showPremiumAnalyticsSheet(context);
+                return;
+              }
+              context.read<AnalyticsCubit>().loadAnalytics(
+                    range: AnalyticsDateRange.month,
+                  );
+            },
           ),
           _RangeButton(
             label: 'Year',
             isSelected: currentRange == AnalyticsDateRange.year,
-            onTap: () => context.read<AnalyticsCubit>().loadAnalytics(range: AnalyticsDateRange.year),
+            isLocked: !isPremiumUser,
+            onTap: () {
+              if (!isPremiumUser) {
+                _showPremiumAnalyticsSheet(context);
+                return;
+              }
+              context.read<AnalyticsCubit>().loadAnalytics(
+                    range: AnalyticsDateRange.year,
+                  );
+            },
           ),
         ],
       ),
@@ -148,11 +223,13 @@ class _RangeButton extends StatelessWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.isLocked = false,
   });
 
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  final bool isLocked;
 
   @override
   Widget build(BuildContext context) {
@@ -167,7 +244,7 @@ class _RangeButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            label,
+            isLocked ? '$label  Lock' : label,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,

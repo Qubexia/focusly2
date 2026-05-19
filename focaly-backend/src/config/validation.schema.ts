@@ -1,5 +1,20 @@
 import * as Joi from 'joi';
 
+const pemString = (label: string) =>
+  Joi.string()
+    .custom((value, helpers) => {
+      const normalized = value.replace(/\\n/g, '\n').trim();
+      const beginMarker = `-----BEGIN ${label}-----`;
+      const endMarker = `-----END ${label}-----`;
+
+      if (normalized.startsWith(beginMarker) && normalized.endsWith(endMarker)) {
+        return value;
+      }
+
+      return helpers.error('any.invalid');
+    }, `${label} PEM validation`)
+    .required();
+
 export const validationSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
   PORT: Joi.number().integer().min(1).max(65535).default(3000),
@@ -13,8 +28,8 @@ export const validationSchema = Joi.object({
   REDIS_URL: Joi.string().uri({ scheme: ['redis', 'rediss'] }).required(),
   FOCALY_DISABLE_REDIS: Joi.boolean().truthy('true', '1', 'yes', 'on').falsy('false', '0', 'no', 'off').default(false),
 
-  JWT_PRIVATE_KEY: Joi.string().required(),
-  JWT_PUBLIC_KEY: Joi.string().required(),
+  JWT_PRIVATE_KEY: pemString('PRIVATE KEY'),
+  JWT_PUBLIC_KEY: pemString('PUBLIC KEY'),
   JWT_ACCESS_TTL: Joi.number().integer().min(60).default(900),
   JWT_REFRESH_TTL: Joi.number().integer().min(3600).default(2_592_000),
   EMAIL_TOKEN_SECRET: Joi.string().min(16).required(),

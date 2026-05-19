@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import {
   PomodoroSession,
@@ -30,7 +30,13 @@ export class PomodoroRepository {
   }
 
   findActiveByUser(userId: string): Promise<PomodoroSessionDocument | null> {
-    return this.model.findOne({ userId, status: 'active' }).sort({ startedAt: -1 }).exec();
+    return this.model
+      .findOne({
+        userId: toObjectIdIfPossible(userId),
+        status: 'active',
+      })
+      .sort({ startedAt: -1 })
+      .exec();
   }
 
   findById(id: string): Promise<PomodoroSessionDocument | null> {
@@ -59,7 +65,7 @@ export class PomodoroRepository {
   ): Promise<PomodoroSessionDocument[]> {
     return this.model
       .find({
-        userId,
+        userId: toObjectIdIfPossible(userId),
         startedAt: { $gte: todayStart, $lte: todayEnd },
       })
       .sort({ startedAt: -1 })
@@ -74,7 +80,7 @@ export class PomodoroRepository {
     cursor?: string,
   ): Promise<PomodoroSessionDocument[]> {
     const filter: Record<string, unknown> = {
-      userId,
+      userId: toObjectIdIfPossible(userId),
       startedAt: { $gte: from, $lte: to },
     };
     if (cursor) {
@@ -82,4 +88,8 @@ export class PomodoroRepository {
     }
     return this.model.find(filter).sort({ startedAt: -1 }).limit(limit).exec();
   }
+}
+
+function toObjectIdIfPossible(value: string): Types.ObjectId | string {
+  return Types.ObjectId.isValid(value) ? new Types.ObjectId(value) : value;
 }

@@ -520,7 +520,9 @@ class _TodaySummaryCard extends StatelessWidget {
               Expanded(
                 child: _TodayStat(
                   label: 'Current Subject',
-                  value: activeSubject == null ? 'General' : 'Active',
+                  value: activeSubject?.name?.trim().isNotEmpty == true
+                      ? activeSubject!.name
+                      : 'General',
                 ),
               ),
             ],
@@ -552,6 +554,8 @@ class _TodayStat extends StatelessWidget {
         children: [
           Text(
             value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: AppColors.primary,
               fontWeight: FontWeight.w800,

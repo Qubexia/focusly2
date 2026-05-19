@@ -80,19 +80,22 @@ class SchedulesCubit extends Cubit<SchedulesState> {
     }
   }
 
-  Future<void> deleteSchedule(String id) async {
+  Future<bool> deleteSchedule(String id) async {
     try {
       await _dataSource.deleteSchedule(id);
+      await _notificationService.cancel(id.hashCode);
       emit(state.copyWith(
         feedbackType: SchedulesFeedbackType.success,
         feedbackMessage: 'Schedule deleted.',
       ));
       await loadSchedules();
+      return true;
     } catch (e) {
       emit(state.copyWith(
         feedbackType: SchedulesFeedbackType.error,
         feedbackMessage: 'Failed to delete schedule.',
       ));
+      return false;
     }
   }
 

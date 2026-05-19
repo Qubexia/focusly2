@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import dayjs from 'dayjs';
 
 import { PomodoroSession, PomodoroSessionDocument } from '../pomodoro/schemas/pomodoro-session.schema';
@@ -18,12 +18,13 @@ export class AnalyticsService {
   async summary(userId: string, from: Date, to: Date) {
     const fromDate = dayjs(from).startOf('day').toDate();
     const toDate = dayjs(to).endOf('day').toDate();
+    const normalizedUserId = toObjectIdIfPossible(userId);
 
     if (dayjs(to).diff(dayjs(from), 'day') <= 7) {
       const [live, streakRows, dailyRows] = await Promise.all([
         this.pomodoroModel
         .aggregate([
-          { $match: { userId: userId as any, startedAt: { $gte: fromDate, $lte: toDate } } },
+          { $match: { userId: normalizedUserId, startedAt: { $gte: fromDate, $lte: toDate } } },
           {
             $group: {
               _id: null,
@@ -37,7 +38,7 @@ export class AnalyticsService {
           .aggregate([
             {
               $match: {
-                userId: userId as any,
+                userId: normalizedUserId,
                 startedAt: { $gte: fromDate, $lte: toDate },
                 totalFocusMinutes: { $gt: 0 },
               },
@@ -53,7 +54,7 @@ export class AnalyticsService {
           .exec(),
         this.pomodoroModel
           .aggregate([
-            { $match: { userId: userId as any, startedAt: { $gte: fromDate, $lte: toDate } } },
+            { $match: { userId: normalizedUserId, startedAt: { $gte: fromDate, $lte: toDate } } },
             {
               $group: {
                 _id: {
@@ -93,8 +94,52 @@ export class AnalyticsService {
   }
 
   async bySubject(userId: string, from: Date, to: Date) {
-    const subjects = await this.analyticsRepo.getBySubject(userId, from, to);
-    return subjects;
+    const fromDate = dayjs(from).startOf('day').toDate();
+    const toDate = dayjs(to).endOf('day').toDate();
+    const normalizedUserId = toObjectIdIfPossible(userId);
+
+    return this.pomodoroModel
+      .aggregate([
+        {
+          $match: {
+            userId: normalizedUserId,
+            startedAt: { $gte: fromDate, $lte: toDate },
+            subjectId: { $ne: null },
+            totalFocusMinutes: { $gt: 0 },
+          },
+        },
+        {
+          $group: {
+            _id: '$subjectId',
+            focusMinutes: { $sum: '$totalFocusMinutes' },
+          },
+        },
+        {
+          $lookup: {
+            from: 'subjects',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'subject',
+          },
+        },
+        {
+          $unwind: {
+            path: '$subject',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            subjectId: { $toString: '$_id' },
+            subjectName: { $ifNull: ['$subject.name', 'Unknown'] },
+            color: '$subject.color',
+            focusMinutes: 1,
+          },
+        },
+        { $sort: { focusMinutes: -1 } },
+      ])
+      .exec();
   }
 
   async heatmap(userId: string, year: number) {
@@ -112,4 +157,8 @@ export class AnalyticsService {
       range: { from: fromDate.toISOString(), to: toDate.toISOString() },
     };
   }
+}
+
+function toObjectIdIfPossible(value: string): Types.ObjectId | string {
+  return Types.ObjectId.isValid(value) ? new Types.ObjectId(value) : value;
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../data/models/schedule_model.dart';
 import '../bloc/schedules_cubit.dart';
 import '../bloc/schedules_state.dart';
 import '../widgets/create_schedule_sheet.dart';
@@ -102,6 +103,37 @@ class _SchedulesViewState extends State<_SchedulesView> {
       return _calendarLastDay;
     }
     return normalizedDay;
+  }
+
+  Future<bool?> _confirmDeleteSchedule(
+    BuildContext context,
+    StudyScheduleModel schedule,
+  ) {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete schedule?'),
+          content: Text(
+            '“${schedule.title}” will be removed from your study schedule.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -326,76 +358,162 @@ class _SchedulesViewState extends State<_SchedulesView> {
       itemCount: daySchedules.length,
       itemBuilder: (context, index) {
         final schedule = daySchedules[index];
-        return _ScheduleTile(schedule: schedule);
+        return _ScheduleTile(
+          schedule: schedule,
+          onDelete: () async {
+            final shouldDelete = await _confirmDeleteSchedule(context, schedule);
+            if (shouldDelete != true || !context.mounted) {
+              return false;
+            }
+
+            return await context.read<SchedulesCubit>().deleteSchedule(schedule.id);
+          },
+        );
       },
     );
   }
 }
 
 class _ScheduleTile extends StatelessWidget {
-  const _ScheduleTile({required this.schedule});
+  const _ScheduleTile({
+    required this.schedule,
+    required this.onDelete,
+  });
 
-  final dynamic schedule; // Use StudyScheduleModel when types are solid
+  final StudyScheduleModel schedule;
+  final Future<bool> Function() onDelete;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+    return Dismissible(
+      key: ValueKey(schedule.id),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (_) => onDelete(),
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        alignment: Alignment.centerRight,
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.delete_outline_rounded,
+              color: AppColors.error,
+              size: 26,
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Delete',
+              style: TextStyle(
+                color: AppColors.error,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.book_rounded,
-              color: AppColors.primary,
-            ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  schedule.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.book_rounded,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    schedule.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${_formatTime(schedule.startAt)} - ${_formatTime(schedule.endAt)}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_formatTime(schedule.startAt)} - ${_formatTime(schedule.endAt)}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (schedule.reminderEnabled)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 4),
+                    child: Icon(
+                      Icons.notifications_active_rounded,
+                      size: 20,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                PopupMenuButton<String>(
+                  tooltip: 'Schedule actions',
+                  onSelected: (value) async {
+                    if (value == 'delete') {
+                      await onDelete();
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.delete_outline_rounded,
+                            color: AppColors.error,
+                          ),
+                          SizedBox(width: 8),
+                          Text('Delete'),
+                        ],
+                      ),
+                    ),
+                  ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      Icons.more_vert_rounded,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          if (schedule.reminderEnabled)
-            const Icon(
-              Icons.notifications_active_rounded,
-              size: 20,
-              color: AppColors.secondary,
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
