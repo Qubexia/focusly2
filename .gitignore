@@ -1,1 +1,16 @@
+# Secrets & credentials
 focusly-9ac6a-firebase-adminsdk-fbsvc-45f5494b8f.json
+*-firebase-adminsdk-*.json
+*.pem
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
