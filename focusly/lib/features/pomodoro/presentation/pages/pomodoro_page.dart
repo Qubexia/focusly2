@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../subjects/data/models/subject_model.dart';
@@ -45,7 +46,16 @@ class _PomodoroView extends StatelessWidget {
         );
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Focus Timer')),
+          appBar: AppBar(
+            title: const Text('Focus Timer'),
+            actions: [
+              IconButton(
+                onPressed: () => context.push('/pomodoro/history'),
+                icon: const Icon(Icons.history_rounded),
+                tooltip: 'History',
+              ),
+            ],
+          ),
           body: RefreshIndicator(
             onRefresh: () => context.read<PomodoroCubit>().load(),
             child: ListView(

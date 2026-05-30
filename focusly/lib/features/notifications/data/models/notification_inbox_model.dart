@@ -42,13 +42,17 @@ class NotificationInboxModel extends Equatable {
   }
 
   factory NotificationInboxModel.fromJson(Map<String, dynamic> json) {
+    final id = json['id'] ?? json['_id'];
+    final createdAtRaw = json['createdAt'];
     return NotificationInboxModel(
-      id: json['id'],
-      title: json['title'],
-      body: json['body'],
-      createdAt: DateTime.parse(json['createdAt']),
-      isRead: json['isRead'] ?? false,
-      type: json['type'],
+      id: id?.toString() ?? '',
+      title: (json['title'] as String?) ?? 'Notification',
+      body: (json['body'] as String?) ?? '',
+      createdAt: createdAtRaw is String
+          ? DateTime.tryParse(createdAtRaw) ?? DateTime.now()
+          : DateTime.now(),
+      isRead: (json['isRead'] ?? json['read'] ?? false) as bool,
+      type: json['type'] as String?,
     );
   }
 

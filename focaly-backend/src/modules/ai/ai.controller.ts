@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpException,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser, CurrentUserPayload } from '../../common/decorators/current-user.decorator';
@@ -29,7 +40,14 @@ export class AiController {
   ) {
     const rateCheck = await this.rateLimiter.check(user.id);
     if (!rateCheck.allowed) {
-      return { statusCode: 429, error: 'AI_RATE_LIMIT', retryAfterMs: rateCheck.retryAfterMs };
+      throw new HttpException(
+        {
+          error: 'AI_RATE_LIMIT',
+          message: 'AI rate limit reached. Try again later.',
+          retryAfterMs: rateCheck.retryAfterMs,
+        },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
 
     const job = await this.aiJobsRepo.create({

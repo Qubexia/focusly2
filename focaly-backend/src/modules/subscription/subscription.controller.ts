@@ -20,6 +20,8 @@ import { AppleIapVerifyDto } from './dto/apple-iap-verify.dto';
 import { GoogleIapVerifyDto } from './dto/google-iap-verify.dto';
 import { StripeCheckoutDto } from './dto/stripe-checkout.dto';
 import { StripePortalDto } from './dto/stripe-portal.dto';
+import { AppleIapService } from './apple-iap.service';
+import { GoogleIapService } from './google-iap.service';
 import { StripeService } from './stripe.service';
 import { SubscriptionsService } from './subscriptions.service';
 
@@ -29,6 +31,8 @@ export class SubscriptionController {
   constructor(
     private readonly subscriptionsService: SubscriptionsService,
     private readonly stripeService: StripeService,
+    private readonly googleIapService: GoogleIapService,
+    private readonly appleIapService: AppleIapService,
   ) {}
 
   @Get('me')
@@ -85,18 +89,57 @@ export class SubscriptionController {
   @Post('iap/google/verify')
   async verifyGooglePurchase(
     @CurrentUser() user: CurrentUserPayload,
-    @Body() _dto: GoogleIapVerifyDto,
+    @Body() dto: GoogleIapVerifyDto,
   ) {
-    return { outcome: 'applied' };
+    const verification = await this.googleIapService.verifyPurchase(
+      dto.packageName,
+      dto.productId,
+      dto.purchaseToken,
+    );
+
+    if (!verification.valid) {
+      return { outcome: 'rejected' };
+    }
+
+    return this.subscriptionsService.applyEvent({
+      provider: 'google_play',
+      eventId: `google-${dto.purchaseToken}`,
+      providerSubId: dto.purchaseToken,
+      userId: user.id,
+      status: 'active',
+      currentPeriodEnd: verification.expiryDate ?? null,
+      priceId: dto.productId,
+      eventTimestamp: new Date(),
+      rawPayload: { packageName: dto.packageName, productId: dto.productId },
+    });
   }
 
   @UseGuards(EmailVerifiedGuard)
   @Post('iap/apple/verify')
   async verifyApplePurchase(
     @CurrentUser() user: CurrentUserPayload,
-    @Body() _dto: AppleIapVerifyDto,
+    @Body() dto: AppleIapVerifyDto,
   ) {
-    return { outcome: 'applied' };
+    const verification = await this.appleIapService.verifyReceipt(dto.receiptData);
+
+    if (!verification.valid) {
+      return { outcome: 'rejected' };
+    }
+
+    const providerSubId =
+      verification.transactionId ?? `apple-${user.id}-${Date.now()}`;
+
+    return this.subscriptionsService.applyEvent({
+      provider: 'app_store',
+      eventId: providerSubId,
+      providerSubId,
+      userId: user.id,
+      status: 'active',
+      currentPeriodEnd: verification.expiryDate ?? null,
+      priceId: verification.productId ?? null,
+      eventTimestamp: new Date(),
+      rawPayload: { receiptLength: dto.receiptData.length },
+    });
   }
 
   @Post('cancel')

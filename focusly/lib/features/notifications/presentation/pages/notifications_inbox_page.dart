@@ -31,10 +31,23 @@ class _NotificationsInboxView extends StatelessWidget {
           BlocBuilder<NotificationsInboxCubit, NotificationsInboxState>(
             builder: (context, state) {
               if (state.notifications.isEmpty) return const SizedBox.shrink();
-              return IconButton(
-                onPressed: () => _showClearAllDialog(context),
-                icon: const Icon(Icons.delete_sweep_rounded),
-                tooltip: 'Clear All',
+              final hasUnread = state.unreadCount > 0;
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (hasUnread)
+                    TextButton(
+                      onPressed: () => context
+                          .read<NotificationsInboxCubit>()
+                          .markAllRead(),
+                      child: const Text('Mark all read'),
+                    ),
+                  IconButton(
+                    onPressed: () => _confirmDeleteAll(context),
+                    icon: const Icon(Icons.delete_sweep_rounded),
+                    tooltip: 'Delete all shown',
+                  ),
+                ],
               );
             },
           ),
@@ -50,21 +63,30 @@ class _NotificationsInboxView extends StatelessWidget {
             return _buildEmptyState(context, isDark);
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: state.notifications.length,
-            itemBuilder: (context, index) {
-              final notification = state.notifications[index];
-              return _NotificationTile(
-                notification: notification,
-                onDelete: () => context
-                    .read<NotificationsInboxCubit>()
-                    .deleteNotification(notification.id),
-                onTap: () => context
-                    .read<NotificationsInboxCubit>()
-                    .markAsRead(notification.id),
-              );
-            },
+          return RefreshIndicator(
+            onRefresh: () =>
+                context.read<NotificationsInboxCubit>().loadNotifications(),
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              itemCount: state.notifications.length,
+              itemBuilder: (context, index) {
+                final notification = state.notifications[index];
+                return _NotificationTile(
+                  notification: notification,
+                  onDelete: () => context
+                      .read<NotificationsInboxCubit>()
+                      .deleteNotification(notification.id),
+                  onTap: () {
+                    if (!notification.isRead) {
+                      context
+                          .read<NotificationsInboxCubit>()
+                          .markAsRead(notification.id);
+                    }
+                  },
+                );
+              },
+            ),
           );
         },
       ),
@@ -99,23 +121,32 @@ class _NotificationsInboxView extends StatelessWidget {
     );
   }
 
-  void _showClearAllDialog(BuildContext context) {
+  void _confirmDeleteAll(BuildContext context) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Clear All Notifications?'),
-        content: const Text('This action cannot be undone.'),
+        title: const Text('Delete all notifications?'),
+        content: const Text(
+          'Each notification will be removed from your inbox.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              context.read<NotificationsInboxCubit>().clearAll();
+            onPressed: () async {
+              final cubit = context.read<NotificationsInboxCubit>();
+              final ids = cubit.state.notifications.map((n) => n.id).toList();
               Navigator.pop(dialogContext);
+              for (final id in ids) {
+                await cubit.deleteNotification(id);
+              }
             },
-            child: const Text('Clear All', style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              'Delete all',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),

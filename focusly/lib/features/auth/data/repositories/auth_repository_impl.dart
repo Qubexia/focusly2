@@ -85,6 +85,10 @@ class AuthRepository {
     );
   }
 
+  Future<void> verifyEmail({required String token}) async {
+    await _remoteDataSource.verifyEmail(token: token);
+  }
+
   Future<void> logout() async {
     try {
       await _remoteDataSource.logout();

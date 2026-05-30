@@ -5,9 +5,17 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import { PresignDto } from './dto';
 
-const MIME_ALLOWLIST = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+const MIME_ALLOWLIST = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+  'application/pdf',
+];
 const KIND_LIMITS: Record<string, number> = {
   'lecture-image': 10_485_760,
+  'ai-notes-image': 10_485_760,
   avatar: 2_097_152,
 };
 

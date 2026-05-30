@@ -10,6 +10,6 @@ export class SubscriptionChangedEvent {
     public readonly userId: string,
     public readonly status: SubscriptionStatus,
     public readonly currentPeriodEnd: Date | null,
-    public readonly provider: 'stripe' | 'google_play' | 'app_store',
+    public readonly provider: 'stripe' | 'google_play' | 'app_store' | 'paymob',
   ) {}
 }

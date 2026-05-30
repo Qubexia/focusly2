@@ -8,7 +8,7 @@ export class PaymentEvent {
   @Prop({
     type: String,
     required: true,
-    enum: ['stripe', 'google_play', 'app_store'],
+    enum: ['stripe', 'google_play', 'app_store', 'paymob'],
   })
   provider!: string;
 

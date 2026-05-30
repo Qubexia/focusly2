@@ -7,8 +7,12 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
 import '../../../notifications/presentation/pages/notifications_inbox_page.dart';
+import '../../../planner/data/models/planned_item_model.dart';
+import '../../../schedules/data/models/schedule_model.dart';
+import '../../../streaks/data/models/streak_model.dart';
 import '../../../streaks/presentation/cubit/streak_cubit.dart';
 import '../../../streaks/presentation/cubit/streak_state.dart';
+import '../../../streaks/presentation/widgets/streak_detail_sheet.dart';
 import '../../../subjects/data/models/subject_model.dart';
 import '../cubit/home_cubit.dart';
 
@@ -73,6 +77,7 @@ class _HomeContent extends StatelessWidget {
                       return _HomeHeader(
                         greeting: _getGreeting(),
                         name: name,
+                        avatarUrl: user?.avatarUrl,
                         isDark: isDark,
                         subjectsCount: subjects.length,
                       );
@@ -88,11 +93,24 @@ class _HomeContent extends StatelessWidget {
                       .animate()
                       .fadeIn(delay: 200.ms, duration: 600.ms)
                       .scale(begin: const Offset(0.95, 0.95)),
+                  const SizedBox(height: 20),
+                  _TodayFocusCard(
+                    focusMinutes: homeState.todayFocusMinutes,
+                    sessionCount: homeState.todaySessionCount,
+                    isLoading: homeState.isLoading,
+                    onStartFocus: () => context.go('/home?tab=2'),
+                  ).animate().fadeIn(delay: 220.ms),
                   const SizedBox(height: 24),
                   BlocBuilder<StreakCubit, StreakState>(
                     builder: (context, streakState) {
                       return _StreaksWidget(
-                        streak: streakState.current,
+                        streak: streakState.streak,
+                        onTap: streakState.streak == null
+                            ? null
+                            : () => showStreakDetailSheet(
+                                  context,
+                                  streak: streakState.streak!,
+                                ),
                       );
                     },
                   ).animate().fadeIn(delay: 250.ms).slideX(begin: -0.1),
@@ -119,6 +137,16 @@ class _HomeContent extends StatelessWidget {
                       ),
                     ],
                   ).animate().fadeIn(delay: 350.ms, duration: 600.ms),
+                  if (homeState.todaySchedules.isNotEmpty ||
+                      homeState.todayTasks.isNotEmpty) ...[
+                    const SizedBox(height: 32),
+                    _UpcomingTodaySection(
+                      schedules: homeState.todaySchedules,
+                      tasks: homeState.todayTasks,
+                      onOpenPlanner: () => context.push('/planner'),
+                      onOpenSchedule: () => context.go('/home?tab=1'),
+                    ).animate().fadeIn(delay: 400.ms),
+                  ],
                   const SizedBox(height: 32),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -202,12 +230,14 @@ class _HomeHeader extends StatelessWidget {
   const _HomeHeader({
     required this.greeting,
     required this.name,
+    this.avatarUrl,
     required this.isDark,
     required this.subjectsCount,
   });
 
   final String greeting;
   final String name;
+  final String? avatarUrl;
   final bool isDark;
   final int subjectsCount;
 
@@ -249,6 +279,13 @@ class _HomeHeader extends StatelessWidget {
                 ],
               ),
             ),
+            if (avatarUrl != null && avatarUrl!.isNotEmpty) ...[
+              const SizedBox(width: 12),
+              CircleAvatar(
+                radius: 22,
+                backgroundImage: NetworkImage(avatarUrl!),
+              ),
+            ],
             const SizedBox(width: 16),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -422,9 +459,97 @@ class _DynamicProgressCard extends StatelessWidget {
 }
 
 class _StreaksWidget extends StatelessWidget {
-  const _StreaksWidget({required this.streak});
+  const _StreaksWidget({required this.streak, this.onTap});
 
-  final int streak;
+  final StreakModel? streak;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final current = streak?.current ?? 0;
+    final longest = streak?.longest ?? 0;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.local_fire_department_rounded,
+                  color: Colors.orange,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$current day streak',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      current > 0
+                          ? 'Best: $longest days · Tap for milestones'
+                          : 'Start today to build your first study streak.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              if (onTap != null)
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: isDark
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TodayFocusCard extends StatelessWidget {
+  const _TodayFocusCard({
+    required this.focusMinutes,
+    required this.sessionCount,
+    required this.isLoading,
+    required this.onStartFocus,
+  });
+
+  final int focusMinutes;
+  final int sessionCount;
+  final bool isLoading;
+  final VoidCallback onStartFocus;
 
   @override
   Widget build(BuildContext context) {
@@ -434,51 +559,218 @@ class _StreaksWidget extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
+        gradient: isDark ? AppColors.darkGradient : AppColors.primaryGradient,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
-        ),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.local_fire_department_rounded,
-              color: Colors.orange,
+          SizedBox(
+            width: 72,
+            height: 72,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: isLoading ? null : (focusMinutes % 120) / 120,
+                  strokeWidth: 6,
+                  backgroundColor: Colors.white24,
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isLoading ? '—' : '$focusMinutes',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const Text(
+                      'min',
+                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$streak day streak',
+                  "Today's focus",
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  streak > 0
-                      ? 'You are building consistent study momentum.'
-                      : 'Start today to build your first study streak.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
+                  isLoading
+                      ? 'Loading your sessions...'
+                      : '$sessionCount session${sessionCount == 1 ? '' : 's'} completed',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 13,
                   ),
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: onStartFocus,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                  ),
+                  child: const Text('Start Focus'),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _UpcomingTodaySection extends StatelessWidget {
+  const _UpcomingTodaySection({
+    required this.schedules,
+    required this.tasks,
+    required this.onOpenPlanner,
+    required this.onOpenSchedule,
+  });
+
+  final List<StudyScheduleModel> schedules;
+  final List<PlannedItemModel> tasks;
+  final VoidCallback onOpenPlanner;
+  final VoidCallback onOpenSchedule;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Upcoming today',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            TextButton(
+              onPressed: tasks.isNotEmpty ? onOpenPlanner : onOpenSchedule,
+              child: Text(tasks.isNotEmpty ? 'Planner' : 'Schedule'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 108,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: schedules.length + tasks.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              if (index < schedules.length) {
+                final schedule = schedules[index];
+                return _UpcomingChip(
+                  title: schedule.title,
+                  subtitle: _formatTime(schedule.startAt),
+                  icon: Icons.event_rounded,
+                  color: AppColors.secondary,
+                  onTap: onOpenSchedule,
+                );
+              }
+              final task = tasks[index - schedules.length];
+              return _UpcomingChip(
+                title: task.title,
+                subtitle: task.time ?? 'Today',
+                icon: Icons.task_alt_rounded,
+                color: AppColors.primary,
+                onTap: onOpenPlanner,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  static String _formatTime(DateTime date) {
+    final h = date.hour.toString().padLeft(2, '0');
+    final m = date.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+}
+
+class _UpcomingChip extends StatelessWidget {
+  const _UpcomingChip({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          width: 200,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 22),
+              const Spacer(),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -503,19 +795,53 @@ class _QuickActions extends StatelessWidget {
           children: const [
             Expanded(
               child: _QuickActionCard(
-                label: 'Subjects',
-                icon: Icons.menu_book_rounded,
-                route: '/subjects',
+                label: 'Start Focus',
+                icon: Icons.play_circle_rounded,
+                route: '/home?tab=2',
               ),
             ),
             SizedBox(width: 12),
             Expanded(
               child: _QuickActionCard(
-                label: 'Focus',
-                icon: Icons.timer_rounded,
-                route: '/main',
+                label: 'Add Task',
+                icon: Icons.add_task_rounded,
+                route: '/planner',
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: const [
+            Expanded(
+              child: _QuickActionCard(
+                label: 'Schedule',
+                icon: Icons.calendar_month_rounded,
+                route: '/home?tab=1',
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: _QuickActionCard(
+                label: 'Subjects',
+                icon: Icons.menu_book_rounded,
+                route: '/subjects',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        const Row(
+          children: [
+            Expanded(
+              child: _QuickActionCard(
+                label: 'AI Notes',
+                icon: Icons.auto_awesome_rounded,
+                route: '/ai-notes',
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(child: SizedBox()),
           ],
         ),
       ],
@@ -710,149 +1036,6 @@ class _SubjectPreviewCard extends StatelessWidget {
 class _HomePremiumPromoCard extends StatelessWidget {
   const _HomePremiumPromoCard();
 
-  void _showSubscriptionPlans(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  height: 4,
-                  width: 40,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : Colors.black12,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.premium.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(
-                      Icons.workspace_premium_rounded,
-                      color: AppColors.premium,
-                      size: 26,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Choose Your Plan',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Unlock unlimited access to all features',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: isDark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondaryLight,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-              _PlanOptionCard(
-                title: 'Monthly Plan',
-                price: '\$4.99',
-                period: '/ month',
-                description: 'Perfect for short-term intense preparation.',
-                isPopular: false,
-                onTap: () => _onSubscribeMock(context, 'Monthly Plan'),
-              ),
-              const SizedBox(height: 14),
-              _PlanOptionCard(
-                title: 'Yearly Premium',
-                price: '\$29.99',
-                period: '/ year',
-                description: 'Best for consistent progress and tracking.',
-                isPopular: true,
-                onTap: () => _onSubscribeMock(context, 'Yearly Premium'),
-              ),
-              const SizedBox(height: 24),
-              Center(
-                child: Text(
-                  'Restore Purchases  •  Terms of Service  •  Privacy Policy',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: isDark
-                            ? AppColors.textSecondaryDark.withValues(alpha: 0.6)
-                            : AppColors.textSecondaryLight.withValues(alpha: 0.6),
-                      ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _onSubscribeMock(BuildContext context, String planName) {
-    Navigator.of(context).pop(); // Dismiss bottom sheet
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          icon: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Color(0xFFE8F5E9),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.check_circle_outline_rounded,
-              color: Colors.green,
-              size: 48,
-            ),
-          ),
-          title: Text('Subscribed to $planName!'),
-          content: const Text(
-            'Thank you for upgrading! Subscriptions are simulated in this build, and full premium features have been unlocked.',
-          ),
-          actions: [
-            Center(
-              child: FilledButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  minimumSize: const Size(120, 48),
-                ),
-                child: const Text('Awesome'),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -948,7 +1131,7 @@ class _HomePremiumPromoCard extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () => _showSubscriptionPlans(context),
+                  onPressed: () => context.push('/premium'),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.premium,
                     foregroundColor: Colors.white,
@@ -967,127 +1150,6 @@ class _HomePremiumPromoCard extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PlanOptionCard extends StatelessWidget {
-  const _PlanOptionCard({
-    required this.title,
-    required this.price,
-    required this.period,
-    required this.description,
-    required this.isPopular,
-    required this.onTap,
-  });
-
-  final String title;
-  final String price;
-  final String period;
-  final String description;
-  final bool isPopular;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: isPopular
-                ? AppColors.premium
-                : (isDark ? AppColors.borderDark : AppColors.borderLight),
-            width: isPopular ? 2 : 1,
-          ),
-          boxShadow: isPopular
-              ? [
-                  BoxShadow(
-                    color: AppColors.premium.withValues(alpha: isDark ? 0.05 : 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                    if (isPopular) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.premium.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          'BEST VALUE',
-                          style: TextStyle(
-                            color: AppColors.premium,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                Row(
-                  textBaseline: TextBaseline.alphabetic,
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  children: [
-                    Text(
-                      price,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            color: isPopular ? AppColors.premium : null,
-                          ),
-                    ),
-                    Text(
-                      period,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondaryLight,
-                          ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              description,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                  ),
-            ),
-          ],
-        ),
       ),
     );
   }

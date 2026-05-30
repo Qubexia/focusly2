@@ -8,6 +8,8 @@ import { PaymentEventsRepository } from './payment-events.repository';
 import { StripeService } from './stripe.service';
 import { GoogleIapService } from './google-iap.service';
 import { AppleIapService } from './apple-iap.service';
+import { PaymobController } from './paymob.controller';
+import { PaymobService } from './paymob.service';
 import { SubscriptionController } from './subscription.controller';
 import { SubscriptionMaintenanceService } from './subscription-maintenance.service';
 import { SubscriptionsRepository } from './subscriptions.repository';
@@ -26,7 +28,7 @@ import { PaymentEvent, PaymentEventSchema } from './schemas/payment-event.schema
     CqrsModule,
     UsersModule,
   ],
-  controllers: [SubscriptionController],
+  controllers: [SubscriptionController, PaymobController],
   providers: [
     SubscriptionsService,
     SubscriptionsRepository,
@@ -34,6 +36,7 @@ import { PaymentEvent, PaymentEventSchema } from './schemas/payment-event.schema
     StripeService,
     GoogleIapService,
     AppleIapService,
+    PaymobService,
     SubscriptionMaintenanceService,
   ],
   exports: [SubscriptionsService, SubscriptionsRepository],

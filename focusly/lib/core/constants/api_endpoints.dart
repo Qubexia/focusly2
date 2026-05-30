@@ -108,4 +108,29 @@ class ApiEndpoints {
 
   // Streaks
   static const String streaksMe = '/v1/streaks/me';
+
+  // Notifications
+  static const String notifications = '/v1/notifications';
+  static const String notificationsReadAll = '/v1/notifications/read-all';
+  static const String notificationsPreferences = '/v1/notifications/preferences';
+  static String notificationById(String id) => '$notifications/$id';
+  static String notificationRead(String id) => '$notifications/$id/read';
+
+  // Subscription
+  static const String subscriptionMe = '/v1/subscription/me';
+  static const String subscriptionStripeCheckout = '/v1/subscription/stripe/checkout';
+  static const String subscriptionCancel = '/v1/subscription/cancel';
+  static const String subscriptionPaymobCheckout = '/v1/subscription/paymob/checkout';
+
+  // Uploads
+  static const String uploadsPresign = '/v1/uploads/presign';
+  static const String uploadsConfirm = '/v1/uploads/confirm';
+
+  // AI
+  static const String aiNotesJobs = '/v1/ai/notes/jobs';
+  static String aiNotesJobById(String id) => '$aiNotesJobs/$id';
+  static const String aiArtifacts = '/v1/ai/artifacts';
+
+  // Auth sessions
+  static String authSessionById(String id) => '$sessions/$id';
 }

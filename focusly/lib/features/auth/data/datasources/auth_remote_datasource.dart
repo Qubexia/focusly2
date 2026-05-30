@@ -84,6 +84,13 @@ class AuthRemoteDataSource {
     );
   }
 
+  Future<void> verifyEmail({required String token}) async {
+    await _dio.post(
+      ApiEndpoints.verifyEmail,
+      data: {'token': token},
+    );
+  }
+
   Future<void> logout() async {
     await _dio.post(ApiEndpoints.logout);
   }

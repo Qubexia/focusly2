@@ -6,9 +6,12 @@ import '../../../auth/presentation/bloc/auth_event_state.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../bloc/analytics_cubit.dart';
 import '../bloc/analytics_state.dart';
+import '../widgets/focus_heatmap.dart';
 import '../widgets/kpi_card.dart';
 import '../widgets/focus_trend_chart.dart';
+import '../widgets/performance_card.dart';
 import '../widgets/subject_distribution_chart.dart';
+import 'package:go_router/go_router.dart';
 
 class AnalyticsPage extends StatelessWidget {
   const AnalyticsPage({super.key});
@@ -31,9 +34,18 @@ class _AnalyticsView extends StatelessWidget {
     final isPremiumUser =
         authState is AuthAuthenticated && authState.user.isPremium;
 
-    return Scaffold(
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Statistics'),
+        bottom: const TabBar(
+          tabs: [
+            Tab(text: 'Overview'),
+            Tab(text: 'Heatmap'),
+            Tab(text: 'Performance'),
+          ],
+        ),
         actions: [
           IconButton(
             onPressed: () => context.read<AnalyticsCubit>().loadAnalytics(),
@@ -58,55 +70,84 @@ class _AnalyticsView extends StatelessWidget {
             return Center(child: Text(state.errorMessage!));
           }
 
-          return RefreshIndicator(
-            onRefresh: () => context.read<AnalyticsCubit>().loadAnalytics(),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
-              children: [
-                _DateRangeSelector(
-                  currentRange: state.dateRange,
-                  isPremiumUser: isPremiumUser,
-                ),
-                if (state.summary != null) ...[
-                  const SizedBox(height: 16),
-                  _InsightsTeaserCard(
-                    lockedRequest: isPremiumError,
-                    message: state.errorMessage,
-                  ),
-                ],
-                const SizedBox(height: 24),
-                Row(
+          return TabBarView(
+            children: [
+              RefreshIndicator(
+                onRefresh: () => context.read<AnalyticsCubit>().loadAnalytics(),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
                   children: [
-                    Expanded(
-                      child: KpiCard(
-                        title: 'Focus Time',
-                        value: '${state.summary?.totalFocusMinutes ?? 0}',
-                        unit: 'min',
-                        icon: Icons.timer_rounded,
-                        color: AppColors.primary,
-                      ),
+                    _DateRangeSelector(
+                      currentRange: state.dateRange,
+                      isPremiumUser: isPremiumUser,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: KpiCard(
-                        title: 'Sessions',
-                        value: '${state.summary?.totalSessions ?? 0}',
-                        unit: 'total',
-                        icon: Icons.bolt_rounded,
-                        color: AppColors.secondary,
+                    if (state.summary != null) ...[
+                      const SizedBox(height: 16),
+                      _InsightsTeaserCard(
+                        lockedRequest: isPremiumError,
+                        message: state.errorMessage,
                       ),
+                    ],
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: KpiCard(
+                            title: 'Focus Time',
+                            value: '${state.summary?.totalFocusMinutes ?? 0}',
+                            unit: 'min',
+                            icon: Icons.timer_rounded,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: KpiCard(
+                            title: 'Sessions',
+                            value: '${state.summary?.totalSessions ?? 0}',
+                            unit: 'total',
+                            icon: Icons.bolt_rounded,
+                            color: AppColors.secondary,
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 24),
+                    FocusTrendChart(dailyFocus: state.summary?.dailyFocus ?? []),
+                    const SizedBox(height: 24),
+                    SubjectDistributionChart(subjects: state.bySubject),
                   ],
                 ),
-                const SizedBox(height: 24),
-                FocusTrendChart(dailyFocus: state.summary?.dailyFocus ?? []),
-                const SizedBox(height: 24),
-                SubjectDistributionChart(subjects: state.bySubject),
-              ],
-            ),
+              ),
+              RefreshIndicator(
+                onRefresh: () => context.read<AnalyticsCubit>().loadAnalytics(),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+                  children: [
+                    if (state.heatmap != null)
+                      FocusHeatmap(heatmap: state.heatmap!)
+                    else
+                      const Center(child: Text('No heatmap data')),
+                  ],
+                ),
+              ),
+              RefreshIndicator(
+                onRefresh: () => context.read<AnalyticsCubit>().loadAnalytics(),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+                  children: [
+                    if (state.performance != null)
+                      PerformanceCard(performance: state.performance!)
+                    else
+                      const Center(child: Text('No performance data')),
+                  ],
+                ),
+              ),
+            ],
           );
         },
       ),
+    ),
     );
   }
 }
@@ -153,7 +194,10 @@ class _DateRangeSelector extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.of(sheetContext).pop(),
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+                    sheetContext.push('/premium');
+                  },
                   child: const Text('Upgrade to Premium'),
                 ),
               ),

@@ -14,14 +14,16 @@ import '../../../schedules/presentation/pages/schedules_page.dart';
 import '../../../streaks/presentation/cubit/streak_cubit.dart';
 
 class MainShell extends StatefulWidget {
-  const MainShell({super.key});
+  const MainShell({super.key, this.initialIndex = 0});
+
+  final int initialIndex;
 
   @override
   State<MainShell> createState() => _MainShellState();
 }
 
 class _MainShellState extends State<MainShell> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
   final Set<int> _loadedTabs = {0};
 
   final List<Widget Function()> _viewBuilders = [
@@ -31,6 +33,13 @@ class _MainShellState extends State<MainShell> {
     () => const AnalyticsPage(),
     () => const ProfilePage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex.clamp(0, 4);
+    _loadedTabs.add(_selectedIndex);
+  }
 
   void _onItemTapped(int index) {
     setState(() {

@@ -6,6 +6,7 @@ import mailerConfig from './env/mailer.config';
 import openaiConfig from './env/openai.config';
 import redisConfig from './env/redis.config';
 import s3Config from './env/s3.config';
+import paymobConfig from './env/paymob.config';
 import stripeConfig from './env/stripe.config';
 
 export const configLoaders = [
@@ -16,6 +17,7 @@ export const configLoaders = [
   fcmConfig,
   openaiConfig,
   stripeConfig,
+  paymobConfig,
   s3Config,
   mailerConfig,
 ];

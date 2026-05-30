@@ -39,4 +39,18 @@ class PomodoroRepository {
   Future<PomodoroTodayModel> getToday() {
     return _remoteDataSource.getToday();
   }
+
+  Future<List<PomodoroSessionModel>> getHistory({
+    required String from,
+    required String to,
+    int limit = 50,
+    String? cursor,
+  }) {
+    return _remoteDataSource.getHistory(
+      from: from,
+      to: to,
+      limit: limit,
+      cursor: cursor,
+    );
+  }
 }

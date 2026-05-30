@@ -18,7 +18,7 @@ class StreakCubit extends Cubit<StreakState> {
       emit(
         state.copyWith(
           isLoading: false,
-          current: streak.current,
+          streak: streak,
         ),
       );
     } on DioException catch (e) {

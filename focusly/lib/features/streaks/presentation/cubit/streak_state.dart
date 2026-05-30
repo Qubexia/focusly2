@@ -1,29 +1,33 @@
 import 'package:equatable/equatable.dart';
 
+import '../../data/models/streak_model.dart';
+
 class StreakState extends Equatable {
   const StreakState({
-    this.current = 0,
+    this.streak,
     this.isLoading = false,
     this.errorMessage,
   });
 
-  final int current;
+  final StreakModel? streak;
   final bool isLoading;
   final String? errorMessage;
 
+  int get current => streak?.current ?? 0;
+
   StreakState copyWith({
-    int? current,
+    StreakModel? streak,
     bool? isLoading,
     String? errorMessage,
     bool clearError = false,
   }) {
     return StreakState(
-      current: current ?? this.current,
+      streak: streak ?? this.streak,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 
   @override
-  List<Object?> get props => [current, isLoading, errorMessage];
+  List<Object?> get props => [streak, isLoading, errorMessage];
 }

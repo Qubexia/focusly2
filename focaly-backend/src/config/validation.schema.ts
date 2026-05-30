@@ -57,6 +57,18 @@ export const validationSchema = Joi.object({
   STRIPE_SECRET_KEY: Joi.string().allow('').optional(),
   STRIPE_WEBHOOK_SECRET: Joi.string().allow('').optional(),
 
+  PAYMOB_API_KEY: Joi.string().allow('').optional(),
+  PAYMOB_PUBLIC_KEY: Joi.string().allow('').optional(),
+  PAYMOB_SECRET_KEY: Joi.string().allow('').optional(),
+  PAYMOB_HMAC_SECRET: Joi.string().allow('').optional(),
+  PAYMOB_INTEGRATION_ID: Joi.number().integer().optional(),
+  PAYMOB_CURRENCY: Joi.string().default('EGP'),
+  PAYMOB_PREMIUM_MONTHLY_AMOUNT_CENTS: Joi.number().integer().min(100).default(9900),
+  PAYMOB_PREMIUM_YEARLY_AMOUNT_CENTS: Joi.number().integer().min(100).default(99900),
+  PUBLIC_API_BASE_URL: Joi.string().uri().allow('').optional(),
+  PAYMOB_APP_SUCCESS_URL: Joi.string().allow('').optional(),
+  PAYMOB_APP_FAILURE_URL: Joi.string().allow('').optional(),
+
   SENTRY_DSN: Joi.string().allow('').optional(),
   OTEL_EXPORTER_OTLP_ENDPOINT: Joi.string().allow('').optional(),
 

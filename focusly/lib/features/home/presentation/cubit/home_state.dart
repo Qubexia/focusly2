@@ -3,31 +3,50 @@ part of 'home_cubit.dart';
 class HomeState extends Equatable {
   const HomeState({
     this.subjects = const [],
-    this.streak = 0,
+    this.pomodoroToday,
+    this.todaySchedules = const [],
+    this.todayTasks = const [],
     this.isLoading = false,
     this.errorMessage,
   });
 
   final List<SubjectModel> subjects;
-  final int streak;
+  final PomodoroTodayModel? pomodoroToday;
+  final List<StudyScheduleModel> todaySchedules;
+  final List<PlannedItemModel> todayTasks;
   final bool isLoading;
   final String? errorMessage;
 
+  int get todayFocusMinutes => pomodoroToday?.totalFocusMinutes ?? 0;
+
+  int get todaySessionCount => pomodoroToday?.sessions.length ?? 0;
+
   HomeState copyWith({
     List<SubjectModel>? subjects,
-    int? streak,
+    PomodoroTodayModel? pomodoroToday,
+    List<StudyScheduleModel>? todaySchedules,
+    List<PlannedItemModel>? todayTasks,
     bool? isLoading,
     String? errorMessage,
     bool clearError = false,
   }) {
     return HomeState(
       subjects: subjects ?? this.subjects,
-      streak: streak ?? this.streak,
+      pomodoroToday: pomodoroToday ?? this.pomodoroToday,
+      todaySchedules: todaySchedules ?? this.todaySchedules,
+      todayTasks: todayTasks ?? this.todayTasks,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 
   @override
-  List<Object?> get props => [subjects, streak, isLoading, errorMessage];
+  List<Object?> get props => [
+        subjects,
+        pomodoroToday,
+        todaySchedules,
+        todayTasks,
+        isLoading,
+        errorMessage,
+      ];
 }

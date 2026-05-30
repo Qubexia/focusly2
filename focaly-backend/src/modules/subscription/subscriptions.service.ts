@@ -12,7 +12,7 @@ import { SubscriptionStatus } from './schemas/subscription.schema';
 import { SubscriptionsRepository } from './subscriptions.repository';
 
 export interface ApplyEventInput {
-  provider: 'stripe' | 'google_play' | 'app_store';
+  provider: 'stripe' | 'google_play' | 'app_store' | 'paymob';
   eventId: string;
   providerSubId: string;
   userId: string;

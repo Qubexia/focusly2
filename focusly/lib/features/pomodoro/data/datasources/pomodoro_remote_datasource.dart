@@ -49,4 +49,38 @@ class PomodoroRemoteDataSource {
     final response = await _dio.get(ApiEndpoints.pomodoroToday);
     return PomodoroTodayModel.fromJson(response.data as Map<String, dynamic>);
   }
+
+  Future<List<PomodoroSessionModel>> getHistory({
+    required String from,
+    required String to,
+    int limit = 50,
+    String? cursor,
+  }) async {
+    final response = await _dio.get(
+      ApiEndpoints.pomodoroHistory,
+      queryParameters: {
+        'from': from,
+        'to': to,
+        'limit': limit,
+        if (cursor != null) 'cursor': cursor,
+      },
+    );
+
+    final data = response.data;
+    final List<dynamic> items;
+    if (data is Map<String, dynamic>) {
+      items = (data['data'] ?? const []) as List<dynamic>;
+    } else if (data is List<dynamic>) {
+      items = data;
+    } else {
+      items = const [];
+    }
+
+    return items
+        .map(
+          (item) =>
+              PomodoroSessionModel.fromJson(item as Map<String, dynamic>),
+        )
+        .toList();
+  }
 }

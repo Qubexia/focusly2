@@ -121,6 +121,24 @@ class ProfilePage extends StatelessWidget {
                         value: _planLabel(user),
                       ),
                       _InfoActionTile(
+                        icon: Icons.checklist_rounded,
+                        title: 'Daily Planner',
+                        subtitle: 'Tasks, revisions, lectures, and exams.',
+                        onTap: () => context.push('/planner'),
+                      ),
+                      _InfoActionTile(
+                        icon: Icons.auto_awesome_rounded,
+                        title: 'AI Notes',
+                        subtitle: 'Generate summaries and flashcards.',
+                        onTap: () => context.push('/ai-notes'),
+                      ),
+                      _InfoActionTile(
+                        icon: Icons.workspace_premium_rounded,
+                        title: 'Premium',
+                        subtitle: _planLabel(user),
+                        onTap: () => context.push('/premium'),
+                      ),
+                      _InfoActionTile(
                         icon: Icons.settings_outlined,
                         title: 'Settings',
                         subtitle: 'Manage account actions and preferences.',
