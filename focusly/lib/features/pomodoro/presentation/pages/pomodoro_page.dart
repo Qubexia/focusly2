@@ -530,7 +530,7 @@ class _TodaySummaryCard extends StatelessWidget {
               Expanded(
                 child: _TodayStat(
                   label: 'Current Subject',
-                  value: activeSubject?.name?.trim().isNotEmpty == true
+                  value: (activeSubject?.name ?? '').trim().isNotEmpty
                       ? activeSubject!.name
                       : 'General',
                 ),

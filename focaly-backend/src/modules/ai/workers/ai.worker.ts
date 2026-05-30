@@ -40,8 +40,6 @@ export class AiWorker extends WorkerHost {
       if (!subjectId) {
         await this.aiJobsRepo.updateStatus(jobId, 'completed', {
           completedAt: new Date(),
-          tokensIn: null,
-          tokensOut: null,
         });
         this.eventBus.publish(new AiJobCompletedEvent(userId, jobId, '', []));
         return;
@@ -118,8 +116,8 @@ export class AiWorker extends WorkerHost {
 
       await this.aiJobsRepo.updateStatus(jobId, 'completed', {
         completedAt: new Date(),
-        tokensIn: pack.tokensIn ?? null,
-        tokensOut: pack.tokensOut ?? null,
+        tokensIn: pack.tokensIn,
+        tokensOut: pack.tokensOut,
       });
 
       this.eventBus.publish(new AiJobCompletedEvent(userId, jobId, subjectId ?? '', []));
