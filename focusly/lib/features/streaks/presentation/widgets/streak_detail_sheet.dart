@@ -25,12 +25,12 @@ Future<void> showStreakDetailSheet(
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.14),
+                    color: AppColors.primary.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Icon(
                     Icons.local_fire_department_rounded,
-                    color: Colors.orange,
+                    color: AppColors.primary,
                     size: 28,
                   ),
                 ),
