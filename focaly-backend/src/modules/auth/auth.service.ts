@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 
 import {
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -114,6 +115,10 @@ export class AuthService {
       throw this.unauthorized('Email or password is invalid.');
     }
 
+    if (user.isBanned) {
+      throw this.suspended();
+    }
+
     const userId = getDocumentId(user);
     const tokens = await this.issueSessionTokens(
       {
@@ -164,6 +169,10 @@ export class AuthService {
         avatarUrl: profile.picture ?? null,
         emailVerified: profile.emailVerified,
       });
+    }
+
+    if (user.isBanned) {
+      throw this.suspended();
     }
 
     const userId = getDocumentId(user);
@@ -447,6 +456,13 @@ export class AuthService {
     return new UnauthorizedException({
       code: ERROR_CODES.UNAUTHORIZED,
       message,
+    });
+  }
+
+  private suspended(): ForbiddenException {
+    return new ForbiddenException({
+      code: ERROR_CODES.ACCOUNT_SUSPENDED,
+      message: 'This account has been suspended. Please contact support.',
     });
   }
 

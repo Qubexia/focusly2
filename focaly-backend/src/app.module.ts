@@ -18,6 +18,7 @@ import { QueueModule } from './infrastructure/queue/queue.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { StorageModule } from './infrastructure/storage/s3.module';
 import { TracingModule } from './infrastructure/tracing/tracing.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -26,10 +27,10 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { PlannedItemsModule } from './modules/planned-items/planned-items.module';
 import { PomodoroModule } from './modules/pomodoro/pomodoro.module';
 import { StreaksModule } from './modules/streaks/streaks.module';
-import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { StudySchedulesModule } from './modules/study-schedules/study-schedules.module';
-import { UploadsModule } from './modules/uploads/uploads.module';
 import { SubjectsModule } from './modules/subjects/subjects.module';
+import { SubscriptionModule } from './modules/subscription/subscription.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 import { UsersModule } from './modules/users/users.module';
 import { EventBusModule } from './shared/events/event-bus.module';
 
@@ -66,6 +67,7 @@ import { EventBusModule } from './shared/events/event-bus.module';
     NotificationsModule,
     PomodoroModule,
     StreaksModule,
+    AdminModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerBehindProxyGuard },

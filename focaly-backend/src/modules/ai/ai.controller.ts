@@ -18,8 +18,9 @@ import { PremiumGuard } from '../../common/guards/premium.guard';
 import { AiArtifactsRepository } from './ai-artifacts.repository';
 import { AiJobsRepository } from './ai-jobs.repository';
 import { AiRateLimiterService } from './ai-rate-limiter.service';
-import { SubmitAiNotesJobDto } from './dto';
+import { AiSettingsService } from './ai-settings.service';
 import { AiWorkerService } from './ai-worker.service';
+import { SubmitAiNotesJobDto } from './dto';
 
 @UseGuards(PremiumGuard)
 @ApiTags('AI')
@@ -30,14 +31,23 @@ export class AiController {
     private readonly aiArtifactsRepo: AiArtifactsRepository,
     private readonly rateLimiter: AiRateLimiterService,
     private readonly aiWorkerService: AiWorkerService,
+    private readonly aiSettings: AiSettingsService,
   ) {}
 
   @Post('notes/jobs')
   @HttpCode(HttpStatus.ACCEPTED)
-  async submitJob(
-    @CurrentUser() user: CurrentUserPayload,
-    @Body() dto: SubmitAiNotesJobDto,
-  ) {
+  async submitJob(@CurrentUser() user: CurrentUserPayload, @Body() dto: SubmitAiNotesJobDto) {
+    const settings = await this.aiSettings.resolve();
+    if (!settings.enabled || !settings.apiKey) {
+      throw new HttpException(
+        {
+          error: 'AI_UNAVAILABLE',
+          message: 'AI features are currently unavailable. Please try again later.',
+        },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+
     const rateCheck = await this.rateLimiter.check(user.id);
     if (!rateCheck.allowed) {
       throw new HttpException(
@@ -57,9 +67,10 @@ export class AiController {
     });
 
     await this.rateLimiter.increment(user.id);
-    await this.aiWorkerService.enqueueJob(job.id, user.id, dto.subjectId ?? null);
+    const jobId = String(job._id);
+    await this.aiWorkerService.enqueueJob(jobId, user.id, dto.subjectId ?? null);
 
-    return { jobId: job.id, status: 'queued' };
+    return { jobId, status: 'queued' };
   }
 
   @Get('notes/jobs/:id')

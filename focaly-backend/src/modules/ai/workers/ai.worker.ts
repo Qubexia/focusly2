@@ -12,6 +12,7 @@ import { QUEUE_AI } from '../../../infrastructure/queue/queue.constants';
 import { AiJobCompletedEvent } from '../../../shared/events/ai-job-completed.event';
 import { AiArtifactsRepository } from '../ai-artifacts.repository';
 import { AiJobsRepository } from '../ai-jobs.repository';
+import { AiSettingsService } from '../ai-settings.service';
 
 interface AiJobData {
   jobId: string;
@@ -36,6 +37,7 @@ export class AiWorker extends WorkerHost {
     private readonly aiArtifactsRepo: AiArtifactsRepository,
     private readonly eventBus: EventBus,
     private readonly config: ConfigService,
+    private readonly aiSettings: AiSettingsService,
   ) {
     super();
   }
@@ -66,15 +68,18 @@ export class AiWorker extends WorkerHost {
         throw new Error('No image keys found for this job');
       }
 
-      const openaiApiKey = this.config.get<string>('openai.apiKey') ?? '';
+      const aiSettings = await this.aiSettings.resolve();
       const textractRegion =
         this.config.get<string>('openai.textractRegion') ??
         this.config.get<string>('s3.region') ??
         'us-east-1';
       const s3Bucket = this.config.get<string>('s3.bucket') ?? '';
 
-      if (!openaiApiKey) {
-        throw new Error('OpenAI is not configured (OPENAI_API_KEY missing).');
+      if (!aiSettings.enabled) {
+        throw new Error('AI features are currently disabled by the administrator.');
+      }
+      if (!aiSettings.apiKey) {
+        throw new Error('OpenAI is not configured (set an API key in the admin dashboard).');
       }
       if (!s3Bucket) {
         throw new Error('S3 bucket is not configured (S3_BUCKET missing).');
@@ -89,12 +94,13 @@ export class AiWorker extends WorkerHost {
         region: textractRegion,
       });
 
-      const model = process.env.OPENAI_MODEL ?? 'gpt-4o-mini';
-      const openai = new OpenAI({ apiKey: openaiApiKey });
+      const openai = new OpenAI({ apiKey: aiSettings.apiKey });
 
       const pack = await this.generateStudyPack({
         openai,
-        model,
+        model: aiSettings.model,
+        temperature: aiSettings.temperature,
+        systemPrompt: aiSettings.systemPrompt,
         ocrText,
       });
 
@@ -191,6 +197,8 @@ export class AiWorker extends WorkerHost {
   private async generateStudyPack(args: {
     openai: OpenAI;
     model: string;
+    temperature: number;
+    systemPrompt: string | null;
     ocrText: string;
   }): Promise<{
     summary: string;
@@ -201,13 +209,15 @@ export class AiWorker extends WorkerHost {
   }> {
     const completion = await args.openai.chat.completions.create({
       model: args.model,
-      temperature: 0.2,
+      temperature: args.temperature,
       response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
           content:
-            'You are a study assistant. You must output valid JSON that matches the requested schema only.',
+            args.systemPrompt && args.systemPrompt.trim().length > 0
+              ? args.systemPrompt
+              : 'You are a study assistant. You must output valid JSON that matches the requested schema only.',
         },
         {
           role: 'user',

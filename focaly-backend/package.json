@@ -22,6 +22,7 @@
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "swagger:export": "node -r ./scripts/dev-runtime-flags.cjs ./node_modules/ts-node/dist/bin.js scripts/export-openapi.ts",
+    "promote-admin": "node -r ./scripts/dev-runtime-flags.cjs ./node_modules/ts-node/dist/bin.js scripts/promote-admin.ts",
     "prepare": "cd .. && husky focaly-backend/.husky || true"
   },
   "dependencies": {

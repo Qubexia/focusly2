@@ -41,8 +41,15 @@ class ApiClient {
         return handler.next(response);
       },
       onError: (err, handler) {
-        debugPrint('❌ DIO [${err.requestOptions.method}] ERROR: ${err.message}');
+        final status = err.response?.statusCode;
+        debugPrint('❌ DIO [${err.requestOptions.method}] ERROR ${status ?? ''}: ${err.message}');
         debugPrint('🔗 URL: ${err.requestOptions.uri}');
+        if (err.requestOptions.data != null) {
+          debugPrint('📤 REQUEST BODY: ${err.requestOptions.data}');
+        }
+        if (err.response?.data != null) {
+          debugPrint('📥 RESPONSE BODY: ${err.response?.data}');
+        }
         return handler.next(err);
       },
     ));

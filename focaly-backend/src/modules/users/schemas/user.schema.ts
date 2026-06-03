@@ -87,6 +87,12 @@ export class User {
   @Prop({ type: Date, default: null })
   deletedAt!: Date | null;
 
+  @Prop({ type: Boolean, default: false, index: true })
+  isBanned!: boolean;
+
+  @Prop({ type: Date, default: null })
+  bannedAt!: Date | null;
+
   createdAt!: Date;
   updatedAt!: Date;
 }
