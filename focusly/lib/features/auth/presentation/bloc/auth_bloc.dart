@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../../core/constants/api_endpoints.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import 'auth_event_state.dart';
 
@@ -153,12 +154,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     if (data is Map<String, dynamic>) {
       return (data['message'] as String?) ?? 'Something went wrong';
     }
-    if (e.type == DioExceptionType.connectionError) {
-      return 'Unable to reach the server. If you are using Flutter Web, check API_BASE_URL and backend CORS settings.';
-    }
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
-      return 'Connection timed out. Please check your internet.';
+    if (e.type == DioExceptionType.connectionError ||
+        e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout) {
+      return 'Cannot reach the server at ${ApiEndpoints.baseUrl}. '
+          'Ensure the backend is running, phone and PC share the same Wi‑Fi, '
+          'and update lib/core/config/dev_api_config.dart with your PC IP.';
     }
     return 'Something went wrong. Please try again.';
   }

@@ -1,42 +1,64 @@
 import 'package:flutter/foundation.dart';
 
+import '../config/dev_api_config.dart';
+
 /// All backend API endpoint paths (v1).
 class ApiEndpoints {
   ApiEndpoints._();
+
+  static const int defaultPort = 5000;
 
   static const String _configuredBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: '',
   );
+  static const bool _useAndroidEmulatorHost = bool.fromEnvironment(
+    'API_USE_ANDROID_EMULATOR_HOST',
+    defaultValue: false,
+  );
 
-  // Base
   static String get baseUrl {
     if (_configuredBaseUrl.isNotEmpty) {
-      return _configuredBaseUrl;
+      return _normalizeBaseUrl(_configuredBaseUrl);
+    }
+
+    if (kDebugMode &&
+        DevApiConfig.useOnMobileInDebug &&
+        DevApiConfig.physicalDeviceBaseUrl.isNotEmpty &&
+        !kIsWeb) {
+      switch (defaultTargetPlatform) {
+        case TargetPlatform.android:
+        case TargetPlatform.iOS:
+          return _normalizeBaseUrl(DevApiConfig.physicalDeviceBaseUrl);
+        default:
+          break;
+      }
     }
 
     if (kIsWeb) {
       final host = Uri.base.host.isEmpty ? 'localhost' : Uri.base.host;
       final scheme = Uri.base.scheme.isEmpty ? 'http' : Uri.base.scheme;
-      return '$scheme://$host:5000';
+      return '$scheme://$host:$defaultPort';
     }
-
-    // IMPORTANT: If testing on a physical Android device, use your PC's local IP (e.g., 192.168.1.3)
-    // 10.0.2.2 is only for the standard Android Emulator.
-    const String localIp = '192.168.1.5';
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        // Try local IP first, then fallback to emulator loopback
-        return 'http://$localIp:5000';
+        if (_useAndroidEmulatorHost) {
+          return 'http://10.0.2.2:$defaultPort';
+        }
+        return 'http://127.0.0.1:$defaultPort';
       case TargetPlatform.iOS:
+        return 'http://127.0.0.1:$defaultPort';
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
       case TargetPlatform.linux:
       default:
-        return 'http://localhost:5000';
+        return 'http://localhost:$defaultPort';
     }
   }
+
+  static String _normalizeBaseUrl(String url) =>
+      url.trim().replaceAll(RegExp(r'/+$'), '');
 
   // Auth
   static const String register = '/v1/auth/register';

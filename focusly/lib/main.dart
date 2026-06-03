@@ -3,12 +3,17 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'app/app.dart';
+import 'core/constants/api_endpoints.dart';
+import 'core/network/api_connectivity.dart';
 import 'core/services/notification_service.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  debugPrint('API_BASE_URL resolved to: ${ApiEndpoints.baseUrl}');
+  await ApiConnectivity.pingBackend();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
