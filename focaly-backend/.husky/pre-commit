@@ -1,1 +1,1 @@
-npx --no -- lint-staged
+cd focaly-backend && npx --no -- lint-staged

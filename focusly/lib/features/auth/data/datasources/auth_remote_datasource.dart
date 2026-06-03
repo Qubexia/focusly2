@@ -91,6 +91,11 @@ class AuthRemoteDataSource {
     );
   }
 
+  /// Re-sends the verification email to the authenticated user.
+  Future<void> resendVerificationEmail() async {
+    await _dio.post(ApiEndpoints.resendVerification);
+  }
+
   Future<void> logout() async {
     await _dio.post(ApiEndpoints.logout);
   }

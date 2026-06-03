@@ -1,5 +1,13 @@
 import { createHmac } from 'crypto';
 
+function hmacPart(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return '';
+}
+
 /** Paymob "Transaction Processed" callback HMAC (Accept API). */
 export function computeTransactionProcessedHmac(
   transaction: Record<string, unknown>,
@@ -31,7 +39,7 @@ export function computeTransactionProcessedHmac(
     transaction.success,
   ];
 
-  const concatenated = parts.map((v) => String(v ?? '')).join('');
+  const concatenated = parts.map((v) => hmacPart(v)).join('');
   return createHmac('sha512', hmacSecret).update(concatenated).digest('hex');
 }
 
@@ -42,6 +50,53 @@ export function verifyTransactionProcessedHmac(
 ): boolean {
   if (!receivedHmac || !hmacSecret) return false;
   const expected = computeTransactionProcessedHmac(transaction, hmacSecret);
+  return expected.toLowerCase() === receivedHmac.toLowerCase();
+}
+
+/**
+ * Paymob "Transaction Response" (redirect) HMAC. It uses the SAME ordered
+ * fields as the processed callback, but the redirect delivers them as FLAT
+ * query params: `order` is the order id (not a nested object) and source_data
+ * arrives under dotted keys (`source_data.pan`, etc.).
+ */
+export function computeResponseCallbackHmac(
+  query: Record<string, unknown>,
+  hmacSecret: string,
+): string {
+  const parts = [
+    query.amount_cents,
+    query.created_at,
+    query.currency,
+    query.error_occured,
+    query.has_parent_transaction,
+    query.id,
+    query.integration_id,
+    query.is_3d_secure,
+    query.is_auth,
+    query.is_capture,
+    query.is_refunded,
+    query.is_standalone_payment,
+    query.is_voided,
+    query.order,
+    query.owner,
+    query.pending,
+    query['source_data.pan'],
+    query['source_data.sub_type'],
+    query['source_data.type'],
+    query.success,
+  ];
+
+  const concatenated = parts.map((v) => hmacPart(v)).join('');
+  return createHmac('sha512', hmacSecret).update(concatenated).digest('hex');
+}
+
+export function verifyResponseCallbackHmac(
+  query: Record<string, unknown>,
+  receivedHmac: string,
+  hmacSecret: string,
+): boolean {
+  if (!receivedHmac || !hmacSecret) return false;
+  const expected = computeResponseCallbackHmac(query, hmacSecret);
   return expected.toLowerCase() === receivedHmac.toLowerCase();
 }
 

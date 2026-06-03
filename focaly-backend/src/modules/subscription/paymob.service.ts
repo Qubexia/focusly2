@@ -56,6 +56,7 @@ export class PaymobService {
 
   async createPremiumCheckout(userId: string, plan: PaymobPlan): Promise<PaymobCheckoutResult> {
     this.assertConfigured();
+    this.warnIfCallbacksUnreachable();
 
     const user = await this.usersRepo.findActiveById(userId);
     if (!user) {
@@ -121,7 +122,9 @@ export class PaymobService {
       });
     }
 
-    const clientSecret = String(data.client_secret ?? '');
+    const rawSecret = data.client_secret;
+    const clientSecret =
+      typeof rawSecret === 'string' || typeof rawSecret === 'number' ? String(rawSecret) : '';
     if (!clientSecret) {
       throw new ServiceUnavailableException({
         message: 'Paymob did not return a client secret.',
@@ -151,6 +154,28 @@ export class PaymobService {
         message:
           'Paymob is not configured. Set PAYMOB_SECRET_KEY, PAYMOB_PUBLIC_KEY, PAYMOB_INTEGRATION_ID, and PAYMOB_HMAC_SECRET.',
       });
+    }
+  }
+
+  /**
+   * Paymob calls the webhook/redirect at PUBLIC_API_BASE_URL. If that isn't a
+   * publicly reachable host, payment may complete but premium is never granted
+   * (the webhook can't reach us). Warn loudly instead of failing silently.
+   */
+  private warnIfCallbacksUnreachable(): void {
+    const base = this.config.get<string>('paymob.publicApiBaseUrl') ?? '';
+    const unreachable =
+      !base ||
+      base.includes('YOUR_PUBLIC_HOST') ||
+      base.includes('localhost') ||
+      base.includes('127.0.0.1');
+    if (unreachable) {
+      this.logger.warn(
+        `PUBLIC_API_BASE_URL is "${base || '(empty)'}" — Paymob cannot reach the ` +
+          'webhook/redirect callbacks, so premium will NOT be granted after payment. ' +
+          'Run scripts/paymob-tunnel.ps1 (dev) or set a public HTTPS host, then ' +
+          'paste the callback URLs into the Paymob dashboard.',
+      );
     }
   }
 }

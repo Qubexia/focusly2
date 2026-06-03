@@ -1,11 +1,12 @@
+import { createHash } from 'crypto';
+
+import { DetectDocumentTextCommand, TextractClient } from '@aws-sdk/client-textract';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventBus } from '@nestjs/cqrs';
 import { Job } from 'bullmq';
-import { createHash } from 'crypto';
 import OpenAI from 'openai';
-import { DetectDocumentTextCommand, TextractClient } from '@aws-sdk/client-textract';
 
 import { QUEUE_AI } from '../../../infrastructure/queue/queue.constants';
 import { AiJobCompletedEvent } from '../../../shared/events/ai-job-completed.event';
@@ -16,6 +17,14 @@ interface AiJobData {
   jobId: string;
   userId: string;
   subjectId: string | null;
+}
+
+function asText(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return '';
 }
 
 @Processor(QUEUE_AI)
@@ -40,6 +49,8 @@ export class AiWorker extends WorkerHost {
       if (!subjectId) {
         await this.aiJobsRepo.updateStatus(jobId, 'completed', {
           completedAt: new Date(),
+          tokensIn: undefined,
+          tokensOut: undefined,
         });
         this.eventBus.publish(new AiJobCompletedEvent(userId, jobId, '', []));
         return;
@@ -116,8 +127,8 @@ export class AiWorker extends WorkerHost {
 
       await this.aiJobsRepo.updateStatus(jobId, 'completed', {
         completedAt: new Date(),
-        tokensIn: pack.tokensIn,
-        tokensOut: pack.tokensOut,
+        tokensIn: pack.tokensIn ?? undefined,
+        tokensOut: pack.tokensOut ?? undefined,
       });
 
       this.eventBus.publish(new AiJobCompletedEvent(userId, jobId, subjectId ?? '', []));
@@ -159,7 +170,10 @@ export class AiWorker extends WorkerHost {
 
       const lines =
         res.Blocks?.filter((b) => b.BlockType === 'LINE' && (b.Text?.trim() ?? '') !== '') ?? [];
-      const text = lines.map((l) => l.Text).filter(Boolean).join('\n');
+      const text = lines
+        .map((l) => l.Text)
+        .filter(Boolean)
+        .join('\n');
       if (text.trim().length > 0) {
         parts.push(text);
       }
@@ -219,37 +233,43 @@ Rules:
     });
 
     const raw = completion.choices?.[0]?.message?.content ?? '{}';
-    let parsed: any;
+    let parsed: Record<string, unknown>;
     try {
-      parsed = JSON.parse(raw);
+      parsed = JSON.parse(raw) as Record<string, unknown>;
     } catch {
       // Defensive fallback: try to extract the first JSON object.
       const match = raw.match(/\{[\s\S]*\}/);
-      parsed = match ? JSON.parse(match[0]) : {};
+      parsed = match ? (JSON.parse(match[0]) as Record<string, unknown>) : {};
     }
 
-    const summary = String(parsed.summary ?? '').slice(0, 800);
+    const summary = asText(parsed.summary).slice(0, 800);
 
     const flashcardsRaw = parsed.flashcards;
     const flashcards = Array.isArray(flashcardsRaw)
       ? flashcardsRaw
           .slice(0, 6)
-          .map((c: any) => ({
-            front: String(c.front ?? '').trim(),
-            back: String(c.back ?? '').trim(),
-          }))
-          .filter((c: any) => c.front.length > 0 && c.back.length > 0)
+          .map((item) => {
+            const card = item as Record<string, unknown>;
+            return {
+              front: asText(card.front).trim(),
+              back: asText(card.back).trim(),
+            };
+          })
+          .filter((card) => card.front.length > 0 && card.back.length > 0)
       : [];
 
     const questionsRaw = parsed.questions;
     const questions = Array.isArray(questionsRaw)
       ? questionsRaw
           .slice(0, 5)
-          .map((q: any) => ({
-            question: String(q.question ?? '').trim(),
-            answer: String(q.answer ?? '').trim(),
-          }))
-          .filter((q: any) => q.question.length > 0 && q.answer.length > 0)
+          .map((item) => {
+            const question = item as Record<string, unknown>;
+            return {
+              question: asText(question.question).trim(),
+              answer: asText(question.answer).trim(),
+            };
+          })
+          .filter((item) => item.question.length > 0 && item.answer.length > 0)
       : [];
 
     const usage = completion.usage;

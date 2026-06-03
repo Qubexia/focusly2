@@ -32,9 +32,17 @@ class DeepLinkService {
     switch (uri.host) {
       case 'payment':
         _handlePaymentReturn(router, uri);
+      case 'verify-email':
+        _handleVerifyEmail(router, uri);
       default:
         break;
     }
+  }
+
+  void _handleVerifyEmail(GoRouter router, Uri uri) {
+    final token = uri.queryParameters['token'] ?? '';
+    if (token.isEmpty) return;
+    router.go('/verify-email?token=${Uri.encodeQueryComponent(token)}');
   }
 
   void _handlePaymentReturn(GoRouter router, Uri uri) {

@@ -1,7 +1,8 @@
+import { readFileSync } from 'node:fs';
+
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
-import { readFileSync } from 'node:fs';
 
 import { FcmClient, FcmMessage, FcmSendResult } from './fcm.tokens';
 
@@ -23,8 +24,18 @@ export class FcmRealClient implements FcmClient, OnModuleInit {
       return;
     }
 
-    const json = inlineJson || readFileSync(jsonPath!, 'utf8');
-    const credentials = JSON.parse(json) as admin.ServiceAccount;
+    let credentials: admin.ServiceAccount;
+    try {
+      const json = inlineJson || readFileSync(jsonPath!, 'utf8');
+      credentials = JSON.parse(json) as admin.ServiceAccount;
+    } catch (err: unknown) {
+      const reason = err instanceof Error ? err.message : String(err);
+      this.logger.warn(
+        `FCM credentials could not be loaded; push notifications are disabled. ${reason}`,
+      );
+      return;
+    }
+
     const existingApp = admin.apps.find(
       (app): app is admin.app.App => app != null && app.name === 'focaly',
     );
@@ -33,10 +44,7 @@ export class FcmRealClient implements FcmClient, OnModuleInit {
       return;
     }
 
-    this.app = admin.initializeApp(
-      { credential: admin.credential.cert(credentials) },
-      'focaly',
-    );
+    this.app = admin.initializeApp({ credential: admin.credential.cert(credentials) }, 'focaly');
   }
 
   async send(messages: FcmMessage[]): Promise<FcmSendResult> {

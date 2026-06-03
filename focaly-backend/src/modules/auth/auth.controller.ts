@@ -7,11 +7,13 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 
 import { CurrentUser, CurrentUserPayload } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -95,6 +97,23 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async verifyEmail(@Body() dto: VerifyEmailDto): Promise<void> {
     await this.authService.verifyEmail(dto);
+  }
+
+  /**
+   * Web verification page opened from the email link. Verifies server-side and
+   * returns an HTML page so it works in any browser without the app installed.
+   */
+  @Get('verify-email')
+  @Public()
+  async verifyEmailWeb(@Query('token') token: string, @Res() res: Response): Promise<void> {
+    const { status, html } = await this.authService.verifyEmailFromLink(token ?? '');
+    res.status(status).type('html').send(html);
+  }
+
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async resendVerification(@CurrentUser() user: CurrentUserPayload): Promise<void> {
+    await this.authService.resendVerificationEmail(user);
   }
 
   @Get('sessions')

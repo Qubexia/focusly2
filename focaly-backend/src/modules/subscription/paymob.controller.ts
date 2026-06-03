@@ -20,6 +20,7 @@ import { EmailVerifiedGuard } from '../../common/guards/email-verified.guard';
 import { PaymobCheckoutDto } from './dto/paymob-checkout.dto';
 import {
   parseUserIdFromSpecialReference,
+  verifyResponseCallbackHmac,
   verifyTransactionProcessedHmac,
 } from './paymob-hmac.util';
 import { PaymobService } from './paymob.service';
@@ -48,10 +49,7 @@ export class PaymobController {
 
   @UseGuards(EmailVerifiedGuard)
   @Post('checkout')
-  async createCheckout(
-    @CurrentUser() user: CurrentUserPayload,
-    @Body() dto: PaymobCheckoutDto,
-  ) {
+  async createCheckout(@CurrentUser() user: CurrentUserPayload, @Body() dto: PaymobCheckoutDto) {
     return this.paymobService.createPremiumCheckout(user.id, dto.plan);
   }
 
@@ -65,9 +63,7 @@ export class PaymobController {
     const body = (req.body ?? {}) as Record<string, unknown>;
     const transaction = (body.obj ?? body) as Record<string, unknown>;
     const receivedHmac =
-      queryHmac ??
-      (body.hmac as string | undefined) ??
-      (req.headers['hmac'] as string | undefined);
+      queryHmac ?? (body.hmac as string | undefined) ?? (req.headers['hmac'] as string | undefined);
 
     const hmacSecret = process.env.PAYMOB_HMAC_SECRET ?? '';
     if (hmacSecret && receivedHmac) {
@@ -93,7 +89,11 @@ export class PaymobController {
       return { received: true, outcome: 'ignored', reason: 'unknown_user_reference' };
     }
 
-    const transactionId = String(transaction.id ?? `paymob-${Date.now()}`);
+    const rawId = transaction.id;
+    const transactionId =
+      typeof rawId === 'string' || typeof rawId === 'number'
+        ? String(rawId)
+        : `paymob-${Date.now()}`;
     const extras =
       (transaction.extras as Record<string, unknown> | undefined) ??
       (body.extras as Record<string, unknown> | undefined);
@@ -114,7 +114,7 @@ export class PaymobController {
       currentPeriodEnd: periodEnd,
       priceId: specialReference,
       eventTimestamp: new Date(),
-      rawPayload: body as Record<string, unknown>,
+      rawPayload: body,
     });
 
     return { received: true, outcome: result.outcome };
@@ -125,11 +125,11 @@ export class PaymobController {
    */
   @Public()
   @Get('redirect')
-  async handleRedirect(@Query() query: Record<string, string>, @Res() res: Response) {
+  handleRedirect(@Query() query: Record<string, string>, @Res() res: Response) {
     const hmacSecret = process.env.PAYMOB_HMAC_SECRET ?? '';
     const receivedHmac = query.hmac;
     if (hmacSecret && receivedHmac) {
-      const valid = verifyTransactionProcessedHmac(query, receivedHmac, hmacSecret);
+      const valid = verifyResponseCallbackHmac(query, receivedHmac, hmacSecret);
       if (!valid) {
         return res.status(400).send(this.renderHtml(false, 'Payment verification failed.'));
       }
@@ -137,10 +137,12 @@ export class PaymobController {
 
     const success = query.success === 'true';
     const appUrl = success
-      ? process.env.PAYMOB_APP_SUCCESS_URL ?? 'focusly://payment/success'
-      : process.env.PAYMOB_APP_FAILURE_URL ?? 'focusly://payment/failure';
+      ? (process.env.PAYMOB_APP_SUCCESS_URL ?? 'focusly://payment/success')
+      : (process.env.PAYMOB_APP_FAILURE_URL ?? 'focusly://payment/failure');
 
-    return res.send(this.renderHtml(success, success ? 'Payment successful' : 'Payment failed', appUrl));
+    return res.send(
+      this.renderHtml(success, success ? 'Payment successful' : 'Payment failed', appUrl),
+    );
   }
 
   private renderHtml(success: boolean, message: string, deepLink?: string): string {
