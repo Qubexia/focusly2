@@ -277,7 +277,7 @@ class _NotificationTile extends StatelessWidget {
       color = AppColors.secondary;
     } else {
       icon = Icons.notifications_rounded;
-      color = Colors.blueAccent;
+      color = AppColors.primary;
     }
 
     return Container(

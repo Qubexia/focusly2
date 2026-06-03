@@ -78,7 +78,7 @@ class ProfilePage extends StatelessWidget {
                             title: 'Current Streak',
                             value:
                                 '$streakDays day${streakDays == 1 ? '' : 's'}',
-                            color: Colors.orange,
+                            color: AppColors.primary,
                           );
                         },
                       ),

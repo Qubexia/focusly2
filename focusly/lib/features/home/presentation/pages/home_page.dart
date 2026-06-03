@@ -126,14 +126,14 @@ class _HomeContent extends StatelessWidget {
                         label: 'Daily Target',
                         value: '${totalDailyTarget}m',
                         icon: Icons.timer_rounded,
-                        color: Colors.blue.shade400,
+                        color: AppColors.primary,
                       ),
                       const SizedBox(width: 16),
                       _StatItem(
                         label: 'Subjects',
                         value: '${subjects.length}',
                         icon: Icons.menu_book_rounded,
-                        color: Colors.green.shade400,
+                        color: AppColors.primaryLight,
                       ),
                     ],
                   ).animate().fadeIn(delay: 350.ms, duration: 600.ms),
@@ -339,9 +339,9 @@ class _SubjectsBadge extends StatelessWidget {
         vertical: compact ? 8 : 10,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F8F2),
+        color: AppColors.secondaryLight,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFCEE5D3)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -490,12 +490,12 @@ class _StreaksWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.12),
+                  color: AppColors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
                   Icons.local_fire_department_rounded,
-                  color: Colors.orange,
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(width: 14),
@@ -1044,21 +1044,15 @@ class _HomePremiumPromoCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF2E2413), const Color(0xFF1E170B)]
-              : [const Color(0xFFFFF7E6), const Color(0xFFFFF0D0)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppColors.premiumGradient,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark ? const Color(0xFF4A3B1F) : const Color(0xFFFFE0A3),
+          color: AppColors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withValues(alpha: isDark ? 0.05 : 0.08),
+            color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.18),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -1072,12 +1066,12 @@ class _HomePremiumPromoCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.premium.withValues(alpha: 0.14),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
                   Icons.workspace_premium_rounded,
-                  color: AppColors.premium,
+                  color: Colors.white,
                   size: 26,
                 ),
               ),
@@ -1092,13 +1086,13 @@ class _HomePremiumPromoCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.premium.withValues(alpha: 0.12),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(99),
                       ),
                       child: Text(
                         'RECOMMENDED',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.premium,
+                              color: Colors.white,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.0,
                             ),
@@ -1109,6 +1103,7 @@ class _HomePremiumPromoCard extends StatelessWidget {
                       'Upgrade to Focusly Premium',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
+                            color: Colors.white,
                           ),
                     ),
                   ],
@@ -1120,9 +1115,7 @@ class _HomePremiumPromoCard extends StatelessWidget {
           Text(
             'Unlock unlimited subjects, deep weekly & monthly analytics insights, and personalized study targets to build an unbreakable streak.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
+                  color: Colors.white.withValues(alpha: 0.9),
                   height: 1.45,
                 ),
           ),
@@ -1133,8 +1126,8 @@ class _HomePremiumPromoCard extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: () => context.push('/premium'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.premium,
-                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primary,
                     minimumSize: const Size.fromHeight(50),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),

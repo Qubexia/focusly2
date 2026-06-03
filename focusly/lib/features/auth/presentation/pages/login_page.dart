@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event_state.dart';
 import '../widgets/auth_text_field.dart';
@@ -107,27 +108,10 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       const SizedBox(height: 40),
 
-                      // App Logo
                       Center(
-                        child: Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.2),
-                                blurRadius: 20,
-                                spreadRadius: 5,
-                              ),
-                            ],
-                          ),
-                          child: ClipOval(
-                            child: Image.asset(
-                              'assets/images/logo.png',
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                        child: const AppLogo(
+                          width: 160,
+                          height: 160,
                         ).animate().scale(duration: 600.ms).fadeIn(),
                       ),
 

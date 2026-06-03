@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
 
@@ -63,7 +64,7 @@ class _SplashPageState extends State<SplashPage> {
               colors: isDark
                   ? [
                       AppColors.backgroundDark,
-                      const Color(0xFF1A1A2E),
+                      AppColors.primaryDark,
                       AppColors.primaryDark.withValues(alpha: 0.3),
                     ]
                   : [
@@ -76,27 +77,9 @@ class _SplashPageState extends State<SplashPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo Image
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 30,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(32),
-                  child: Image.asset(
-                    'assets/images/logo.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
+              const AppLogo(
+                width: 220,
+                height: 220,
               )
                   .animate()
                   .scale(

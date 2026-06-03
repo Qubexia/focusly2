@@ -46,7 +46,7 @@ class FocusHeatmap extends StatelessWidget {
                   height: 14,
                   decoration: BoxDecoration(
                     color: Color.lerp(
-                      isDark ? const Color(0xFF2D2D3A) : const Color(0xFFE8EAED),
+                      isDark ? AppColors.heatmapEmptyDark : AppColors.heatmapEmptyLight,
                       AppColors.primary,
                       intensity,
                     ),

@@ -171,11 +171,11 @@ class PlannedItemTile extends StatelessWidget {
       case PlannedItemType.task:
         return AppColors.primary;
       case PlannedItemType.revision:
-        return const Color(0xFF00B894); // Teal
+        return AppColors.secondary;
       case PlannedItemType.lecture:
-        return const Color(0xFF0984E3); // Blue
+        return AppColors.primaryDark;
       case PlannedItemType.exam:
-        return const Color(0xFFD63031); // Red
+        return AppColors.premium;
     }
   }
 }

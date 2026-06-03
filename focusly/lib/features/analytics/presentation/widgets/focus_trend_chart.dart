@@ -96,7 +96,7 @@ class FocusTrendChart extends StatelessWidget {
                     }).toList(),
                     isCurved: true,
                     gradient: const LinearGradient(
-                      colors: [AppColors.primary, Color(0xFF8E84E3)],
+                      colors: [AppColors.primary, AppColors.primaryDark],
                     ),
                     barWidth: 4,
                     isStrokeCapRound: true,
