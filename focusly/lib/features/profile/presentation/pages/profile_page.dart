@@ -1,9 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/data/models/user_model.dart';
+import '../../../auth/data/repositories/auth_repository_impl.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
 import '../../../streaks/presentation/cubit/streak_cubit.dart';
@@ -108,12 +110,8 @@ class ProfilePage extends StatelessWidget {
                         title: 'Email Address',
                         value: user?.email ?? 'No email available',
                       ),
-                      _InfoTile(
-                        icon: Icons.verified_user_outlined,
-                        title: 'Verification',
-                        value: (user?.emailVerified ?? false)
-                            ? 'Verified'
-                            : 'Pending',
+                      _VerificationTile(
+                        verified: user?.emailVerified ?? false,
                       ),
                       _InfoTile(
                         icon: Icons.star_outline_rounded,
@@ -472,6 +470,113 @@ class _InfoListCard extends StatelessWidget {
         ),
       ),
       child: Column(children: children),
+    );
+  }
+}
+
+class _VerificationTile extends StatefulWidget {
+  const _VerificationTile({required this.verified});
+
+  final bool verified;
+
+  @override
+  State<_VerificationTile> createState() => _VerificationTileState();
+}
+
+class _VerificationTileState extends State<_VerificationTile> {
+  final AuthRepository _authRepository = AuthRepository();
+  bool _sending = false;
+
+  Future<void> _resend() async {
+    if (_sending) return;
+    setState(() => _sending = true);
+    try {
+      await _authRepository.resendVerificationEmail();
+      if (!mounted) return;
+      _showSnack(
+        'Verification email sent. Check your inbox.',
+        AppColors.secondary,
+      );
+    } on DioException catch (e) {
+      if (!mounted) return;
+      _showSnack(_errorMessage(e), AppColors.error);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack(
+        'Could not send the email. Please try again.',
+        AppColors.error,
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  void _showSnack(String message, Color color) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: color,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
+  String _errorMessage(DioException e) {
+    final data = e.response?.data;
+    if (data is Map<String, dynamic>) {
+      return (data['message'] as String?) ?? 'Could not send the email.';
+    }
+    return 'Could not send the email. Please try again.';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final verified = widget.verified;
+    final tileColor = verified ? AppColors.secondary : Colors.orange;
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: Container(
+        height: 42,
+        width: 42,
+        decoration: BoxDecoration(
+          color: tileColor.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(
+          verified ? Icons.verified_user_rounded : Icons.verified_user_outlined,
+          color: tileColor,
+        ),
+      ),
+      title: Text(
+        'Verification',
+        style: Theme.of(
+          context,
+        ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+      ),
+      subtitle: Text(
+        verified ? 'Verified' : 'Pending — verify to secure your account.',
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: isDark
+              ? AppColors.textSecondaryDark
+              : AppColors.textSecondaryLight,
+        ),
+      ),
+      trailing: verified
+          ? null
+          : _sending
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : TextButton(
+                  onPressed: _resend,
+                  child: const Text('Resend'),
+                ),
     );
   }
 }

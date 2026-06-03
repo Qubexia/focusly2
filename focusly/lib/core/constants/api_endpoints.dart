@@ -23,12 +23,12 @@ class ApiEndpoints {
 
     // IMPORTANT: If testing on a physical Android device, use your PC's local IP (e.g., 192.168.1.3)
     // 10.0.2.2 is only for the standard Android Emulator.
-    const String localIp = '192.168.1.3'; 
+    const String localIp = '192.168.1.5';
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         // Try local IP first, then fallback to emulator loopback
-        return 'http://$localIp:5000'; 
+        return 'http://$localIp:5000';
       case TargetPlatform.iOS:
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
@@ -48,6 +48,7 @@ class ApiEndpoints {
   static const String forgotPassword = '/v1/auth/forgot-password';
   static const String resetPassword = '/v1/auth/reset-password';
   static const String verifyEmail = '/v1/auth/verify-email';
+  static const String resendVerification = '/v1/auth/resend-verification';
   static const String sessions = '/v1/auth/sessions';
 
   // Users
@@ -112,15 +113,18 @@ class ApiEndpoints {
   // Notifications
   static const String notifications = '/v1/notifications';
   static const String notificationsReadAll = '/v1/notifications/read-all';
-  static const String notificationsPreferences = '/v1/notifications/preferences';
+  static const String notificationsPreferences =
+      '/v1/notifications/preferences';
   static String notificationById(String id) => '$notifications/$id';
   static String notificationRead(String id) => '$notifications/$id/read';
 
   // Subscription
   static const String subscriptionMe = '/v1/subscription/me';
-  static const String subscriptionStripeCheckout = '/v1/subscription/stripe/checkout';
+  static const String subscriptionStripeCheckout =
+      '/v1/subscription/stripe/checkout';
   static const String subscriptionCancel = '/v1/subscription/cancel';
-  static const String subscriptionPaymobCheckout = '/v1/subscription/paymob/checkout';
+  static const String subscriptionPaymobCheckout =
+      '/v1/subscription/paymob/checkout';
 
   // Uploads
   static const String uploadsPresign = '/v1/uploads/presign';

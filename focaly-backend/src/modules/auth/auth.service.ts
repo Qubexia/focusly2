@@ -7,6 +7,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Request } from 'express';
 import type Redis from 'ioredis';
@@ -34,6 +35,7 @@ import { PasswordService } from './password.service';
 import { AuditLog, AuditLogDocument } from './schemas/audit-log.schema';
 import { buildVerificationEmail } from './templates/email-verification.template';
 import { buildPasswordResetEmail } from './templates/password-reset.template';
+import { buildVerifyResultPage } from './templates/verify-email-result.template';
 
 export interface RequestMeta {
   ip?: string | null;
@@ -52,6 +54,7 @@ export class AuthService {
     @Inject(MAILER) private readonly mailer: Mailer,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     @InjectModel(AuditLog.name) private readonly auditLogModel: Model<AuditLogDocument>,
+    private readonly config: ConfigService,
   ) {}
 
   async register(
@@ -309,6 +312,44 @@ export class AuthService {
     );
   }
 
+  /**
+   * Verifies an email token opened from the email link and returns a rendered
+   * HTML page (success or failure) plus the HTTP status to respond with.
+   * Never throws — a bad/expired token yields the failure page.
+   */
+  async verifyEmailFromLink(token: string): Promise<{ status: number; html: string }> {
+    let ok = false;
+    try {
+      if (token) {
+        await this.verifyEmail({ token });
+        ok = true;
+      }
+    } catch {
+      ok = false;
+    }
+
+    const appOpenUrl = this.config.get<string>('app.appOpenUrl') ?? 'focusly://login';
+    return { status: ok ? 200 : 400, html: buildVerifyResultPage(ok, appOpenUrl) };
+  }
+
+  async resendVerificationEmail(user: CurrentUserPayload): Promise<void> {
+    const found = await this.usersRepository.findActiveById(user.id);
+    if (!found) {
+      throw new NotFoundException({
+        code: ERROR_CODES.NOT_FOUND,
+        message: 'User no longer exists.',
+      });
+    }
+    if (found.emailVerified) {
+      throw new ConflictException({
+        code: ERROR_CODES.CONFLICT,
+        message: 'Your email is already verified.',
+      });
+    }
+
+    await this.sendEmailToken(getDocumentId(found), found.email, 'verify-email');
+  }
+
   async listSessions(user: CurrentUserPayload): Promise<Array<Record<string, unknown>>> {
     const sessions = await this.authSessionsRepository.findActiveByUserId(user.id);
     return sessions.map((session) => ({
@@ -377,7 +418,7 @@ export class AuthService {
     });
     await this.redis.set(this.getEmailTokenKey(purpose, jti), userId, 'EX', expiresIn);
     if (purpose === 'verify-email') {
-      await this.mailer.send(buildVerificationEmail(email, token));
+      await this.mailer.send(buildVerificationEmail(email, this.buildVerifyEmailUrl(token)));
     }
     return token;
   }
@@ -392,6 +433,14 @@ export class AuthService {
 
   private getEmailTokenKey(purpose: string, jti: string): string {
     return `auth:email:${purpose}:${jti}`;
+  }
+
+  private buildVerifyEmailUrl(token: string): string {
+    const explicit = this.config.get<string>('app.verifyEmailUrl') ?? '';
+    const port = this.config.get<number>('app.port') ?? 5000;
+    const base = explicit || `http://localhost:${port}/v1/auth/verify-email`;
+    const separator = base.includes('?') ? '&' : '?';
+    return `${base}${separator}token=${encodeURIComponent(token)}`;
   }
 
   private unauthorized(message: string): UnauthorizedException {

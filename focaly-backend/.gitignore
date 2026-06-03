@@ -5,6 +5,9 @@ coverage/
 *.log
 *.tsbuildinfo
 
+# Local dev tunnel binary (cloudflared) downloaded by scripts/paymob-tunnel.ps1
+tools/
+
 .env
 .env*
 .env.local

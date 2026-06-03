@@ -2,7 +2,7 @@ import * as Joi from 'joi';
 
 const pemString = (label: string) =>
   Joi.string()
-    .custom((value, helpers) => {
+    .custom((value: string, helpers) => {
       const normalized = value.replace(/\\n/g, '\n').trim();
       const beginMarker = `-----BEGIN ${label}-----`;
       const endMarker = `-----END ${label}-----`;
@@ -18,15 +18,20 @@ const pemString = (label: string) =>
 export const validationSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
   PORT: Joi.number().integer().min(1).max(65535).default(3000),
-  LOG_LEVEL: Joi.string()
-    .valid('fatal', 'error', 'warn', 'info', 'debug', 'trace')
-    .default('info'),
+  LOG_LEVEL: Joi.string().valid('fatal', 'error', 'warn', 'info', 'debug', 'trace').default('info'),
 
-  MONGO_URI: Joi.string().uri({ scheme: ['mongodb', 'mongodb+srv'] }).required(),
+  MONGO_URI: Joi.string()
+    .uri({ scheme: ['mongodb', 'mongodb+srv'] })
+    .required(),
   MONGO_MAX_POOL: Joi.number().integer().min(1).default(50),
 
-  REDIS_URL: Joi.string().uri({ scheme: ['redis', 'rediss'] }).required(),
-  FOCALY_DISABLE_REDIS: Joi.boolean().truthy('true', '1', 'yes', 'on').falsy('false', '0', 'no', 'off').default(false),
+  REDIS_URL: Joi.string()
+    .uri({ scheme: ['redis', 'rediss'] })
+    .required(),
+  FOCALY_DISABLE_REDIS: Joi.boolean()
+    .truthy('true', '1', 'yes', 'on')
+    .falsy('false', '0', 'no', 'off')
+    .default(false),
 
   JWT_PRIVATE_KEY: pemString('PRIVATE KEY'),
   JWT_PUBLIC_KEY: pemString('PUBLIC KEY'),
@@ -42,6 +47,8 @@ export const validationSchema = Joi.object({
   SMTP_PORT: Joi.number().integer().min(1).max(65535).allow('').optional(),
   SMTP_USER: Joi.string().allow('').optional(),
   SMTP_PASS: Joi.string().allow('').optional(),
+  APP_VERIFY_EMAIL_URL: Joi.string().uri().allow('').optional(),
+  APP_OPEN_URL: Joi.string().allow('').optional(),
 
   S3_BUCKET: Joi.string().required(),
   S3_REGION: Joi.string().default('us-east-1'),
