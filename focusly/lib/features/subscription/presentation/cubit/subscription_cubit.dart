@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/constants/api_endpoints.dart';
 import '../../data/models/subscription_model.dart';
 import '../../data/repositories/subscription_repository.dart';
 
@@ -38,7 +39,10 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
   Future<void> payWithPaymob({required String plan}) async {
     emit(state.copyWith(isPurchasing: true, clearFeedback: true));
     try {
-      final result = await _repository.createPaymobCheckout(plan: plan);
+      final result = await _repository.createPaymobCheckout(
+        plan: plan,
+        checkoutBaseUrl: ApiEndpoints.baseUrl,
+      );
       final checkoutUrl = (result['checkoutUrl'] as String?) ?? '';
       if (checkoutUrl.isEmpty) {
         emit(

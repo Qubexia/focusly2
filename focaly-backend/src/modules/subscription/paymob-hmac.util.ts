@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto';
+import { createHmac, randomUUID } from 'crypto';
 
 function hmacPart(value: unknown): string {
   if (value === null || value === undefined) return '';
@@ -100,8 +100,15 @@ export function verifyResponseCallbackHmac(
   return expected.toLowerCase() === receivedHmac.toLowerCase();
 }
 
-/** Extract user id from `focusly-user-{mongoId}` special_reference. */
+/** Build a unique Paymob order reference that still embeds the Mongo user id. */
+export function buildPaymobSpecialReference(userId: string): string {
+  return `focusly-user-${userId}-${randomUUID()}`;
+}
+
+/** Extract user id from `focusly-user-{mongoId}` or `focusly-user-{mongoId}-{checkoutId}`. */
 export function parseUserIdFromSpecialReference(reference: string | undefined): string | null {
   if (!reference?.startsWith('focusly-user-')) return null;
-  return reference.slice('focusly-user-'.length) || null;
+  const rest = reference.slice('focusly-user-'.length);
+  const match = rest.match(/^([a-f0-9]{24})(?:-|$)/i);
+  return match?.[1] ?? null;
 }

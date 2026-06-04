@@ -2,8 +2,10 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Query,
   Req,
@@ -18,6 +20,7 @@ import { Public } from '../../common/decorators/public.decorator';
 import { EmailVerifiedGuard } from '../../common/guards/email-verified.guard';
 
 import { PaymobCheckoutDto } from './dto/paymob-checkout.dto';
+import { PaymobCardPayDto } from './dto/paymob-card-pay.dto';
 import {
   parseUserIdFromSpecialReference,
   verifyResponseCallbackHmac,
@@ -41,16 +44,63 @@ export class PaymobController {
     return {
       transactionProcessedCallback: this.paymobService.webhookUrl,
       transactionResponseCallback: this.paymobService.redirectUrl,
+      checkoutRequirements: {
+        unifiedCheckout:
+          'Needs an Online Card (MIGS) integration ID — works with Intention API + Unified Checkout.',
+        legacyIframe:
+          'VPC/wallet integrations need PAYMOB_IFRAME_ID from Developers → iFrames in Accept Dashboard.',
+        currentIntegrationId: Number(process.env.PAYMOB_INTEGRATION_ID ?? 0),
+        iframeIdConfigured: Number(process.env.PAYMOB_IFRAME_ID ?? 0) > 0,
+      },
       note:
         'Use a public HTTPS URL in production (e.g. ngrok for local dev). ' +
-        'Processed callback = server webhook (POST). Response callback = user redirect (GET).',
+        'Processed callback = server webhook (POST). Response callback = user redirect (GET). ' +
+        'Replace the default post_pay URLs on your Paymob integration with the two URLs above.',
     };
   }
 
   @UseGuards(EmailVerifiedGuard)
   @Post('checkout')
-  async createCheckout(@CurrentUser() user: CurrentUserPayload, @Body() dto: PaymobCheckoutDto) {
-    return this.paymobService.createPremiumCheckout(user.id, dto.plan);
+  async createCheckout(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body() dto: PaymobCheckoutDto,
+    @Req() req: Request,
+  ) {
+    const proto =
+      (typeof req.headers['x-forwarded-proto'] === 'string'
+        ? req.headers['x-forwarded-proto']
+        : undefined) ??
+      req.protocol ??
+      'http';
+    const requestOrigin = req.headers.host ? `${proto}://${req.headers.host}` : undefined;
+
+    return this.paymobService.createPremiumCheckout(
+      user.id,
+      dto.plan,
+      dto.checkoutBaseUrl,
+      requestOrigin,
+    );
+  }
+
+  /** Hosted card checkout page (replaces broken Paymob /standalone/ SPA on mobile). */
+  @Public()
+  @Get('open/:sessionId/checkout.js')
+  @Header('Content-Type', 'application/javascript; charset=utf-8')
+  hostedCheckoutScript(@Param('sessionId') sessionId: string): string {
+    return this.paymobService.renderHostedCheckoutScript(sessionId);
+  }
+
+  @Public()
+  @Get('open/:sessionId')
+  @Header('Content-Type', 'text/html; charset=utf-8')
+  openHostedCheckout(@Param('sessionId') sessionId: string): string {
+    return this.paymobService.renderHostedCheckoutPage(sessionId);
+  }
+
+  @Public()
+  @Post('open/:sessionId/pay')
+  async payHostedCheckout(@Param('sessionId') sessionId: string, @Body() dto: PaymobCardPayDto) {
+    return this.paymobService.processHostedCardPayment(sessionId, dto);
   }
 
   /**
@@ -84,7 +134,12 @@ export class PaymobController {
       (transaction.special_reference as string | undefined) ??
       (body.special_reference as string | undefined);
 
-    const userId = parseUserIdFromSpecialReference(specialReference);
+    const extras =
+      (transaction.extras as Record<string, unknown> | undefined) ??
+      (body.extras as Record<string, unknown> | undefined);
+    const userId =
+      parseUserIdFromSpecialReference(specialReference) ??
+      (typeof extras?.userId === 'string' ? extras.userId : null);
     if (!userId) {
       return { received: true, outcome: 'ignored', reason: 'unknown_user_reference' };
     }
@@ -94,9 +149,6 @@ export class PaymobController {
       typeof rawId === 'string' || typeof rawId === 'number'
         ? String(rawId)
         : `paymob-${Date.now()}`;
-    const extras =
-      (transaction.extras as Record<string, unknown> | undefined) ??
-      (body.extras as Record<string, unknown> | undefined);
     const plan = extras?.plan as string | undefined;
     const periodEnd = new Date();
     if (plan === 'yearly') {

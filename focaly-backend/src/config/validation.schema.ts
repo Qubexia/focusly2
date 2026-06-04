@@ -69,6 +69,8 @@ export const validationSchema = Joi.object({
   PAYMOB_SECRET_KEY: Joi.string().allow('').optional(),
   PAYMOB_HMAC_SECRET: Joi.string().allow('').optional(),
   PAYMOB_INTEGRATION_ID: Joi.number().integer().optional(),
+  PAYMOB_IFRAME_ID: Joi.number().integer().optional(),
+  PAYMOB_CHECKOUT_BASE_URL: Joi.string().uri().allow('').optional(),
   PAYMOB_CURRENCY: Joi.string().default('EGP'),
   PAYMOB_PREMIUM_MONTHLY_AMOUNT_CENTS: Joi.number().integer().min(100).default(9900),
   PAYMOB_PREMIUM_YEARLY_AMOUNT_CENTS: Joi.number().integer().min(100).default(99900),

@@ -23,6 +23,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "swagger:export": "node -r ./scripts/dev-runtime-flags.cjs ./node_modules/ts-node/dist/bin.js scripts/export-openapi.ts",
     "promote-admin": "node -r ./scripts/dev-runtime-flags.cjs ./node_modules/ts-node/dist/bin.js scripts/promote-admin.ts",
+    "verify-email": "node -r ./scripts/dev-runtime-flags.cjs ./node_modules/ts-node/dist/bin.js scripts/verify-user-email.ts",
+    "paymob:test": "node -r ./scripts/dev-runtime-flags.cjs ./node_modules/ts-node/dist/bin.js scripts/test-paymob-credentials.ts",
     "prepare": "cd .. && husky focaly-backend/.husky || true"
   },
   "dependencies": {

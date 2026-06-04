@@ -10,6 +10,10 @@ PAYMOB_PUBLIC_KEY=egy_pk_test_...
 PAYMOB_SECRET_KEY=egy_sk_test_...
 PAYMOB_HMAC_SECRET=
 PAYMOB_INTEGRATION_ID=5690496
+PAYMOB_IFRAME_ID=
+
+# Required for VPC/wallet integrations (legacy iframe checkout).
+# For card payments in the mobile app, prefer an Online Card (MIGS) integration ID instead.
 
 PUBLIC_API_BASE_URL=https://YOUR_PUBLIC_HTTPS_HOST
 
@@ -21,9 +25,32 @@ PAYMOB_APP_SUCCESS_URL=focusly://payment/success
 PAYMOB_APP_FAILURE_URL=focusly://payment/failure
 ```
 
-`PUBLIC_API_BASE_URL` must be reachable from the internet (use [ngrok](https://ngrok.com) for local dev: `ngrok http 3000`).
+Paymob intention API expects:
 
-## Paymob dashboard URLs
+```http
+Authorization: Token <PAYMOB_SECRET_KEY>
+```
+
+(not `Bearer`). The backend uses this format in `paymob.service.ts`.
+
+Test credentials locally:
+
+```bash
+npm run paymob:test
+```
+
+## Integration type (important)
+
+| Type | Example | Checkout |
+|------|---------|----------|
+| **Online Card (MIGS)** | Card payments in app/browser | Intention API → Unified Checkout (`egy_csk_…`) |
+| **VPC / wallet** | Integration `5690496` (Aman, Masary, …) | Legacy payment key → `/standalone/?payment_token=…` (or iFrame if `PAYMOB_IFRAME_ID` is set) |
+
+If Unified Checkout shows **"Something went wrong"**, your integration is likely VPC-only. Either:
+
+1. **Recommended:** Create **Online Card** under Developers → Payment Integrations (Test), set `PAYMOB_INTEGRATION_ID` to that ID.
+2. **Already works for VPC:** the backend opens `https://accept.paymob.com/standalone/?payment_token=…` automatically (no iFrame required). Optionally set `PAYMOB_IFRAME_ID` to use the iFrame URL instead.
+
 
 | Setting | URL |
 |---------|-----|

@@ -15,6 +15,9 @@ class SubscriptionRepository {
   Future<String> createStripeCheckoutSession() =>
       _remote.createStripeCheckoutSession();
 
-  Future<Map<String, dynamic>> createPaymobCheckout({required String plan}) =>
-      _remote.createPaymobCheckout(plan: plan);
+  Future<Map<String, dynamic>> createPaymobCheckout({
+    required String plan,
+    String? checkoutBaseUrl,
+  }) =>
+      _remote.createPaymobCheckout(plan: plan, checkoutBaseUrl: checkoutBaseUrl);
 }
