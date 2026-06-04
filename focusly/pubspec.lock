@@ -832,6 +832,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
+  paymob:
+    dependency: "direct main"
+    description:
+      name: paymob
+      sha256: c83cc4adf4293628c2e7e8487c6dae5d5e416ba5c4de9a96bf1a8a726482a833
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   permission_handler:
     dependency: "direct main"
     description:

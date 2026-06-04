@@ -14,6 +14,8 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven(url = "https://jitpack.io")
+        maven(url = rootProject.projectDir.toURI().resolve("libs"))
     }
 }
 

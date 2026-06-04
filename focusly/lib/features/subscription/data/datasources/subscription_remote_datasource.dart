@@ -23,15 +23,10 @@ class SubscriptionRemoteDataSource {
 
   Future<Map<String, dynamic>> createPaymobCheckout({
     required String plan,
-    String? checkoutBaseUrl,
   }) async {
     final response = await _dio.post(
       ApiEndpoints.subscriptionPaymobCheckout,
-      data: {
-        'plan': plan,
-        if (checkoutBaseUrl != null && checkoutBaseUrl.isNotEmpty)
-          'checkoutBaseUrl': checkoutBaseUrl,
-      },
+      data: {'plan': plan},
     );
     return response.data as Map<String, dynamic>;
   }

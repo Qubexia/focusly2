@@ -76,7 +76,8 @@ class _PaywallViewState extends State<_PaywallView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(state.feedbackMessage!),
-            backgroundColor: state.feedbackType == SubscriptionFeedbackType.error
+            backgroundColor:
+                state.feedbackType == SubscriptionFeedbackType.error
                 ? AppColors.error
                 : AppColors.secondary,
           ),
@@ -119,17 +120,16 @@ class _PaywallViewState extends State<_PaywallView> {
                     if (!isPremium) ...[
                       Text(
                         'Choose payment method',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 12),
                       FilledButton.icon(
                         onPressed: state.isPurchasing
                             ? null
                             : () => context
-                                .read<SubscriptionCubit>()
-                                .payWithPaymob(plan: 'monthly'),
+                                  .read<SubscriptionCubit>()
+                                  .payWithPaymob(plan: 'monthly'),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.premium,
                           foregroundColor: Colors.white,
@@ -143,8 +143,8 @@ class _PaywallViewState extends State<_PaywallView> {
                         onPressed: state.isPurchasing
                             ? null
                             : () => context
-                                .read<SubscriptionCubit>()
-                                .payWithPaymob(plan: 'yearly'),
+                                  .read<SubscriptionCubit>()
+                                  .payWithPaymob(plan: 'yearly'),
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),
                         ),
@@ -154,7 +154,7 @@ class _PaywallViewState extends State<_PaywallView> {
                       const SizedBox(height: 8),
                       Text(
                         'Cards, wallets, and local methods via Paymob. '
-                        'Opens secure checkout in your browser.',
+                        'Uses the native Paymob payment sheet inside the app.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 16),
@@ -162,8 +162,8 @@ class _PaywallViewState extends State<_PaywallView> {
                         onPressed: state.isPurchasing
                             ? null
                             : () => context
-                                .read<SubscriptionCubit>()
-                                .payWithStripe(),
+                                  .read<SubscriptionCubit>()
+                                  .payWithStripe(),
                         icon: const Icon(Icons.credit_card_rounded),
                         label: const Text('International card (Stripe)'),
                         style: OutlinedButton.styleFrom(
@@ -178,8 +178,8 @@ class _PaywallViewState extends State<_PaywallView> {
                         onPressed: state.isLoading
                             ? null
                             : () => context
-                                .read<SubscriptionCubit>()
-                                .cancelSubscription(),
+                                  .read<SubscriptionCubit>()
+                                  .cancelSubscription(),
                         child: const Text('Cancel subscription'),
                       ),
                     ],
@@ -208,14 +208,18 @@ class _HeroCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 40),
+          const Icon(
+            Icons.workspace_premium_rounded,
+            color: Colors.white,
+            size: 40,
+          ),
           const SizedBox(height: 12),
           Text(
             isPremium ? 'You are Premium' : 'Upgrade your study flow',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -247,12 +251,16 @@ class _FeatureRow extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
-          const Icon(Icons.check_circle_rounded, color: AppColors.secondary, size: 20),
+          const Icon(
+            Icons.check_circle_rounded,
+            color: AppColors.secondary,
+            size: 20,
+          ),
         ],
       ),
     );
@@ -283,14 +291,10 @@ class _ActivePlanCard extends StatelessWidget {
 
 void showPaywallOrGate(BuildContext context, {String? message}) {
   if (message != null) {
-    showPremiumGateSheet(
-      context,
-      message: message,
-      upgradeRoute: '/premium',
-    );
+    showPremiumGateSheet(context, message: message, upgradeRoute: '/premium');
     return;
   }
-  Navigator.of(context).push(
-    MaterialPageRoute(builder: (_) => const PaywallPage()),
-  );
+  Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => const PaywallPage()));
 }

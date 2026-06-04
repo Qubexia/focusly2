@@ -8,16 +8,21 @@ import { ConfigService } from '@nestjs/config';
 
 import { UsersRepository } from '../users/users.repository';
 
-import { buildPaymobSpecialReference } from './paymob-hmac.util';
-import { PaymobCheckoutSessionStore } from './paymob-checkout.sessions';
-import { renderPaymobHostedCheckoutPage, renderPaymobHostedCheckoutScript } from './paymob-hosted-checkout';
 import { PaymobCardPayDto } from './dto/paymob-card-pay.dto';
+import { PaymobCheckoutSessionStore } from './paymob-checkout.sessions';
+import { buildPaymobSpecialReference } from './paymob-hmac.util';
+import {
+  renderPaymobHostedCheckoutPage,
+  renderPaymobHostedCheckoutScript,
+} from './paymob-hosted-checkout';
 
 export type PaymobPlan = 'monthly' | 'yearly';
 
 export interface PaymobCheckoutResult {
   checkoutUrl: string;
   clientSecret: string;
+  publicKey: string;
+  canUseNativeSdk: boolean;
   specialReference: string;
   amountCents: number;
   currency: string;
@@ -153,7 +158,6 @@ export class PaymobService {
       throw new BadRequestException({ message: 'Checkout session expired or not found.' });
     }
 
-    const base = this.resolveCheckoutBaseUrl();
     const amountLabel = (session.amountCents / 100).toFixed(2);
     const planLabel =
       session.plan === 'yearly' ? 'Focusly Premium — Yearly' : 'Focusly Premium — Monthly';
@@ -166,8 +170,10 @@ export class PaymobService {
       planLabel,
       payUrl: `${checkoutBase}/v1/subscription/paymob/open/${sessionId}/pay`,
       scriptUrl: `${checkoutBase}/v1/subscription/paymob/open/${sessionId}/checkout.js`,
-      appSuccessUrl: this.config.get<string>('paymob.appRedirectSuccess') ?? 'focusly://payment/success',
-      appFailureUrl: this.config.get<string>('paymob.appRedirectFailure') ?? 'focusly://payment/failure',
+      appSuccessUrl:
+        this.config.get<string>('paymob.appRedirectSuccess') ?? 'focusly://payment/success',
+      appFailureUrl:
+        this.config.get<string>('paymob.appRedirectFailure') ?? 'focusly://payment/failure',
     });
   }
 
@@ -180,15 +186,22 @@ export class PaymobService {
     const checkoutBase = session.checkoutBaseUrl.replace(/\/$/, '');
     return renderPaymobHostedCheckoutScript({
       payUrl: `${checkoutBase}/v1/subscription/paymob/open/${sessionId}/pay`,
-      appSuccessUrl: this.config.get<string>('paymob.appRedirectSuccess') ?? 'focusly://payment/success',
-      appFailureUrl: this.config.get<string>('paymob.appRedirectFailure') ?? 'focusly://payment/failure',
+      appSuccessUrl:
+        this.config.get<string>('paymob.appRedirectSuccess') ?? 'focusly://payment/success',
+      appFailureUrl:
+        this.config.get<string>('paymob.appRedirectFailure') ?? 'focusly://payment/failure',
     });
   }
 
   async processHostedCardPayment(
     sessionId: string,
     card: PaymobCardPayDto,
-  ): Promise<{ success: boolean; message: string; redirectUrl?: string; terminalFailure?: boolean }> {
+  ): Promise<{
+    success: boolean;
+    message: string;
+    redirectUrl?: string;
+    terminalFailure?: boolean;
+  }> {
     const session = this.checkoutSessions.get(sessionId);
     if (!session) {
       throw new BadRequestException({ message: 'Checkout session expired or not found.' });
@@ -220,7 +233,22 @@ export class PaymobService {
           : undefined;
 
     if (response.ok && redirectUrl) {
-      return { success: false, message: 'Redirecting to complete payment…', redirectUrl };
+      try {
+        const redirectSuccess = new URL(redirectUrl).searchParams.get('success') === 'true';
+        if (redirectSuccess) {
+          return { success: false, message: 'Redirecting to complete payment…', redirectUrl };
+        }
+      } catch {
+        return { success: false, message: 'Redirecting to complete payment…', redirectUrl };
+      }
+
+      return {
+        success: false,
+        message:
+          `Paymob declined this card. Integration ${this.integrationId} is VPC/wallet — Visa test cards need ` +
+          'an Online Card (MIGS) integration in Paymob Dashboard. Create one and set PAYMOB_INTEGRATION_ID.',
+        terminalFailure: true,
+      };
     }
 
     const success = data.success === true || data.success === 'true';
@@ -270,6 +298,19 @@ export class PaymobService {
     };
   }
 
+  private isUsableCheckoutBaseUrl(url: string): boolean {
+    if (!url || !/^https?:\/\//i.test(url)) {
+      return false;
+    }
+
+    const lower = url.toLowerCase();
+    if (lower.includes('your_public_host') || lower.includes('example.com')) {
+      return false;
+    }
+
+    return true;
+  }
+
   private resolveCheckoutBaseUrl(explicit?: string, requestOrigin?: string): string {
     const candidates = [
       explicit,
@@ -280,14 +321,14 @@ export class PaymobService {
 
     for (const raw of candidates) {
       const candidate = (raw ?? '').trim().replace(/\/$/, '');
-      if (candidate && /^https?:\/\//i.test(candidate) && !this.isLoopbackUrl(candidate)) {
+      if (this.isUsableCheckoutBaseUrl(candidate) && !this.isLoopbackUrl(candidate)) {
         return candidate;
       }
     }
 
     for (const raw of candidates) {
       const candidate = (raw ?? '').trim().replace(/\/$/, '');
-      if (candidate && /^https?:\/\//i.test(candidate)) {
+      if (this.isUsableCheckoutBaseUrl(candidate)) {
         return candidate;
       }
     }
@@ -367,8 +408,7 @@ export class PaymobService {
       payment_methods: [this.integrationId],
       items: [
         {
-          name:
-            input.plan === 'yearly' ? 'Focusly Premium Yearly' : 'Focusly Premium Monthly',
+          name: input.plan === 'yearly' ? 'Focusly Premium Yearly' : 'Focusly Premium Monthly',
           amount: input.amountCents,
           description: 'Focusly study app premium subscription',
           quantity: 1,
@@ -416,6 +456,8 @@ export class PaymobService {
     return {
       checkoutUrl: this.buildCheckoutUrl(clientSecret),
       clientSecret,
+      publicKey: this.publicKey,
+      canUseNativeSdk: this.isIntentionClientSecret(clientSecret),
       specialReference: input.specialReference,
       amountCents: input.amountCents,
       currency: input.currency,
@@ -443,8 +485,7 @@ export class PaymobService {
         merchant_order_id: input.specialReference,
         items: [
           {
-            name:
-              input.plan === 'yearly' ? 'Focusly Premium Yearly' : 'Focusly Premium Monthly',
+            name: input.plan === 'yearly' ? 'Focusly Premium Yearly' : 'Focusly Premium Monthly',
             amount_cents: input.amountCents,
             description: 'Focusly study app premium subscription',
             quantity: 1,
@@ -492,6 +533,8 @@ export class PaymobService {
     return {
       checkoutUrl: this.buildCheckoutUrl(paymentToken),
       clientSecret: paymentToken,
+      publicKey: this.publicKey,
+      canUseNativeSdk: false,
       specialReference: input.specialReference,
       amountCents: input.amountCents,
       currency: input.currency,

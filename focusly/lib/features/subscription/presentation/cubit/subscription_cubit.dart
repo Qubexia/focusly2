@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:paymob/paymob.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../data/models/subscription_model.dart';
 import '../../data/repositories/subscription_repository.dart';
 
@@ -11,8 +13,8 @@ part 'subscription_state.dart';
 
 class SubscriptionCubit extends Cubit<SubscriptionState> {
   SubscriptionCubit({SubscriptionRepository? repository})
-      : _repository = repository ?? SubscriptionRepository(),
-        super(const SubscriptionState());
+    : _repository = repository ?? SubscriptionRepository(),
+      super(const SubscriptionState());
 
   final SubscriptionRepository _repository;
 
@@ -20,12 +22,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
     emit(state.copyWith(isLoading: true, errorMessage: null));
     try {
       final subscription = await _repository.getMySubscription();
-      emit(
-        state.copyWith(
-          isLoading: false,
-          subscription: subscription,
-        ),
-      );
+      emit(state.copyWith(isLoading: false, subscription: subscription));
     } catch (_) {
       emit(
         state.copyWith(
@@ -39,32 +36,76 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
   Future<void> payWithPaymob({required String plan}) async {
     emit(state.copyWith(isPurchasing: true, clearFeedback: true));
     try {
-      final result = await _repository.createPaymobCheckout(
-        plan: plan,
-        checkoutBaseUrl: ApiEndpoints.baseUrl,
-      );
-      final checkoutUrl = (result['checkoutUrl'] as String?) ?? '';
-      if (checkoutUrl.isEmpty) {
+      final checkout = await _repository.createPaymobCheckout(plan: plan);
+      final publicKey = (checkout['publicKey'] as String?)?.trim() ?? '';
+      final clientSecret = (checkout['clientSecret'] as String?)?.trim() ?? '';
+      final canUseNativeSdk =
+          checkout['canUseNativeSdk'] == true ||
+          clientSecret.startsWith('egy_csk_') ||
+          clientSecret.startsWith('csk_');
+
+      if (publicKey.isEmpty || clientSecret.isEmpty) {
         emit(
           state.copyWith(
             isPurchasing: false,
             feedbackType: SubscriptionFeedbackType.error,
-            feedbackMessage: 'Paymob checkout URL was empty.',
+            feedbackMessage: 'Paymob SDK session data is incomplete.',
           ),
         );
         return;
       }
-      final uri = Uri.parse(checkoutUrl);
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+      if (!canUseNativeSdk) {
+        emit(
+          state.copyWith(
+            isPurchasing: false,
+            feedbackType: SubscriptionFeedbackType.error,
+            feedbackMessage:
+                'Paymob is still configured with a legacy integration on the server. '
+                'To use the in-app Flutter SDK, switch PAYMOB_INTEGRATION_ID to an Online Card '
+                '(MIGS) integration that returns a client secret from Intention API.',
+          ),
+        );
+        return;
+      }
+
+      final result = await Paymob.pay(
+        publicKey: publicKey,
+        clientSecret: clientSecret,
+        appName: 'Focusly',
+        buttonBackgroundColor: AppColors.premium,
+        buttonTextColor: Colors.white,
+        saveCardDefault: false,
+        showSaveCard: true,
+      );
+
+      final status = result.status;
+      final isSuccess = result.isSuccessful;
+      final isPending = status == PaymobTransactionStatus.pending;
+      final isRejected = status == PaymobTransactionStatus.rejected;
+      final message = result.errorMessage?.trim();
+
+      if (isSuccess || isPending) {
+        await load();
+      }
+
       emit(
         state.copyWith(
           isPurchasing: false,
-          feedbackType: launched
+          feedbackType: (isSuccess || isPending)
               ? SubscriptionFeedbackType.success
               : SubscriptionFeedbackType.error,
-          feedbackMessage: launched
-              ? 'Complete payment in the browser, then return and tap Refresh.'
-              : 'Could not open Paymob checkout.',
+          feedbackMessage: isSuccess
+              ? 'Payment completed successfully.'
+              : isPending
+              ? 'Payment submitted and is pending confirmation.'
+              : isRejected
+              ? (message?.isNotEmpty == true
+                    ? message!
+                    : 'Payment was rejected.')
+              : (message?.isNotEmpty == true
+                    ? message!
+                    : 'Could not complete Paymob payment.'),
         ),
       );
     } on DioException catch (e) {
@@ -102,7 +143,10 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         return;
       }
       final uri = Uri.parse(checkoutUrl);
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
       emit(
         state.copyWith(
           isPurchasing: false,
