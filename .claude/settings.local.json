@@ -15,7 +15,15 @@
       "PowerShell(Get-Content \"C:\\\\Users\\\\zezo\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-zezo-Desktop-work-focaly\\\\bc670564-846b-48cc-a4cd-bcaf821c43e1\\\\tasks\\\\bmd9uqqo3.output\" -ErrorAction SilentlyContinue | Select-Object -Last 30; Write-Output \"---\"; if \\(Test-Path \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\focaly-backend\\\\node_modules\"\\) { \\(Get-ChildItem \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\focaly-backend\\\\node_modules\" -Directory | Measure-Object\\).Count.ToString\\(\\) + \" packages installed so far\" } else { \"node_modules not yet created\" })",
       "PowerShell(if \\(Test-Path \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\focaly-backend\\\\node_modules\"\\) { \\(Get-ChildItem \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\focaly-backend\\\\node_modules\" -Directory | Measure-Object\\).Count.ToString\\(\\) + \" package dirs\"; Test-Path \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focaly\\\\focaly-backend\\\\package-lock.json\" } else { \"no node_modules yet\" })",
       "Bash(npx tsc *)",
-      "Bash(npx nest *)"
+      "Bash(npx nest *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focusly2\\\\focusly\\\\lib\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\focusly2\\\\focaly-backend\\\\src\\\\modules\" -Directory)",
+      "Bash(npm run *)",
+      "Bash(npx eslint *)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(grep EMAIL= /tmp/e2e-creds.txt)",
+      "Bash(powershell -Command 'Get-NetTCPConnection -LocalPort 5055 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }')"
     ]
   }
 }
