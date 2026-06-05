@@ -156,6 +156,7 @@ class ApiEndpoints {
   static const String aiNotesJobs = '/v1/ai/notes/jobs';
   static String aiNotesJobById(String id) => '$aiNotesJobs/$id';
   static const String aiArtifacts = '/v1/ai/artifacts';
+  static const String aiFiles = '/v1/ai/files';
 
   // Auth sessions
   static String authSessionById(String id) => '$sessions/$id';

@@ -11,6 +11,9 @@ export class AiArtifact {
   @Prop({ type: SchemaTypes.ObjectId, required: true, index: true })
   subjectId!: string;
 
+  @Prop({ type: SchemaTypes.ObjectId, default: null, index: true })
+  chapterId!: string | null;
+
   @Prop({ type: SchemaTypes.ObjectId, required: true, index: true })
   jobId!: string;
 

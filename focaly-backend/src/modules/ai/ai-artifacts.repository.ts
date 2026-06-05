@@ -7,6 +7,7 @@ import { AiArtifact, AiArtifactDocument } from './schemas/ai-artifact.schema';
 export interface CreateAiArtifactInput {
   userId: string;
   subjectId: string;
+  chapterId?: string | null;
   jobId: string;
   kind: string;
   content: Record<string, unknown>;
@@ -25,6 +26,10 @@ export class AiArtifactsRepository {
 
   findBySubject(userId: string, subjectId: string): Promise<AiArtifactDocument[]> {
     return this.model.find({ userId, subjectId }).sort({ createdAt: -1 }).exec();
+  }
+
+  findByChapter(userId: string, chapterId: string): Promise<AiArtifactDocument[]> {
+    return this.model.find({ userId, chapterId }).sort({ createdAt: -1 }).exec();
   }
 
   findByJob(jobId: string): Promise<AiArtifactDocument[]> {

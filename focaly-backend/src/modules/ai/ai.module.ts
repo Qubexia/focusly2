@@ -5,6 +5,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 import { AiArtifactsRepository } from './ai-artifacts.repository';
+import { AiFilesController } from './ai-files.controller';
+import { AiFilesService } from './ai-files.service';
 import { AiJobsRepository } from './ai-jobs.repository';
 import { AiRateLimiterService } from './ai-rate-limiter.service';
 import { AiSettingsService } from './ai-settings.service';
@@ -26,10 +28,11 @@ import { AiWorker } from './workers/ai.worker';
     CqrsModule,
     NotificationsModule,
   ],
-  controllers: [AiController],
+  controllers: [AiController, AiFilesController],
   providers: [
     AiJobsRepository,
     AiArtifactsRepository,
+    AiFilesService,
     AiRateLimiterService,
     AiSettingsService,
     AiWorkerService,

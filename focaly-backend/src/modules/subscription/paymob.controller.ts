@@ -19,8 +19,8 @@ import { CurrentUser, CurrentUserPayload } from '../../common/decorators/current
 import { Public } from '../../common/decorators/public.decorator';
 import { EmailVerifiedGuard } from '../../common/guards/email-verified.guard';
 
-import { PaymobCheckoutDto } from './dto/paymob-checkout.dto';
 import { PaymobCardPayDto } from './dto/paymob-card-pay.dto';
+import { PaymobCheckoutDto } from './dto/paymob-checkout.dto';
 import {
   parseUserIdFromSpecialReference,
   verifyResponseCallbackHmac,
@@ -183,7 +183,8 @@ export class PaymobController {
     if (hmacSecret && receivedHmac) {
       const valid = verifyResponseCallbackHmac(query, receivedHmac, hmacSecret);
       if (!valid) {
-        return res.status(400).send(this.renderHtml(false, 'Payment verification failed.'));
+        res.status(400).send(this.renderHtml(false, 'Payment verification failed.'));
+        return;
       }
     }
 
@@ -192,9 +193,7 @@ export class PaymobController {
       ? (process.env.PAYMOB_APP_SUCCESS_URL ?? 'focusly://payment/success')
       : (process.env.PAYMOB_APP_FAILURE_URL ?? 'focusly://payment/failure');
 
-    return res.send(
-      this.renderHtml(success, success ? 'Payment successful' : 'Payment failed', appUrl),
-    );
+    res.send(this.renderHtml(success, success ? 'Payment successful' : 'Payment failed', appUrl));
   }
 
   private renderHtml(success: boolean, message: string, deepLink?: string): string {

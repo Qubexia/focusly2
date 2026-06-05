@@ -63,12 +63,21 @@ export class AiController {
     const job = await this.aiJobsRepo.create({
       userId: user.id,
       subjectId: dto.subjectId ?? null,
-      imageKeys: dto.imageKeys,
+      chapterId: dto.chapterId ?? null,
+      imageKeys: dto.imageKeys ?? [],
+      pdfKeys: dto.pdfKeys ?? [],
+      language: dto.language ?? null,
+      detailLevel: dto.detailLevel ?? null,
     });
 
     await this.rateLimiter.increment(user.id);
     const jobId = String(job._id);
-    await this.aiWorkerService.enqueueJob(jobId, user.id, dto.subjectId ?? null);
+    await this.aiWorkerService.enqueueJob(
+      jobId,
+      user.id,
+      dto.subjectId ?? null,
+      dto.chapterId ?? null,
+    );
 
     return { jobId, status: 'queued' };
   }
@@ -81,8 +90,12 @@ export class AiController {
   @Get('artifacts')
   async getArtifacts(
     @CurrentUser() user: CurrentUserPayload,
-    @Query('subjectId') subjectId: string,
+    @Query('subjectId') subjectId?: string,
+    @Query('chapterId') chapterId?: string,
   ) {
-    return this.aiArtifactsRepo.findBySubject(user.id, subjectId);
+    if (chapterId) {
+      return this.aiArtifactsRepo.findByChapter(user.id, chapterId);
+    }
+    return this.aiArtifactsRepo.findBySubject(user.id, subjectId ?? '');
   }
 }

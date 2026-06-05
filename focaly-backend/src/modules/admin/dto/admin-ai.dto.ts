@@ -12,6 +12,15 @@ export class UpdateAiSettingsDto {
   @MaxLength(200)
   apiKey?: string;
 
+  /**
+   * OpenAI-compatible base URL (e.g. https://openrouter.ai/api/v1).
+   * Send an empty string to clear it (fall back to env / official OpenAI).
+   */
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  baseUrl?: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(100)

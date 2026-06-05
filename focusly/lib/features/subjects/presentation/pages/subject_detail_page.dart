@@ -1,10 +1,22 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../ai/presentation/pages/ai_artifact_viewer_page.dart';
 import '../../data/models/chapter_model.dart';
 import '../../data/models/subject_model.dart';
 import '../cubit/subject_detail_cubit.dart';
+
+/// Opens the native file picker limited to PDFs and returns the picked path.
+Future<String?> _pickPdfPath() async {
+  final result = await FilePicker.platform.pickFiles(
+    type: FileType.custom,
+    allowedExtensions: const ['pdf'],
+    withData: false,
+  );
+  return result?.files.single.path;
+}
 
 class SubjectDetailPage extends StatelessWidget {
   const SubjectDetailPage({required this.subjectId, super.key});
@@ -94,6 +106,13 @@ class _SubjectDetailView extends StatelessWidget {
                                   progress?.chaptersCompleted ?? 0,
                               chaptersTotal: progress?.chaptersTotal ?? 0,
                             ),
+                            const SizedBox(height: 16),
+                            _SubjectAiCard(
+                              isAnalyzing: state.isAnalyzingSubject,
+                              onUpload: () =>
+                                  _pickAndAnalyzeSubjectPdf(context),
+                              onView: () => _openSubjectMaterials(context),
+                            ),
                             const SizedBox(height: 20),
                             Text(
                               'Chapters',
@@ -126,6 +145,8 @@ class _SubjectDetailView extends StatelessWidget {
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: _ChapterTile(
                                   chapter: chapter,
+                                  isAnalyzing: state.analyzingChapterIds
+                                      .contains(chapter.id),
                                   onChanged: (value) {
                                     context
                                         .read<SubjectDetailCubit>()
@@ -137,6 +158,10 @@ class _SubjectDetailView extends StatelessWidget {
                                   onEdit: () => _openChapterEditor(
                                     context,
                                     chapter: chapter,
+                                  ),
+                                  onOpenMaterials: () => _openChapterMaterials(
+                                    context,
+                                    chapter,
                                   ),
                                 ),
                               ),
@@ -153,28 +178,119 @@ class _SubjectDetailView extends StatelessWidget {
     BuildContext context, {
     ChapterModel? chapter,
   }) async {
+    // New chapters can attach a PDF for AI analysis; editing only renames.
+    if (chapter == null) {
+      final draft = await showModalBottomSheet<_ChapterDraft>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (sheetContext) => const _ChapterCreateSheet(),
+      );
+
+      if (draft == null || !context.mounted) return;
+
+      await context.read<SubjectDetailCubit>().createChapter(
+            draft.title,
+            pdfPath: draft.pdfPath,
+            language: draft.options.language,
+            detailLevel: draft.options.detailLevel,
+          );
+      return;
+    }
+
     final result = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _TextEditorSheet(
-        title: chapter == null ? 'Add Chapter' : 'Edit Chapter',
+        title: 'Edit Chapter',
         hintText: 'Chapter title',
-        initialValue: chapter?.title ?? '',
-        submitLabel: chapter == null ? 'Add Chapter' : 'Save Changes',
+        initialValue: chapter.title,
+        submitLabel: 'Save Changes',
       ),
     );
 
     if (result == null || !context.mounted) return;
 
-    if (chapter == null) {
-      await context.read<SubjectDetailCubit>().createChapter(result);
-    } else {
-      await context.read<SubjectDetailCubit>().renameChapter(
-            chapterId: chapter.id,
-            title: result,
-          );
+    await context.read<SubjectDetailCubit>().renameChapter(
+          chapterId: chapter.id,
+          title: result,
+        );
+  }
+
+  Future<void> _openChapterMaterials(
+    BuildContext context,
+    ChapterModel chapter,
+  ) async {
+    final cubit = context.read<SubjectDetailCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    final artifacts = await cubit.loadChapterArtifacts(chapter.id);
+    if (!context.mounted) return;
+
+    if (artifacts.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('No AI materials yet. Upload a PDF to generate them.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
     }
+
+    await navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => AiArtifactViewerPage(artifacts: artifacts),
+      ),
+    );
+  }
+
+  Future<void> _openSubjectMaterials(BuildContext context) async {
+    final cubit = context.read<SubjectDetailCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    final artifacts = await cubit.loadSubjectArtifacts();
+    if (!context.mounted) return;
+
+    if (artifacts.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('No AI materials yet. Upload a PDF to generate them.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    await navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => AiArtifactViewerPage(artifacts: artifacts),
+      ),
+    );
+  }
+
+  Future<void> _pickAndAnalyzeSubjectPdf(BuildContext context) async {
+    final cubit = context.read<SubjectDetailCubit>();
+    final path = await _pickPdfPath();
+    if (path == null || !context.mounted) return;
+
+    final options = await showModalBottomSheet<_AiAnalysisOptions>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _PdfAnalysisOptionsSheet(
+        fileName: path.split(RegExp(r'[\\/]+')).last,
+      ),
+    );
+    if (options == null || !context.mounted) return;
+
+    await cubit.analyzeSubjectPdf(
+      pdfPath: path,
+      language: options.language,
+      detailLevel: options.detailLevel,
+    );
   }
 
   Future<void> _openSubjectEditor(
@@ -418,17 +534,25 @@ class _SubjectEmptyChapters extends StatelessWidget {
 class _ChapterTile extends StatelessWidget {
   const _ChapterTile({
     required this.chapter,
+    required this.isAnalyzing,
     required this.onChanged,
     required this.onEdit,
+    required this.onOpenMaterials,
   });
 
   final ChapterModel chapter;
+  final bool isAnalyzing;
   final ValueChanged<bool?> onChanged;
   final VoidCallback onEdit;
+  final VoidCallback onOpenMaterials;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final subtitle = isAnalyzing
+        ? 'Analyzing PDF…'
+        : (chapter.completed ? 'Completed' : 'In progress');
 
     return Container(
       decoration: BoxDecoration(
@@ -457,18 +581,512 @@ class _ChapterTile extends StatelessWidget {
               ),
         ),
         subtitle: Text(
-          chapter.completed ? 'Completed' : 'In progress',
+          subtitle,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: chapter.completed
-                    ? AppColors.secondary
-                    : (isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight),
+                color: isAnalyzing
+                    ? AppColors.primary
+                    : (chapter.completed
+                        ? AppColors.secondary
+                        : (isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight)),
               ),
         ),
-        trailing: IconButton(
-          onPressed: onEdit,
-          icon: const Icon(Icons.edit_outlined),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isAnalyzing)
+              const Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            else
+              IconButton(
+                tooltip: 'AI study materials',
+                onPressed: onOpenMaterials,
+                icon: const Icon(Icons.auto_awesome_outlined),
+                color: AppColors.primary,
+              ),
+            IconButton(
+              onPressed: onEdit,
+              icon: const Icon(Icons.edit_outlined),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SubjectAiCard extends StatelessWidget {
+  const _SubjectAiCard({
+    required this.isAnalyzing,
+    required this.onUpload,
+    required this.onView,
+  });
+
+  final bool isAnalyzing;
+  final VoidCallback onUpload;
+  final VoidCallback onView;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                height: 44,
+                width: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI Study Materials',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Upload a PDF and let AI build a summary, flashcards, and quiz.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: isAnalyzing ? null : onUpload,
+                  icon: isAnalyzing
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.upload_file_rounded, size: 18),
+                  label: Text(isAnalyzing ? 'Analyzing…' : 'Upload PDF'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onView,
+                  icon: const Icon(Icons.menu_book_rounded, size: 18),
+                  label: const Text('View'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChapterDraft {
+  const _ChapterDraft({
+    required this.title,
+    required this.options,
+    this.pdfPath,
+  });
+
+  final String title;
+  final String? pdfPath;
+  final _AiAnalysisOptions options;
+}
+
+class _ChapterCreateSheet extends StatefulWidget {
+  const _ChapterCreateSheet();
+
+  @override
+  State<_ChapterCreateSheet> createState() => _ChapterCreateSheetState();
+}
+
+class _ChapterCreateSheetState extends State<_ChapterCreateSheet> {
+  final _controller = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  String? _pdfPath;
+  String _language = _AiAnalysisOptions.defaults.language;
+  String _detailLevel = _AiAnalysisOptions.defaults.detailLevel;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickPdf() async {
+    final path = await _pickPdfPath();
+    if (path == null) return;
+    setState(() => _pdfPath = path);
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    Navigator.of(context).pop(
+      _ChapterDraft(
+        title: _controller.text.trim(),
+        pdfPath: _pdfPath,
+        options: _AiAnalysisOptions(
+          language: _language,
+          detailLevel: _detailLevel,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fileName = _pdfPath?.split(RegExp(r'[\\/]+')).last;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Add Chapter',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 18),
+                TextFormField(
+                  controller: _controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Chapter title',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'This field is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: _pickPdf,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.borderDark
+                            : AppColors.borderLight,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _pdfPath == null
+                              ? Icons.upload_file_rounded
+                              : Icons.picture_as_pdf_rounded,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            fileName ?? 'Attach a PDF (optional) for AI analysis',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                        if (_pdfPath != null)
+                          IconButton(
+                            onPressed: () => setState(() => _pdfPath = null),
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (_pdfPath != null) ...[
+                  const SizedBox(height: 18),
+                  _AnalysisOptionControls(
+                    language: _language,
+                    detailLevel: _detailLevel,
+                    onLanguage: (v) => setState(() => _language = v),
+                    onDetailLevel: (v) => setState(() => _detailLevel = v),
+                  ),
+                ],
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _submit,
+                    child: const Text('Add Chapter'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AnalysisOption {
+  const _AnalysisOption(this.value, this.label);
+
+  final String value;
+  final String label;
+}
+
+class _AiAnalysisOptions {
+  const _AiAnalysisOptions({required this.language, required this.detailLevel});
+
+  final String language;
+  final String detailLevel;
+
+  static const _AiAnalysisOptions defaults =
+      _AiAnalysisOptions(language: 'auto', detailLevel: 'medium');
+
+  static const List<_AnalysisOption> languages = [
+    _AnalysisOption('auto', 'Auto'),
+    _AnalysisOption('ar', 'العربية'),
+    _AnalysisOption('en', 'English'),
+  ];
+
+  static const List<_AnalysisOption> lengths = [
+    _AnalysisOption('short', 'Short'),
+    _AnalysisOption('medium', 'Medium'),
+    _AnalysisOption('long', 'Detailed'),
+  ];
+}
+
+/// Language + summary-length pickers shared by the chapter and subject flows.
+class _AnalysisOptionControls extends StatelessWidget {
+  const _AnalysisOptionControls({
+    required this.language,
+    required this.detailLevel,
+    required this.onLanguage,
+    required this.onDetailLevel,
+  });
+
+  final String language;
+  final String detailLevel;
+  final ValueChanged<String> onLanguage;
+  final ValueChanged<String> onDetailLevel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _label(context, 'Language'),
+        const SizedBox(height: 8),
+        _ChipRow(
+          options: _AiAnalysisOptions.languages,
+          selected: language,
+          onSelected: onLanguage,
+        ),
+        const SizedBox(height: 16),
+        _label(context, 'Summary length'),
+        const SizedBox(height: 8),
+        _ChipRow(
+          options: _AiAnalysisOptions.lengths,
+          selected: detailLevel,
+          onSelected: onDetailLevel,
+        ),
+      ],
+    );
+  }
+
+  Widget _label(BuildContext context, String text) {
+    return Text(
+      text,
+      style: Theme.of(context)
+          .textTheme
+          .titleSmall
+          ?.copyWith(fontWeight: FontWeight.w700),
+    );
+  }
+}
+
+class _ChipRow extends StatelessWidget {
+  const _ChipRow({
+    required this.options,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final List<_AnalysisOption> options;
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: options.map((option) {
+        final isSelected = option.value == selected;
+        return ChoiceChip(
+          label: Text(option.label),
+          selected: isSelected,
+          showCheckmark: false,
+          onSelected: (_) => onSelected(option.value),
+          backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
+          selectedColor: AppColors.primary.withValues(alpha: 0.14),
+          labelStyle: TextStyle(
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected
+                ? AppColors.primary
+                : (isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: isSelected
+                  ? AppColors.primary
+                  : (isDark ? AppColors.borderDark : AppColors.borderLight),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+/// Bottom sheet shown after picking a subject-level PDF, to choose options.
+class _PdfAnalysisOptionsSheet extends StatefulWidget {
+  const _PdfAnalysisOptionsSheet({required this.fileName});
+
+  final String fileName;
+
+  @override
+  State<_PdfAnalysisOptionsSheet> createState() =>
+      _PdfAnalysisOptionsSheetState();
+}
+
+class _PdfAnalysisOptionsSheetState extends State<_PdfAnalysisOptionsSheet> {
+  String _language = _AiAnalysisOptions.defaults.language;
+  String _detailLevel = _AiAnalysisOptions.defaults.detailLevel;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Analyze PDF',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(Icons.picture_as_pdf_rounded,
+                    color: AppColors.primary, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    widget.fileName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _AnalysisOptionControls(
+              language: _language,
+              detailLevel: _detailLevel,
+              onLanguage: (v) => setState(() => _language = v),
+              onDetailLevel: (v) => setState(() => _detailLevel = v),
+            ),
+            const SizedBox(height: 22),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.of(context).pop(
+                  _AiAnalysisOptions(
+                    language: _language,
+                    detailLevel: _detailLevel,
+                  ),
+                ),
+                icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                label: const Text('Analyze with AI'),
+              ),
+            ),
+          ],
         ),
       ),
     );

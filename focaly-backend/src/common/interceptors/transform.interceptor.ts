@@ -2,6 +2,14 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nes
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+function mongoIdToString(value: unknown): string {
+  const candidate = value as { toHexString?: () => string };
+  if (typeof candidate.toHexString === 'function') {
+    return candidate.toHexString();
+  }
+  return String(value);
+}
+
 function isMongoIdLike(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false;
 
@@ -11,34 +19,51 @@ function isMongoIdLike(value: unknown): boolean {
     toHexString?: unknown;
   };
 
-  return candidate._bsontype === 'ObjectId' ||
-      candidate.constructor?.name === 'ObjectId' ||
-      typeof candidate.toHexString === 'function';
+  return (
+    candidate._bsontype === 'ObjectId' ||
+    candidate.constructor?.name === 'ObjectId' ||
+    typeof candidate.toHexString === 'function'
+  );
 }
 
-function stripMongoFields(value: unknown): unknown {
+function stripMongoFields(value: unknown, ancestors: WeakSet<object> = new WeakSet()): unknown {
   if (value === null || value === undefined) return value;
-  if (Array.isArray(value)) return value.map(stripMongoFields);
   if (value instanceof Date) return value.toISOString();
-  if (isMongoIdLike(value)) return String(value);
+  if (isMongoIdLike(value)) return mongoIdToString(value);
   if (typeof value !== 'object') return value;
 
-  const src = value as Record<string, unknown>;
-  if ('_doc' in src || typeof (src as { toObject?: unknown }).toObject === 'function') {
-    const obj = (src as { toObject?: () => Record<string, unknown> }).toObject?.() ?? { ...src };
-    return stripMongoFields(obj);
-  }
-
-  const out: Record<string, unknown> = {};
-  for (const [key, val] of Object.entries(src)) {
-    if (key === '__v') continue;
-    if (key === '_id') {
-      out.id = typeof val === 'object' && val !== null ? String(val) : val;
-      continue;
+  // Guard against circular references (e.g. an Express Response leaking in).
+  // Track only the current recursion path so legitimately shared (non-circular)
+  // references are still emitted.
+  if (ancestors.has(value)) return undefined;
+  ancestors.add(value);
+  try {
+    if (Array.isArray(value)) {
+      return value.map((item) => stripMongoFields(item, ancestors));
     }
-    out[key] = stripMongoFields(val);
+
+    const src = value as Record<string, unknown>;
+    if ('_doc' in src || typeof (src as { toObject?: unknown }).toObject === 'function') {
+      const obj = (src as { toObject?: () => Record<string, unknown> }).toObject?.() ?? { ...src };
+      return stripMongoFields(obj, ancestors);
+    }
+
+    const out: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(src)) {
+      if (key === '__v') continue;
+      if (key === '_id') {
+        out.id =
+          typeof val === 'object' && val !== null && isMongoIdLike(val)
+            ? mongoIdToString(val)
+            : val;
+        continue;
+      }
+      out[key] = stripMongoFields(val, ancestors);
+    }
+    return out;
+  } finally {
+    ancestors.delete(value);
   }
-  return out;
 }
 
 @Injectable()

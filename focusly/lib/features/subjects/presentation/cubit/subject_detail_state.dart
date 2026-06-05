@@ -12,6 +12,8 @@ class SubjectDetailState extends Equatable {
     this.errorMessage,
     this.feedbackType = SubjectDetailFeedbackType.none,
     this.feedbackMessage,
+    this.analyzingChapterIds = const {},
+    this.isAnalyzingSubject = false,
   });
 
   final SubjectModel? subject;
@@ -23,6 +25,12 @@ class SubjectDetailState extends Equatable {
   final SubjectDetailFeedbackType feedbackType;
   final String? feedbackMessage;
 
+  /// Chapter ids whose uploaded PDF is currently being analyzed by the AI.
+  final Set<String> analyzingChapterIds;
+
+  /// Whether a subject-level PDF is currently being analyzed.
+  final bool isAnalyzingSubject;
+
   SubjectDetailState copyWith({
     SubjectModel? subject,
     SubjectProgressModel? progress,
@@ -32,6 +40,8 @@ class SubjectDetailState extends Equatable {
     String? errorMessage,
     SubjectDetailFeedbackType? feedbackType,
     String? feedbackMessage,
+    Set<String>? analyzingChapterIds,
+    bool? isAnalyzingSubject,
     bool clearFeedback = false,
   }) {
     return SubjectDetailState(
@@ -45,6 +55,8 @@ class SubjectDetailState extends Equatable {
           ? SubjectDetailFeedbackType.none
           : feedbackType ?? this.feedbackType,
       feedbackMessage: clearFeedback ? null : feedbackMessage,
+      analyzingChapterIds: analyzingChapterIds ?? this.analyzingChapterIds,
+      isAnalyzingSubject: isAnalyzingSubject ?? this.isAnalyzingSubject,
     );
   }
 
@@ -58,5 +70,7 @@ class SubjectDetailState extends Equatable {
         errorMessage,
         feedbackType,
         feedbackMessage,
+        analyzingChapterIds,
+        isAnalyzingSubject,
       ];
 }

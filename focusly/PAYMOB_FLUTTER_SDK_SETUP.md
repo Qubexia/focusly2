@@ -30,30 +30,26 @@ Run:
 flutter pub get
 ```
 
-## Android native SDK
+## Native SDK install (required once)
 
-Download the Paymob Android SDK version required by the Flutter plugin and place the `.aar` file at:
+Paymob hosts the native binaries on SharePoint (login required). Run the helper script from the `focusly/` folder:
 
-```text
-android/libs/com/paymob/sdk/Paymob-SDK/1.8.1/Paymob-SDK-1.8.1.aar
+```powershell
+.\scripts\setup-paymob-native.ps1 -OpenDownloads
 ```
 
-The Gradle repository and data binding setup are already prepared in this repo.
+Then paste the extracted folder paths when prompted, or pass them directly:
 
-## iOS native SDK
-
-Download `PaymobSDK.xcframework` and place it at:
-
-```text
-ios/Frameworks/PaymobSDK.xcframework
+```powershell
+.\scripts\setup-paymob-native.ps1 `
+  -AndroidSource "$env:USERPROFILE\Downloads\PaymobAndroidSDK1.8.1" `
+  -IosSource "$env:USERPROFILE\Downloads\PaymobSDK 1.3.3"
 ```
 
-Then in Xcode:
+Manual download links (same as [paymob pub.dev](https://pub.dev/packages/paymob)):
 
-1. Open `ios/Runner.xcworkspace`
-2. Select Runner target
-3. Add `ios/Frameworks/PaymobSDK.xcframework`
-4. Set it to `Embed & Sign`
+- Android 1.8.1: https://paymob-my.sharepoint.com/:f:/p/ahmedsobhy/EjQrdOdzUzhIqlQmcsE9Hg0BOVjJYOu2BMGRClGVEa9dJA?e=hfFnnI
+- iOS 1.3.3: https://paymob-my.sharepoint.com/:f:/p/mahmoudyoussef/El9q1ULaxcBFkQurwvXkZQEBY9S-6dwhWL9xXQgjEnGPBQ?e=0sKgCf
 
 ## Paymob dashboard settings
 

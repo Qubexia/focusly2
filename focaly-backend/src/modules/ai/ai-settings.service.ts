@@ -13,6 +13,7 @@ const DEFAULT_TEMPERATURE = 0.2;
 export interface ResolvedAiSettings {
   enabled: boolean;
   apiKey: string;
+  baseUrl: string;
   model: string;
   temperature: number;
   systemPrompt: string | null;
@@ -23,6 +24,7 @@ export interface MaskedAiSettings {
   apiKeySet: boolean;
   apiKeyPreview: string | null;
   apiKeySource: 'database' | 'env' | 'none';
+  baseUrl: string;
   model: string;
   temperature: number;
   systemPrompt: string | null;
@@ -32,6 +34,7 @@ export interface MaskedAiSettings {
 export interface UpdateAiSettingsInput {
   enabled?: boolean;
   apiKey?: string; // empty string clears the stored key (falls back to env)
+  baseUrl?: string; // empty string clears the stored base URL (falls back to env)
   model?: string;
   temperature?: number;
   systemPrompt?: string | null;
@@ -68,12 +71,17 @@ export class AiSettingsService {
     return process.env.OPENAI_MODEL ?? DEFAULT_MODEL;
   }
 
+  private envBaseUrl(): string {
+    return this.config.get<string>('openai.baseUrl') ?? '';
+  }
+
   /** Effective settings used by the worker (DB value, else env fallback). */
   async resolve(): Promise<ResolvedAiSettings> {
     const doc = await this.getOrCreate();
     return {
       enabled: doc.enabled,
       apiKey: doc.apiKey && doc.apiKey.length > 0 ? doc.apiKey : this.envApiKey(),
+      baseUrl: doc.baseUrl && doc.baseUrl.length > 0 ? doc.baseUrl : this.envBaseUrl(),
       model: doc.model && doc.model.length > 0 ? doc.model : this.envModel(),
       temperature: typeof doc.temperature === 'number' ? doc.temperature : DEFAULT_TEMPERATURE,
       systemPrompt: doc.systemPrompt,
@@ -94,6 +102,7 @@ export class AiSettingsService {
       apiKeySet: effectiveKey.length > 0,
       apiKeyPreview: effectiveKey ? maskKey(effectiveKey) : null,
       apiKeySource: source,
+      baseUrl: doc.baseUrl && doc.baseUrl.length > 0 ? doc.baseUrl : this.envBaseUrl(),
       model: doc.model && doc.model.length > 0 ? doc.model : this.envModel(),
       temperature: doc.temperature ?? DEFAULT_TEMPERATURE,
       systemPrompt: doc.systemPrompt,
@@ -104,6 +113,7 @@ export class AiSettingsService {
   async update(input: UpdateAiSettingsInput): Promise<MaskedAiSettings> {
     const set: Record<string, unknown> = {};
     if (input.enabled !== undefined) set.enabled = input.enabled;
+    if (input.baseUrl !== undefined) set.baseUrl = input.baseUrl.trim() || null;
     if (input.model !== undefined) set.model = input.model.trim() || null;
     if (input.temperature !== undefined) set.temperature = input.temperature;
     if (input.systemPrompt !== undefined) {
@@ -135,7 +145,12 @@ export class AiSettingsService {
     }
 
     try {
-      const client = new OpenAI({ apiKey: key, timeout: 10_000, maxRetries: 0 });
+      const client = new OpenAI({
+        apiKey: key,
+        baseURL: resolved.baseUrl.length > 0 ? resolved.baseUrl : undefined,
+        timeout: 10_000,
+        maxRetries: 0,
+      });
       await client.models.list();
       return { ok: true, model: resolved.model };
     } catch (err) {

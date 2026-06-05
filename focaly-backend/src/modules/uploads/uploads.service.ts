@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 import { PresignDto } from './dto';
 
@@ -16,6 +16,8 @@ const MIME_ALLOWLIST = [
 const KIND_LIMITS: Record<string, number> = {
   'lecture-image': 10_485_760,
   'ai-notes-image': 10_485_760,
+  'subject-pdf': 26_214_400, // 25 MB
+  'chapter-pdf': 26_214_400, // 25 MB
   avatar: 2_097_152,
 };
 
@@ -59,7 +61,8 @@ export class UploadsService {
     return { url, key };
   }
 
-  async confirmUpload(key: string): Promise<void> {
+  confirmUpload(key: string): Promise<void> {
     void key;
+    return Promise.resolve();
   }
 }

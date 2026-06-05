@@ -110,6 +110,11 @@ class _AuthInterceptor extends Interceptor {
           final token = await SecureStorage.getAccessToken();
           final retryOptions = err.requestOptions;
           retryOptions.headers['Authorization'] = 'Bearer $token';
+          // FormData is single-use (its stream is consumed on the first send),
+          // so clone it before retrying a multipart upload after a refresh.
+          if (retryOptions.data is FormData) {
+            retryOptions.data = (retryOptions.data as FormData).clone();
+          }
           final response = await _dio.fetch(retryOptions);
           _isRefreshing = false;
           return handler.resolve(response);

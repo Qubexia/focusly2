@@ -17,7 +17,14 @@ export class AiSetting {
   @Prop({ type: String, default: null })
   apiKey!: string | null;
 
-  /** Model id, e.g. gpt-4o-mini. Null falls back to env/default. */
+  /**
+   * OpenAI-compatible base URL (e.g. https://openrouter.ai/api/v1 for OpenRouter).
+   * Null falls back to the OPENAI_BASE_URL env var (empty = official OpenAI API).
+   */
+  @Prop({ type: String, default: null })
+  baseUrl!: string | null;
+
+  /** Model id, e.g. gpt-4o-mini or moonshotai/kimi-k2.6:free. Null falls back to env/default. */
   @Prop({ type: String, default: null })
   model!: string | null;
 

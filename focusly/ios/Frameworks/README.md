@@ -1,13 +1,16 @@
 Place the Paymob iOS native SDK here before building.
 
+Run the setup script (opens download links and installs files):
+
+```powershell
+.\scripts\setup-paymob-native.ps1 -OpenDownloads
+```
+
 Expected framework from the Paymob Flutter plugin documentation:
 
 `ios/Frameworks/PaymobSDK.xcframework`
 
-After copying it:
-- Open `ios/Runner.xcworkspace` in Xcode
-- Add `PaymobSDK.xcframework` to the Runner target
-- Set it to `Embed & Sign`
+The Xcode project is already configured to link and embed this framework (Embed & Sign).
 
 Source:
 - Paymob Flutter package on pub.dev

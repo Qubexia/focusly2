@@ -12,8 +12,20 @@ export class AiJob {
   @Prop({ type: SchemaTypes.ObjectId, default: null, index: true })
   subjectId!: string | null;
 
-  @Prop({ type: [String], required: true })
+  @Prop({ type: SchemaTypes.ObjectId, default: null, index: true })
+  chapterId!: string | null;
+
+  @Prop({ type: [String], default: [] })
   imageKeys!: string[];
+
+  @Prop({ type: [String], default: [] })
+  pdfKeys!: string[];
+
+  @Prop({ type: String, default: null })
+  language!: string | null;
+
+  @Prop({ type: String, default: null })
+  detailLevel!: string | null;
 
   @Prop({
     type: String,

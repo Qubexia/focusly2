@@ -1,7 +1,13 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/services/upload_service.dart';
+import '../../../ai/data/models/ai_artifact_model.dart';
+import '../../../ai/data/repositories/ai_repository.dart';
 import '../../data/models/chapter_model.dart';
 import '../../data/models/subject_model.dart';
 import '../../data/models/subject_progress_model.dart';
@@ -10,11 +16,18 @@ import '../../data/repositories/subjects_repository.dart';
 part 'subject_detail_state.dart';
 
 class SubjectDetailCubit extends Cubit<SubjectDetailState> {
-  SubjectDetailCubit({SubjectsRepository? repository})
-      : _repository = repository ?? SubjectsRepository(),
+  SubjectDetailCubit({
+    SubjectsRepository? repository,
+    AiRepository? aiRepository,
+    UploadService? uploadService,
+  })  : _repository = repository ?? SubjectsRepository(),
+        _aiRepository = aiRepository ?? AiRepository(),
+        _uploadService = uploadService ?? UploadService(),
         super(const SubjectDetailState());
 
   final SubjectsRepository _repository;
+  final AiRepository _aiRepository;
+  final UploadService _uploadService;
 
   Future<void> load(String subjectId) async {
     emit(state.copyWith(isLoading: true, clearFeedback: true));
@@ -53,7 +66,12 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
     }
   }
 
-  Future<bool> createChapter(String title) async {
+  Future<bool> createChapter(
+    String title, {
+    String? pdfPath,
+    String language = 'auto',
+    String detailLevel = 'medium',
+  }) async {
     final subject = state.subject;
     if (subject == null) return false;
 
@@ -75,11 +93,25 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
           chapters: chapters,
           progress: _buildProgress(chapters),
           feedbackType: SubjectDetailFeedbackType.success,
-          feedbackMessage: 'Chapter added successfully.',
+          feedbackMessage: pdfPath != null
+              ? 'Chapter added. Analyzing the PDF…'
+              : 'Chapter added successfully.',
         ),
       );
 
       await _refreshSubjectDetails(subject.id);
+
+      if (pdfPath != null) {
+        // Fire-and-forget: analysis runs in the background and updates state.
+        unawaited(
+          analyzeChapterPdf(
+            chapterId: chapter.id,
+            pdfPath: pdfPath,
+            language: language,
+            detailLevel: detailLevel,
+          ),
+        );
+      }
 
       return true;
     } on DioException catch (e) {
@@ -101,6 +133,147 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
       );
       return false;
     }
+  }
+
+  /// Uploads a PDF for a chapter and submits an AI job that generates study
+  /// materials (summary / flashcards / questions) scoped to that chapter.
+  Future<void> analyzeChapterPdf({
+    required String chapterId,
+    required String pdfPath,
+    String language = 'auto',
+    String detailLevel = 'medium',
+  }) async {
+    final subject = state.subject;
+    if (subject == null) return;
+
+    emit(
+      state.copyWith(
+        analyzingChapterIds: {...state.analyzingChapterIds, chapterId},
+      ),
+    );
+
+    try {
+      final fileId = await _uploadService.uploadAiFile(
+        file: File(pdfPath),
+        mimeType: 'application/pdf',
+      );
+
+      final jobId = await _aiRepository.submitJob(
+        pdfKeys: [fileId],
+        subjectId: subject.id,
+        chapterId: chapterId,
+        language: language,
+        detailLevel: detailLevel,
+      );
+
+      await _waitForJob(jobId);
+
+      emit(
+        state.copyWith(
+          analyzingChapterIds: _withoutChapter(chapterId),
+          feedbackType: SubjectDetailFeedbackType.success,
+          feedbackMessage: 'AI study materials are ready for this chapter.',
+        ),
+      );
+    } on DioException catch (e) {
+      emit(
+        state.copyWith(
+          analyzingChapterIds: _withoutChapter(chapterId),
+          feedbackType: SubjectDetailFeedbackType.error,
+          feedbackMessage: _extractMessage(e),
+        ),
+      );
+    } catch (_) {
+      emit(
+        state.copyWith(
+          analyzingChapterIds: _withoutChapter(chapterId),
+          feedbackType: SubjectDetailFeedbackType.error,
+          feedbackMessage: 'Failed to analyze the PDF.',
+        ),
+      );
+    }
+  }
+
+  /// Uploads a PDF for the whole subject and submits an AI job scoped to it.
+  Future<void> analyzeSubjectPdf({
+    required String pdfPath,
+    String language = 'auto',
+    String detailLevel = 'medium',
+  }) async {
+    final subject = state.subject;
+    if (subject == null) return;
+
+    emit(state.copyWith(isAnalyzingSubject: true, clearFeedback: true));
+
+    try {
+      final fileId = await _uploadService.uploadAiFile(
+        file: File(pdfPath),
+        mimeType: 'application/pdf',
+      );
+
+      final jobId = await _aiRepository.submitJob(
+        pdfKeys: [fileId],
+        subjectId: subject.id,
+        language: language,
+        detailLevel: detailLevel,
+      );
+
+      await _waitForJob(jobId);
+
+      emit(
+        state.copyWith(
+          isAnalyzingSubject: false,
+          feedbackType: SubjectDetailFeedbackType.success,
+          feedbackMessage: 'AI study materials are ready for this subject.',
+        ),
+      );
+    } on DioException catch (e) {
+      emit(
+        state.copyWith(
+          isAnalyzingSubject: false,
+          feedbackType: SubjectDetailFeedbackType.error,
+          feedbackMessage: _extractMessage(e),
+        ),
+      );
+    } catch (_) {
+      emit(
+        state.copyWith(
+          isAnalyzingSubject: false,
+          feedbackType: SubjectDetailFeedbackType.error,
+          feedbackMessage: 'Failed to analyze the PDF.',
+        ),
+      );
+    }
+  }
+
+  /// Fetches the AI study materials generated for a single chapter.
+  Future<List<AiArtifactModel>> loadChapterArtifacts(String chapterId) {
+    return _aiRepository.getArtifacts(chapterId: chapterId);
+  }
+
+  /// Fetches the AI study materials generated at the subject level.
+  Future<List<AiArtifactModel>> loadSubjectArtifacts() {
+    final subject = state.subject;
+    if (subject == null) return Future.value(const []);
+    return _aiRepository.getArtifacts(subjectId: subject.id);
+  }
+
+  Set<String> _withoutChapter(String chapterId) {
+    return state.analyzingChapterIds.where((id) => id != chapterId).toSet();
+  }
+
+  /// Polls a job until it reaches a terminal state. Throws on failure.
+  Future<void> _waitForJob(String jobId) async {
+    const maxAttempts = 90; // ~3 minutes at 2s intervals
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      await Future<void>.delayed(const Duration(seconds: 2));
+      final job = await _aiRepository.getJob(jobId);
+      if (job.isCompleted) return;
+      if (job.isFailed) {
+        throw Exception(job.failureReason ?? 'AI job failed.');
+      }
+    }
+    throw Exception('AI analysis timed out.');
   }
 
   Future<bool> renameChapter({

@@ -33,6 +33,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       );
     }
 
+    // If the response was already (partially) sent — e.g. a handler using
+    // @Res() that threw after writing — writing again throws ERR_HTTP_HEADERS_SENT
+    // and crashes the process. Delegate to the default handler instead.
+    if (res.headersSent) {
+      return;
+    }
+
     res.status(status).json(body);
   }
 
@@ -43,7 +50,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         body: {
           code: ERROR_CODES.DUPLICATE_KEY,
           message: 'Duplicate key',
-          details: { keyValue: (exception as MongoLikeError).keyValue },
+          details: { keyValue: exception.keyValue },
         },
       };
     }
@@ -55,11 +62,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       if (typeof payload === 'object' && payload !== null) {
         const obj = payload as Record<string, unknown>;
         const code = typeof obj.code === 'string' ? obj.code : this.codeForStatus(status);
-        const message = typeof obj.message === 'string'
-          ? obj.message
-          : Array.isArray(obj.message)
-            ? (obj.message as string[]).join('; ')
-            : exception.message;
+        const message =
+          typeof obj.message === 'string'
+            ? obj.message
+            : Array.isArray(obj.message)
+              ? (obj.message as string[]).join('; ')
+              : exception.message;
         const details =
           typeof obj.details === 'object' && obj.details !== null
             ? (obj.details as Record<string, unknown>)

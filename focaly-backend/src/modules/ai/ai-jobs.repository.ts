@@ -1,13 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model, UpdateQuery } from 'mongoose';
+import { Model, UpdateQuery } from 'mongoose';
 
 import { AiJob, AiJobDocument, AiJobStatus } from './schemas/ai-job.schema';
 
 export interface CreateAiJobInput {
   userId: string;
   subjectId?: string | null;
-  imageKeys: string[];
+  chapterId?: string | null;
+  imageKeys?: string[];
+  pdfKeys?: string[];
+  language?: string | null;
+  detailLevel?: string | null;
 }
 
 @Injectable()
