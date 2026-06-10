@@ -11,11 +11,15 @@ import '../../features/notifications/data/datasources/notifications_local_dataso
 import '../../features/notifications/data/models/notification_inbox_model.dart';
 import '../../firebase_options.dart';
 
+const _mainChannelId = 'Zakerly_main_channel';
+const _scheduledChannelId = 'Zakerly_scheduled_channel';
+
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await NotificationService.showRemoteNotification(message);
 }
 
 class NotificationService {
@@ -32,7 +36,7 @@ class NotificationService {
 
   static const AndroidNotificationChannel _mainChannel =
       AndroidNotificationChannel(
-        'Zakerly_main_channel',
+        _mainChannelId,
         'Zakerly Notifications',
         description: 'Main channel for Zakerly alerts',
         importance: Importance.max,
@@ -40,11 +44,33 @@ class NotificationService {
 
   static const AndroidNotificationChannel _scheduledChannel =
       AndroidNotificationChannel(
-        'Zakerly_scheduled_channel',
+        _scheduledChannelId,
         'Zakerly Scheduled Notifications',
         description: 'Channel for scheduled study reminders',
         importance: Importance.max,
       );
+
+  static const NotificationDetails _mainNotificationDetails = NotificationDetails(
+    android: AndroidNotificationDetails(
+      _mainChannelId,
+      'Zakerly Notifications',
+      channelDescription: 'Main channel for Zakerly alerts',
+      importance: Importance.max,
+      priority: Priority.high,
+    ),
+    iOS: DarwinNotificationDetails(),
+  );
+
+  static const NotificationDetails _scheduledNotificationDetails = NotificationDetails(
+    android: AndroidNotificationDetails(
+      _scheduledChannelId,
+      'Zakerly Scheduled Notifications',
+      channelDescription: 'Channel for scheduled study reminders',
+      importance: Importance.max,
+      priority: Priority.high,
+    ),
+    iOS: DarwinNotificationDetails(),
+  );
 
   Future<void> init() async {
     if (_isInitialized) return;
@@ -74,6 +100,7 @@ class NotificationService {
             AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.createNotificationChannel(_mainChannel);
     await androidPlugin?.createNotificationChannel(_scheduledChannel);
+    await androidPlugin?.requestExactAlarmsPermission();
 
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
@@ -84,6 +111,7 @@ class NotificationService {
     );
 
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleOpenedMessage);
 
     _isInitialized = true;
   }
@@ -110,12 +138,26 @@ class NotificationService {
     }
   }
 
-  Future<String?> getFcmToken() {
-    return _messaging.getToken();
+  Future<String?> getFcmToken({int maxAttempts = 3}) async {
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      final token = await _messaging.getToken();
+      if (token != null && token.isNotEmpty) {
+        return token;
+      }
+
+      if (attempt < maxAttempts - 1) {
+        await Future<void>.delayed(Duration(seconds: 1 + attempt));
+      }
+    }
+    return null;
   }
 
   Stream<String> onTokenRefresh() {
     return _messaging.onTokenRefresh;
+  }
+
+  Future<RemoteMessage?> getInitialMessage() {
+    return _messaging.getInitialMessage();
   }
 
   Future<void> showNotification({
@@ -128,20 +170,10 @@ class NotificationService {
       id: id,
       title: title,
       body: body,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'Zakerly_main_channel',
-          'Zakerly Notifications',
-          channelDescription: 'Main channel for Zakerly alerts',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
+      notificationDetails: _mainNotificationDetails,
       payload: payload,
     );
 
-    // Save to local inbox
     await _localDataSource.saveNotification(
       NotificationInboxModel(
         id: id.toString(),
@@ -165,21 +197,11 @@ class NotificationService {
       title: title,
       body: body,
       scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'Zakerly_scheduled_channel',
-          'Zakerly Scheduled Notifications',
-          channelDescription: 'Channel for scheduled study reminders',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
+      notificationDetails: _scheduledNotificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       payload: payload,
     );
 
-    // Save to local inbox
     await _localDataSource.saveNotification(
       NotificationInboxModel(
         id: id.toString(),
@@ -199,15 +221,66 @@ class NotificationService {
     await _notificationsPlugin.cancel(id: id);
   }
 
-  Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    final notification = message.notification;
-    if (notification == null) return;
+  static Future<void> showRemoteNotification(RemoteMessage message) async {
+    final title = _extractTitle(message);
+    final body = _extractBody(message);
+    if (title == null && body == null) return;
 
-    await showNotification(
-      id: message.messageId.hashCode,
-      title: notification.title ?? 'Zakerly',
-      body: notification.body ?? '',
+    final plugin = FlutterLocalNotificationsPlugin();
+    const initializationSettings = InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: DarwinInitializationSettings(),
+    );
+
+    await plugin.initialize(settings: initializationSettings);
+
+    final androidPlugin = plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    await androidPlugin?.createNotificationChannel(_mainChannel);
+
+    await plugin.show(
+      id: message.messageId?.hashCode ?? message.hashCode,
+      title: title ?? 'Zakerly',
+      body: body ?? '',
+      notificationDetails: _mainNotificationDetails,
       payload: message.data.isEmpty ? null : message.data.toString(),
     );
+  }
+
+  Future<void> _handleForegroundMessage(RemoteMessage message) async {
+    final title = _extractTitle(message);
+    final body = _extractBody(message);
+    if (title == null && body == null) return;
+
+    await showNotification(
+      id: message.messageId?.hashCode ?? message.hashCode,
+      title: title ?? 'Zakerly',
+      body: body ?? '',
+      payload: message.data.isEmpty ? null : message.data.toString(),
+    );
+  }
+
+  Future<void> _handleOpenedMessage(RemoteMessage message) async {
+    final title = _extractTitle(message);
+    final body = _extractBody(message);
+    if (title == null && body == null) return;
+
+    await _localDataSource.saveNotification(
+      NotificationInboxModel(
+        id: (message.messageId ?? message.hashCode).toString(),
+        title: title ?? 'Zakerly',
+        body: body ?? '',
+        createdAt: DateTime.now(),
+        type: message.data.isEmpty ? null : message.data.toString(),
+      ),
+    );
+  }
+
+  static String? _extractTitle(RemoteMessage message) {
+    return message.notification?.title ?? message.data['title'] as String?;
+  }
+
+  static String? _extractBody(RemoteMessage message) {
+    return message.notification?.body ?? message.data['body'] as String?;
   }
 }

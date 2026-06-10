@@ -11,11 +11,11 @@ import { UsersRepository } from '../../users/users.repository';
 import { NotificationJobsRepository } from '../notification-jobs.repository';
 import { NotificationsRepository } from '../notifications.repository';
 
-interface DispatchJobData {
+export interface DispatchJobData {
   jobId: string;
   userId: string;
-  title: string;
-  body: string;
+  title: string | null;
+  body: string | null;
   category: string;
 }
 
@@ -34,7 +34,11 @@ export class NotificationsWorker extends WorkerHost {
   }
 
   async process(job: Job<DispatchJobData>): Promise<void> {
-    const { jobId, userId, title, body, category } = job.data;
+    await this.dispatchNotification(job.data);
+  }
+
+  async dispatchNotification(data: DispatchJobData): Promise<void> {
+    const { jobId, userId, title, body, category } = data;
 
     if (title) {
       await this.notificationsRepo.create({
@@ -68,9 +72,7 @@ export class NotificationsWorker extends WorkerHost {
     }
 
     const sessions = await this.authSessionsRepo.findActiveByUserId(userId);
-    const fcmTokens = sessions
-      .map((s) => s.fcmToken)
-      .filter((t): t is string => !!t);
+    const fcmTokens = sessions.map((s) => s.fcmToken).filter((t): t is string => !!t);
 
     if (fcmTokens.length === 0) {
       await this.jobsRepo.markSent(jobId);
@@ -89,7 +91,7 @@ export class NotificationsWorker extends WorkerHost {
       if (failure.permanent) {
         const session = sessions.find((s) => s.fcmToken === failure.token);
         if (session) {
-          await this.authSessionsRepo.setFcmToken(session.id, null);
+          await this.authSessionsRepo.setFcmToken(String(session._id), null);
         }
       }
     }

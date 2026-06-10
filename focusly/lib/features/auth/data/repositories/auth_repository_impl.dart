@@ -56,6 +56,7 @@ class AuthRepository {
       fcmToken: fcmToken,
     );
     await _persistTokens(response);
+    await _syncFcmToken();
     return response;
   }
 
@@ -68,6 +69,7 @@ class AuthRepository {
       fcmToken: fcmToken,
     );
     await _persistTokens(response);
+    await _syncFcmToken();
     return response;
   }
 
