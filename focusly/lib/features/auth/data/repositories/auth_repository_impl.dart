@@ -106,11 +106,33 @@ class AuthRepository {
     final token = await SecureStorage.getAccessToken();
     if (token == null) return null;
     try {
-      final user = await _remoteDataSource.getMe();
+      final user = await fetchCurrentUser();
       await _syncFcmToken();
       return user;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<UserModel> fetchCurrentUser() => _remoteDataSource.getMe();
+
+  Future<bool> refreshSessionTokens() async {
+    final refreshToken = await SecureStorage.getRefreshToken();
+    final deviceId = await SecureStorage.getDeviceId();
+    if (refreshToken == null || deviceId == null) return false;
+
+    try {
+      final data = await _remoteDataSource.refreshSession(
+        refreshToken: refreshToken,
+        deviceId: deviceId,
+      );
+      await SecureStorage.saveTokens(
+        accessToken: data['accessToken'] as String,
+        refreshToken: data['refreshToken'] as String,
+      );
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 

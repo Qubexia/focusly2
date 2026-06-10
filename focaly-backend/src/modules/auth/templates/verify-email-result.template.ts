@@ -9,7 +9,7 @@ export function buildVerifyResultPage(success: boolean, appOpenUrl: string): str
   const icon = success ? '&#10003;' : '&#33;';
   const title = success ? 'Email verified' : 'Verification failed';
   const message = success
-    ? 'Your email address has been verified. You can return to the Focusly app and continue.'
+    ? 'Your email address has been verified. You can return to the Zakerly app and continue.'
     : 'This verification link is invalid, has expired, or was already used. Please open the app and request a new verification email.';
 
   return `<!doctype html>
@@ -17,7 +17,7 @@ export function buildVerifyResultPage(success: boolean, appOpenUrl: string): str
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${title} — Focusly</title>
+  <title>${title} — Zakerly</title>
 </head>
 <body style="margin:0;background:#0f0f17;font-family:Arial,Helvetica,sans-serif;color:#1a1a1a">
   <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box">

@@ -17,8 +17,11 @@ class SubscriptionRemoteDataSource {
     return null;
   }
 
-  Future<void> cancelSubscription() async {
-    await _dio.post(ApiEndpoints.subscriptionCancel);
+  Future<Map<String, dynamic>> cancelSubscription() async {
+    final response = await _dio.post(ApiEndpoints.subscriptionCancel);
+    final data = response.data;
+    if (data is Map<String, dynamic>) return data;
+    return const {};
   }
 
   Future<Map<String, dynamic>> createPaymobCheckout({
@@ -29,6 +32,23 @@ class SubscriptionRemoteDataSource {
       data: {'plan': plan},
     );
     return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> confirmPaymobSdk({
+    required String plan,
+    String? transactionId,
+  }) async {
+    final response = await _dio.post(
+      ApiEndpoints.subscriptionPaymobConfirmSdk,
+      data: {
+        'plan': plan,
+        if (transactionId != null && transactionId.isNotEmpty)
+          'transactionId': transactionId,
+      },
+    );
+    final data = response.data;
+    if (data is Map<String, dynamic>) return data;
+    return const {};
   }
 
   Future<String> createStripeCheckoutSession() async {

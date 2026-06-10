@@ -23,7 +23,6 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  late int _selectedIndex;
   final Set<int> _loadedTabs = {0};
 
   final List<Widget Function()> _viewBuilders = [
@@ -34,22 +33,22 @@ class _MainShellState extends State<MainShell> {
     () => const ProfilePage(),
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _selectedIndex = widget.initialIndex.clamp(0, 4);
-    _loadedTabs.add(_selectedIndex);
+  int _selectedIndexFromRoute(BuildContext context) {
+    final tab = int.tryParse(
+      GoRouterState.of(context).uri.queryParameters['tab'] ?? '',
+    );
+    return (tab ?? widget.initialIndex).clamp(0, 4);
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      _loadedTabs.add(index);
-    });
+    context.go('/home?tab=$index');
   }
 
   @override
   Widget build(BuildContext context) {
+    final selectedIndex = _selectedIndexFromRoute(context);
+    _loadedTabs.add(selectedIndex);
+
     return BlocProvider(
       create: (context) {
         final cubit = StreakCubit();
@@ -70,7 +69,7 @@ class _MainShellState extends State<MainShell> {
         child: Scaffold(
           extendBody: true, // Allows content to flow behind the floating nav bar
           body: IndexedStack(
-            index: _selectedIndex,
+            index: selectedIndex,
             children: List.generate(_viewBuilders.length, (index) {
               if (!_loadedTabs.contains(index)) {
                 return const SizedBox.shrink();
@@ -79,7 +78,7 @@ class _MainShellState extends State<MainShell> {
             }),
           ),
           bottomNavigationBar: _FloatingBottomNavBar(
-            selectedIndex: _selectedIndex,
+            selectedIndex: selectedIndex,
             onItemTapped: _onItemTapped,
           ),
         ),

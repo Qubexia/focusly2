@@ -1,4 +1,4 @@
-# focusly
+# Zakerly
 
 A new Flutter project.
 

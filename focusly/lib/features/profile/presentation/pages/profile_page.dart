@@ -10,6 +10,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
 import '../../../streaks/presentation/cubit/streak_cubit.dart';
 import '../../../streaks/presentation/cubit/streak_state.dart';
+import '../../../subscription/presentation/subscription_actions.dart';
 import '../widgets/edit_profile_sheet.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -88,11 +89,13 @@ class ProfilePage extends StatelessWidget {
                         value: '24',
                         color: AppColors.primary,
                       ),
-                      const _InfoTile(
+                      _InfoTile(
                         icon: Icons.verified_rounded,
                         title: 'Plan Status',
-                        value: 'Active',
-                        color: AppColors.secondary,
+                        value: user?.isPremium == true ? 'Premium' : 'Free',
+                        color: user?.isPremium == true
+                            ? AppColors.premium
+                            : AppColors.secondary,
                       ),
                     ],
                   ),
@@ -136,6 +139,13 @@ class ProfilePage extends StatelessWidget {
                         subtitle: _planLabel(user),
                         onTap: () => context.push('/premium'),
                       ),
+                      if (user?.isPremium == true)
+                        _InfoActionTile(
+                          icon: Icons.cancel_outlined,
+                          title: 'Cancel subscription',
+                          subtitle: 'Stop renewal at the end of the billing period',
+                          onTap: () => SubscriptionActions.cancelFromContext(context),
+                        ),
                       _InfoActionTile(
                         icon: Icons.settings_outlined,
                         title: 'Settings',
@@ -145,54 +155,58 @@ class ProfilePage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.surfaceDark : Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.borderDark
-                            : AppColors.borderLight,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 6,
-                          ),
-                          leading: Container(
-                            height: 42,
-                            width: 42,
-                            decoration: BoxDecoration(
-                              color: AppColors.error.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Icon(
-                              Icons.logout_rounded,
-                              color: AppColors.error,
-                            ),
-                          ),
-                          title: Text(
-                            'Log Out',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          subtitle: Text(
-                            'Sign out from this device.',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondaryLight,
-                            ),
-                          ),
-                          trailing: const Icon(Icons.chevron_right_rounded),
-                          onTap: () => _confirmLogout(context),
+                  Material(
+                    color: isDark ? AppColors.surfaceDark : Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    clipBehavior: Clip.antiAlias,
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.borderDark
+                              : AppColors.borderLight,
                         ),
-                      ],
+                      ),
+                      child: Column(
+                        children: [
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 6,
+                            ),
+                            leading: Container(
+                              height: 42,
+                              width: 42,
+                              decoration: BoxDecoration(
+                                color: AppColors.error.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Icon(
+                                Icons.logout_rounded,
+                                color: AppColors.error,
+                              ),
+                            ),
+                            title: Text(
+                              'Log Out',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Sign out from this device.',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: isDark
+                                    ? AppColors.textSecondaryDark
+                                    : AppColors.textSecondaryLight,
+                              ),
+                            ),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () => _confirmLogout(context),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -247,8 +261,8 @@ class _ProfileHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final name = user?.name.isNotEmpty == true ? user!.name : 'Focusly Student';
-    final email = user?.email ?? 'student@focusly.app';
+    final name = user?.name.isNotEmpty == true ? user!.name : 'Zakerly Student';
+    final email = user?.email ?? 'student@Zakerly.app';
 
     return Container(
       width: double.infinity,
@@ -461,15 +475,19 @@ class _InfoListCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+    return Material(
+      color: isDark ? AppColors.surfaceDark : Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          ),
         ),
+        child: Column(children: children),
       ),
-      child: Column(children: children),
     );
   }
 }

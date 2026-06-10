@@ -94,7 +94,7 @@ class _SplashPageState extends State<SplashPage> {
 
               // App Name
               Text(
-                'Focusly',
+                'Zakerly',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.5,

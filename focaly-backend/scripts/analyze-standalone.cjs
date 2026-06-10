@@ -69,7 +69,7 @@ require('dotenv').config();
       Authorization: 'Bearer ' + authToken,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ name: 'Focusly Checkout', description: 'Focusly mobile app' }),
+    body: JSON.stringify({ name: 'Zakerly Checkout', description: 'Zakerly mobile app' }),
   });
   console.log('\ncreate iframe', createIframe.status, await createIframe.text());
 

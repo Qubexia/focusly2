@@ -32,16 +32,16 @@ class NotificationService {
 
   static const AndroidNotificationChannel _mainChannel =
       AndroidNotificationChannel(
-        'focusly_main_channel',
-        'Focusly Notifications',
-        description: 'Main channel for Focusly alerts',
+        'Zakerly_main_channel',
+        'Zakerly Notifications',
+        description: 'Main channel for Zakerly alerts',
         importance: Importance.max,
       );
 
   static const AndroidNotificationChannel _scheduledChannel =
       AndroidNotificationChannel(
-        'focusly_scheduled_channel',
-        'Focusly Scheduled Notifications',
+        'Zakerly_scheduled_channel',
+        'Zakerly Scheduled Notifications',
         description: 'Channel for scheduled study reminders',
         importance: Importance.max,
       );
@@ -130,9 +130,9 @@ class NotificationService {
       body: body,
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
-          'focusly_main_channel',
-          'Focusly Notifications',
-          channelDescription: 'Main channel for Focusly alerts',
+          'Zakerly_main_channel',
+          'Zakerly Notifications',
+          channelDescription: 'Main channel for Zakerly alerts',
           importance: Importance.max,
           priority: Priority.high,
         ),
@@ -167,8 +167,8 @@ class NotificationService {
       scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
-          'focusly_scheduled_channel',
-          'Focusly Scheduled Notifications',
+          'Zakerly_scheduled_channel',
+          'Zakerly Scheduled Notifications',
           channelDescription: 'Channel for scheduled study reminders',
           importance: Importance.max,
           priority: Priority.high,
@@ -205,7 +205,7 @@ class NotificationService {
 
     await showNotification(
       id: message.messageId.hashCode,
-      title: notification.title ?? 'Focusly',
+      title: notification.title ?? 'Zakerly',
       body: notification.body ?? '',
       payload: message.data.isEmpty ? null : message.data.toString(),
     );

@@ -1,6 +1,6 @@
-# Focusly — Flutter Frontend Implementation Plan
+# Zakerly — Flutter Frontend Implementation Plan
 
-> Full backend-to-frontend mapping for the Focusly Study Management App.
+> Full backend-to-frontend mapping for the Zakerly Study Management App.
 > **Backend:** NestJS + MongoDB + Redis + BullMQ  
 > **Frontend:** Flutter (iOS + Android)
 

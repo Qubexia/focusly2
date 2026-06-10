@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
+import '../../../subscription/presentation/subscription_actions.dart';
 import '../widgets/edit_profile_sheet.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -112,6 +113,13 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: user?.isPremium == true ? 'Active' : 'Upgrade',
                       onTap: () => context.push('/premium'),
                     ),
+                    if (user?.isPremium == true)
+                      _SettingsTile(
+                        icon: Icons.cancel_outlined,
+                        title: 'Cancel subscription',
+                        subtitle: 'Stop renewal at period end',
+                        onTap: () => SubscriptionActions.cancelFromContext(context),
+                      ),
                     _SettingsTile(
                       icon: Icons.auto_awesome_rounded,
                       title: 'AI Notes',

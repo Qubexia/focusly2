@@ -1,11 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/premium/premium_status.dart';
+import '../../../../core/services/payment_flow_guard.dart';
+import '../../../../core/services/premium_refresh_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/premium_gate_sheet.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
 import '../../data/models/subscription_model.dart';
 import '../cubit/subscription_cubit.dart';
+import '../widgets/cancel_subscription_dialog.dart';
 
 class PaywallPage extends StatelessWidget {
   const PaywallPage({super.key, this.paymentResult});
@@ -15,10 +22,7 @@ class PaywallPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => SubscriptionCubit()..load(),
-      child: _PaywallView(paymentResult: paymentResult),
-    );
+    return _PaywallView(paymentResult: paymentResult);
   }
 }
 
@@ -35,25 +39,85 @@ class _PaywallViewState extends State<_PaywallView> {
   @override
   void initState() {
     super.initState();
+    context.read<SubscriptionCubit>().load();
     WidgetsBinding.instance.addPostFrameCallback((_) => _handlePaymentReturn());
+  }
+
+  @override
+  void didUpdateWidget(covariant _PaywallView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.paymentResult != oldWidget.paymentResult &&
+        widget.paymentResult != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _handlePaymentReturn());
+    }
   }
 
   void _handlePaymentReturn() {
     final result = widget.paymentResult;
     if (result == null) return;
 
-    context.read<AuthBloc>().add(const AuthCheckStatus());
-    context.read<SubscriptionCubit>().load();
+    if (result == '1') {
+      if (!PaymentFlowGuard.instance.claimSuccessHandling()) return;
+      unawaited(_syncPremiumAfterPayment(showSnackBar: true));
+      return;
+    }
 
-    final success = result == '1';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? 'Payment received. If Premium is not active yet, wait a moment and tap Refresh.'
-              : 'Payment was not completed.',
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Payment was not completed.'),
+          backgroundColor: AppColors.error,
         ),
-        backgroundColor: success ? AppColors.secondary : AppColors.error,
+      );
+  }
+
+  Future<void> _syncPremiumAfterPayment({required bool showSnackBar}) async {
+    await PaymentFlowGuard.instance.runSync(() async {
+      final authBloc = context.read<AuthBloc>();
+      await context.read<SubscriptionCubit>().load();
+
+      final becamePremium = await PremiumRefreshService.instance.refreshUntilPremium(
+        authBloc,
+      );
+
+      if (!mounted) return;
+
+      if (showSnackBar) {
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              becamePremium
+                  ? 'Premium is active. Enjoy your upgraded study flow.'
+                  : 'Payment received. Premium may take a moment to activate.',
+            ),
+            backgroundColor: becamePremium ? AppColors.secondary : AppColors.premium,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+
+      if (becamePremium) {
+        context.go('/home');
+      }
+    });
+  }
+
+  void _showFeedbackSnackBar({
+    required String message,
+    required SubscriptionFeedbackType type,
+  }) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: type == SubscriptionFeedbackType.error
+            ? AppColors.error
+            : AppColors.secondary,
+        duration: const Duration(seconds: 4),
       ),
     );
   }
@@ -68,31 +132,53 @@ class _PaywallViewState extends State<_PaywallView> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<SubscriptionCubit, SubscriptionState>(
+      listenWhen: (previous, current) =>
+          current.feedbackType != SubscriptionFeedbackType.none &&
+          current.feedbackMessage != null &&
+          (previous.feedbackType != current.feedbackType ||
+              previous.feedbackMessage != current.feedbackMessage),
       listener: (context, state) {
-        if (state.feedbackType == SubscriptionFeedbackType.none ||
-            state.feedbackMessage == null) {
-          return;
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(state.feedbackMessage!),
-            backgroundColor:
-                state.feedbackType == SubscriptionFeedbackType.error
-                ? AppColors.error
-                : AppColors.secondary,
-          ),
-        );
-        if (state.feedbackType == SubscriptionFeedbackType.success) {
-          context.read<AuthBloc>().add(const AuthCheckStatus());
-        }
+        final feedbackType = state.feedbackType;
+        final feedbackMessage = state.feedbackMessage!;
         context.read<SubscriptionCubit>().clearFeedback();
+
+        Future<void> handleFeedback() async {
+          if (feedbackType == SubscriptionFeedbackType.success) {
+            if (!PaymentFlowGuard.instance.claimSuccessHandling()) return;
+            _showFeedbackSnackBar(message: feedbackMessage, type: feedbackType);
+            await _syncPremiumAfterPayment(showSnackBar: false);
+            return;
+          }
+
+          _showFeedbackSnackBar(message: feedbackMessage, type: feedbackType);
+
+          if (feedbackType == SubscriptionFeedbackType.cancelSuccess) {
+            await PremiumRefreshService.instance.syncAfterSubscriptionChange(
+              context.read<AuthBloc>(),
+            );
+            if (!context.mounted) return;
+            await context.read<SubscriptionCubit>().load();
+          }
+        }
+
+        unawaited(handleFeedback());
       },
       builder: (context, state) {
-        final isPremium = state.subscription?.isActive == true;
+        final authState = context.watch<AuthBloc>().state;
+        final user = authState is AuthAuthenticated ? authState.user : null;
+        final subscription = state.subscription;
+        final isPremium = hasPremiumAccess(
+          authState: authState,
+          subscription: subscription,
+        );
+        final canCancel = subscription?.isActive == true;
+        final isPendingCancel =
+            subscription?.isCanceled == true &&
+            (user?.isPremium == true || subscription?.isActive == true);
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Focusly Premium'),
+            title: const Text('Zakerly Premium'),
             actions: [
               IconButton(
                 tooltip: 'Refresh status',
@@ -100,7 +186,7 @@ class _PaywallViewState extends State<_PaywallView> {
                     ? null
                     : () {
                         context.read<SubscriptionCubit>().load();
-                        context.read<AuthBloc>().add(const AuthCheckStatus());
+                        context.read<AuthBloc>().add(const AuthRefreshUser());
                       },
                 icon: const Icon(Icons.refresh_rounded),
               ),
@@ -172,16 +258,41 @@ class _PaywallViewState extends State<_PaywallView> {
                       ),
                     ],
                     if (isPremium) ...[
-                      _ActivePlanCard(subscription: state.subscription!),
-                      const SizedBox(height: 16),
-                      OutlinedButton(
-                        onPressed: state.isLoading
-                            ? null
-                            : () => context
-                                  .read<SubscriptionCubit>()
-                                  .cancelSubscription(),
-                        child: const Text('Cancel subscription'),
+                      _ActivePlanCard(
+                        subscription: subscription,
+                        premiumUntil: user?.premiumUntil,
+                        isPendingCancel: isPendingCancel,
                       ),
+                      if (canCancel) ...[
+                        const SizedBox(height: 16),
+                        OutlinedButton.icon(
+                          onPressed: state.isLoading
+                              ? null
+                              : () => handleCancelSubscription(
+                                    context,
+                                    onConfirm: () => context
+                                        .read<SubscriptionCubit>()
+                                        .cancelSubscription(),
+                                  ),
+                          icon: const Icon(Icons.cancel_outlined),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.error,
+                            side: const BorderSide(color: AppColors.error),
+                            minimumSize: const Size.fromHeight(48),
+                          ),
+                          label: const Text('Cancel subscription'),
+                        ),
+                      ],
+                      if (isPendingCancel) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          user?.premiumUntil != null
+                              ? 'Renewal canceled. Premium access until '
+                                  '${_formatDate(user!.premiumUntil!)}.'
+                              : 'Renewal canceled. Premium access remains for this period.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
                     ],
                   ],
                 ),
@@ -189,6 +300,10 @@ class _PaywallViewState extends State<_PaywallView> {
       },
     );
   }
+}
+
+String _formatDate(DateTime date) {
+  return '${date.day}/${date.month}/${date.year}';
 }
 
 class _HeroCard extends StatelessWidget {
@@ -268,12 +383,22 @@ class _FeatureRow extends StatelessWidget {
 }
 
 class _ActivePlanCard extends StatelessWidget {
-  const _ActivePlanCard({required this.subscription});
+  const _ActivePlanCard({
+    required this.subscription,
+    required this.premiumUntil,
+    required this.isPendingCancel,
+  });
 
-  final SubscriptionModel subscription;
+  final SubscriptionModel? subscription;
+  final DateTime? premiumUntil;
+  final bool isPendingCancel;
 
   @override
   Widget build(BuildContext context) {
+    final status = subscription?.status ?? (isPendingCancel ? 'canceled' : 'active');
+    final provider = subscription?.provider;
+    final renewsOn = subscription?.currentPeriodEnd ?? premiumUntil;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -281,9 +406,25 @@ class _ActivePlanCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
       ),
-      child: Text(
-        'Status: ${subscription.status}'
-        '${subscription.currentPeriodEnd != null ? '\nRenews: ${subscription.currentPeriodEnd}' : ''}',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isPendingCancel ? 'Premium (canceling)' : 'Premium active',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text('Status: $status'),
+          if (provider != null) Text('Provider: $provider'),
+          if (renewsOn != null)
+            Text(
+              isPendingCancel
+                  ? 'Access until: ${_formatDate(renewsOn)}'
+                  : 'Renews: ${_formatDate(renewsOn)}',
+            ),
+        ],
       ),
     );
   }

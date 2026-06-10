@@ -92,7 +92,7 @@ export interface PaymobHostedCheckoutView {
 }
 
 export function renderPaymobHostedCheckoutPage(view: PaymobHostedCheckoutView): string {
-  const title = 'Focusly Premium';
+  const title = 'Zakerly Premium';
   const amount = `${view.amountLabel} ${view.currency}`;
 
   return `<!DOCTYPE html>

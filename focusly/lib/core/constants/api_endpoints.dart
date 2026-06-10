@@ -147,6 +147,8 @@ class ApiEndpoints {
   static const String subscriptionCancel = '/v1/subscription/cancel';
   static const String subscriptionPaymobCheckout =
       '/v1/subscription/paymob/checkout';
+  static const String subscriptionPaymobConfirmSdk =
+      '/v1/subscription/paymob/confirm-sdk';
 
   // Uploads
   static const String uploadsPresign = '/v1/uploads/presign';

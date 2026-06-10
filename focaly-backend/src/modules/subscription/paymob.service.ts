@@ -160,7 +160,7 @@ export class PaymobService {
 
     const amountLabel = (session.amountCents / 100).toFixed(2);
     const planLabel =
-      session.plan === 'yearly' ? 'Focusly Premium — Yearly' : 'Focusly Premium — Monthly';
+      session.plan === 'yearly' ? 'Zakerly Premium — Yearly' : 'Zakerly Premium — Monthly';
     const checkoutBase = session.checkoutBaseUrl.replace(/\/$/, '');
 
     return renderPaymobHostedCheckoutPage({
@@ -171,9 +171,9 @@ export class PaymobService {
       payUrl: `${checkoutBase}/v1/subscription/paymob/open/${sessionId}/pay`,
       scriptUrl: `${checkoutBase}/v1/subscription/paymob/open/${sessionId}/checkout.js`,
       appSuccessUrl:
-        this.config.get<string>('paymob.appRedirectSuccess') ?? 'focusly://payment/success',
+        this.config.get<string>('paymob.appRedirectSuccess') ?? 'zakerly://payment/success',
       appFailureUrl:
-        this.config.get<string>('paymob.appRedirectFailure') ?? 'focusly://payment/failure',
+        this.config.get<string>('paymob.appRedirectFailure') ?? 'zakerly://payment/failure',
     });
   }
 
@@ -187,9 +187,9 @@ export class PaymobService {
     return renderPaymobHostedCheckoutScript({
       payUrl: `${checkoutBase}/v1/subscription/paymob/open/${sessionId}/pay`,
       appSuccessUrl:
-        this.config.get<string>('paymob.appRedirectSuccess') ?? 'focusly://payment/success',
+        this.config.get<string>('paymob.appRedirectSuccess') ?? 'zakerly://payment/success',
       appFailureUrl:
-        this.config.get<string>('paymob.appRedirectFailure') ?? 'focusly://payment/failure',
+        this.config.get<string>('paymob.appRedirectFailure') ?? 'zakerly://payment/failure',
     });
   }
 
@@ -256,7 +256,7 @@ export class PaymobService {
       this.checkoutSessions.delete(sessionId);
       return {
         success: true,
-        message: 'Payment successful. Return to the Focusly app and tap Refresh.',
+        message: 'Payment successful. Return to the Zakerly app and tap Refresh.',
       };
     }
 
@@ -375,8 +375,8 @@ export class PaymobService {
   }
 
   private buildBillingData(name: string, email: string): PaymobBillingData {
-    const parts = (name || 'Focusly User').trim().split(/\s+/);
-    const firstName = parts[0] ?? 'Focusly';
+    const parts = (name || 'Zakerly User').trim().split(/\s+/);
+    const firstName = parts[0] ?? 'Zakerly';
     const lastName = parts.slice(1).join(' ') || 'User';
 
     return {
@@ -408,9 +408,9 @@ export class PaymobService {
       payment_methods: [this.integrationId],
       items: [
         {
-          name: input.plan === 'yearly' ? 'Focusly Premium Yearly' : 'Focusly Premium Monthly',
+          name: input.plan === 'yearly' ? 'Zakerly Premium Yearly' : 'Zakerly Premium Monthly',
           amount: input.amountCents,
-          description: 'Focusly study app premium subscription',
+          description: 'Zakerly study app premium subscription',
           quantity: 1,
         },
       ],
@@ -485,9 +485,9 @@ export class PaymobService {
         merchant_order_id: input.specialReference,
         items: [
           {
-            name: input.plan === 'yearly' ? 'Focusly Premium Yearly' : 'Focusly Premium Monthly',
+            name: input.plan === 'yearly' ? 'Zakerly Premium Yearly' : 'Zakerly Premium Monthly',
             amount_cents: input.amountCents,
-            description: 'Focusly study app premium subscription',
+            description: 'Zakerly study app premium subscription',
             quantity: 1,
           },
         ],

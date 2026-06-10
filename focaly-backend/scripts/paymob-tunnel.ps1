@@ -42,8 +42,8 @@ if (-not (Test-Path $exe)) {
 
 Write-Host "Starting Cloudflare tunnel to http://localhost:$Port ..." -ForegroundColor Cyan
 
-$errLog = Join-Path $env:TEMP 'focusly-cloudflared.err.log'
-$outLog = Join-Path $env:TEMP 'focusly-cloudflared.out.log'
+$errLog = Join-Path $env:TEMP 'Zakerly-cloudflared.err.log'
+$outLog = Join-Path $env:TEMP 'Zakerly-cloudflared.out.log'
 foreach ($f in @($errLog, $outLog)) { if (Test-Path $f) { Remove-Item $f -Force } }
 
 $proc = Start-Process -FilePath $exe `

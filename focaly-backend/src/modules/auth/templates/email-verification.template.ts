@@ -2,25 +2,25 @@ import { MailMessage } from '../../../infrastructure/mailer/mailer.module';
 
 /**
  * Builds the verification email. `verifyUrl` is a ready-to-open link
- * (e.g. `focusly://verify-email?token=...`) that opens the app and verifies
+ * (e.g. `zakerly://verify-email?token=...`) that opens the app and verifies
  * the account. A plain-text copy is included for clients that strip the button.
  */
 export function buildVerificationEmail(to: string, verifyUrl: string): MailMessage {
   const text = [
-    'Welcome to Focusly!',
+    'Welcome to Zakerly!',
     '',
     'Verify your email by opening this link:',
     verifyUrl,
     '',
     'This link expires in 1 hour.',
-    "If you didn't create a Focusly account, you can safely ignore this email.",
+    "If you didn't create a Zakerly account, you can safely ignore this email.",
   ].join('\n');
 
   const html = `
   <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#1a1a1a">
     <h2 style="margin:0 0 8px">Verify your email</h2>
     <p style="margin:0 0 20px;color:#444">
-      Tap the button below to verify your Focusly account and get started.
+      Tap the button below to verify your Zakerly account and get started.
     </p>
     <p style="text-align:center;margin:28px 0">
       <a href="${verifyUrl}"
@@ -35,13 +35,13 @@ export function buildVerificationEmail(to: string, verifyUrl: string): MailMessa
       ${verifyUrl}
     </p>
     <p style="color:#aaa;font-size:12px;margin:0">
-      This link expires in 1 hour. If you didn't create a Focusly account, you can ignore this email.
+      This link expires in 1 hour. If you didn't create a Zakerly account, you can ignore this email.
     </p>
   </div>`;
 
   return {
     to,
-    subject: 'Verify your Focusly email',
+    subject: 'Verify your Zakerly email',
     text,
     html,
   };

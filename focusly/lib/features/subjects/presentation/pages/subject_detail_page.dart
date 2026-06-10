@@ -554,15 +554,18 @@ class _ChapterTile extends StatelessWidget {
         ? 'Analyzing PDF…'
         : (chapter.completed ? 'Completed' : 'In progress');
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+    return Material(
+      color: isDark ? AppColors.surfaceDark : Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          ),
         ),
-      ),
-      child: ListTile(
+        child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Checkbox(
           value: chapter.completed,
@@ -618,6 +621,7 @@ class _ChapterTile extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

@@ -105,6 +105,25 @@ class AuthRemoteDataSource {
     return UserModel.fromJson(response.data as Map<String, dynamic>);
   }
 
+  Future<Map<String, dynamic>> refreshSession({
+    required String refreshToken,
+    required String deviceId,
+  }) async {
+    final response = await Dio(
+      BaseOptions(baseUrl: ApiEndpoints.baseUrl),
+    ).post(
+      ApiEndpoints.refresh,
+      data: {
+        'refreshToken': refreshToken,
+        'deviceId': deviceId,
+      },
+      options: Options(
+        headers: {'Authorization': 'Bearer $refreshToken'},
+      ),
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
   Future<void> updateFcmToken({required String fcmToken}) async {
     await _dio.post(
       ApiEndpoints.usersFcmToken,

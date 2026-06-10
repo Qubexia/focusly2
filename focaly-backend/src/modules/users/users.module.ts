@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuthModule } from '../auth/auth.module';
+import { SubscriptionModule } from '../subscription/subscription.module';
 
 import { User, UserSchema } from './schemas/user.schema';
 import { UsersController } from './users.controller';
@@ -12,6 +13,7 @@ import { UsersService } from './users.service';
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     forwardRef(() => AuthModule),
+    forwardRef(() => SubscriptionModule),
   ],
   controllers: [UsersController],
   providers: [UsersRepository, UsersService],

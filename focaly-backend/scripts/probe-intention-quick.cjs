@@ -23,16 +23,16 @@ async function main() {
     return;
   }
 
-  const specialReference = `focusly-user-${USER_ID}-${crypto.randomUUID()}`;
+  const specialReference = `Zakerly-user-${USER_ID}-${crypto.randomUUID()}`;
   const body = {
     amount: 9900,
     currency: 'EGP',
     payment_methods: [INTEGRATION_ID],
     items: [
       {
-        name: 'Focusly Premium Monthly',
+        name: 'Zakerly Premium Monthly',
         amount: 9900,
-        description: 'Focusly study app premium subscription',
+        description: 'Zakerly study app premium subscription',
         quantity: 1,
       },
     ],

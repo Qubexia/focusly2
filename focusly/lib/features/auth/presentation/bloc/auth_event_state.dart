@@ -14,6 +14,21 @@ class AuthCheckStatus extends AuthEvent {
   const AuthCheckStatus();
 }
 
+/// Re-fetch `/users/me` without clearing the session (e.g. after payment).
+class AuthRefreshUser extends AuthEvent {
+  const AuthRefreshUser();
+}
+
+/// Apply a freshly fetched user profile to the current session.
+class AuthUserSynced extends AuthEvent {
+  final UserModel user;
+
+  const AuthUserSynced(this.user);
+
+  @override
+  List<Object?> get props => [user.id, user.plan, user.premiumUntil];
+}
+
 class AuthLoginRequested extends AuthEvent {
   final String email;
   final String password;
@@ -91,7 +106,7 @@ class AuthAuthenticated extends AuthState {
   const AuthAuthenticated({required this.user});
 
   @override
-  List<Object?> get props => [user.id];
+  List<Object?> get props => [user.id, user.plan, user.premiumUntil];
 }
 
 class AuthUnauthenticated extends AuthState {

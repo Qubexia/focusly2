@@ -17,5 +17,5 @@ export default registerAs('app', () => ({
   // Dev (device): set to your PC LAN IP. Prod: your public HTTPS host.
   verifyEmailUrl: process.env.APP_VERIFY_EMAIL_URL ?? '',
   // Deep link used by the "Open the app" button on the verification result page.
-  appOpenUrl: process.env.APP_OPEN_URL ?? 'focusly://login',
+  appOpenUrl: process.env.APP_OPEN_URL ?? 'zakerly://login',
 }));

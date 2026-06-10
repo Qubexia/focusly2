@@ -29,7 +29,7 @@ async function main(): Promise<void> {
 
     const user =
       (await users.findActiveByEmail('abdelmottale3@gmail.com')) ??
-      (await users.findActiveByEmail('test@focusly.app'));
+      (await users.findActiveByEmail('test@Zakerly.app'));
     if (!user) {
       console.error('✗ No test user. Register once, then rerun.');
       process.exitCode = 1;

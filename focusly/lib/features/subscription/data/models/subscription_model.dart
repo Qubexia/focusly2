@@ -12,6 +12,8 @@ class SubscriptionModel {
   bool get isActive =>
       status == 'active' || status == 'trialing';
 
+  bool get isCanceled => status == 'canceled';
+
   factory SubscriptionModel.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
       return const SubscriptionModel(status: 'none');

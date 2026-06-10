@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/premium/premium_status.dart';
+import '../../../../core/services/premium_refresh_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
@@ -14,6 +16,7 @@ import '../../../streaks/presentation/cubit/streak_cubit.dart';
 import '../../../streaks/presentation/cubit/streak_state.dart';
 import '../../../streaks/presentation/widgets/streak_detail_sheet.dart';
 import '../../../subjects/data/models/subject_model.dart';
+import '../../../subscription/presentation/cubit/subscription_cubit.dart';
 import '../cubit/home_cubit.dart';
 
 class HomeView extends StatelessWidget {
@@ -35,13 +38,14 @@ class _HomeContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final authState = context.watch<AuthBloc>().state;
-    final user = authState is AuthAuthenticated ? authState.user : null;
-    final isPremium = user?.isPremium ?? false;
+    final subscription = context.watch<SubscriptionCubit>().state.subscription;
+    final isPremium = hasPremiumAccess(
+      authState: authState,
+      subscription: subscription,
+    );
 
     return BlocListener<AuthBloc, AuthState>(
-      listenWhen: (previous, current) =>
-          current is AuthAuthenticated &&
-          previous.runtimeType != current.runtimeType,
+      listenWhen: premiumStatusChanged,
       listener: (context, state) {
         context.read<HomeCubit>().loadHome();
       },
@@ -115,7 +119,7 @@ class _HomeContent extends StatelessWidget {
                     },
                   ).animate().fadeIn(delay: 250.ms).slideX(begin: -0.1),
                   const SizedBox(height: 32),
-                  const _QuickActions()
+                  _QuickActions(isPremium: isPremium)
                       .animate()
                       .fadeIn(delay: 300.ms)
                       .scale(begin: const Offset(0.98, 0.98)),
@@ -777,7 +781,9 @@ class _UpcomingChip extends StatelessWidget {
 }
 
 class _QuickActions extends StatelessWidget {
-  const _QuickActions();
+  const _QuickActions({required this.isPremium});
+
+  final bool isPremium;
 
   @override
   Widget build(BuildContext context) {
@@ -831,17 +837,18 @@ class _QuickActions extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        const Row(
+        Row(
           children: [
             Expanded(
               child: _QuickActionCard(
                 label: 'AI Notes',
                 icon: Icons.auto_awesome_rounded,
                 route: '/ai-notes',
+                requiresPremium: !isPremium,
               ),
             ),
-            SizedBox(width: 12),
-            Expanded(child: SizedBox()),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox()),
           ],
         ),
       ],
@@ -854,18 +861,30 @@ class _QuickActionCard extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.route,
+    this.requiresPremium = false,
   });
 
   final String label;
   final IconData icon;
   final String route;
+  final bool requiresPremium;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return InkWell(
-      onTap: () => context.push(route),
+      onTap: () {
+        if (requiresPremium) {
+          context.push('/premium');
+          return;
+        }
+        if (route.startsWith('/home')) {
+          context.go(route);
+        } else {
+          context.push(route);
+        }
+      },
       borderRadius: BorderRadius.circular(22),
       child: Ink(
         padding: const EdgeInsets.all(18),
@@ -879,13 +898,27 @@ class _QuickActionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppColors.primary),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: AppColors.primary),
+                ),
+                if (requiresPremium) ...[
+                  const Spacer(),
+                  Icon(
+                    Icons.lock_rounded,
+                    size: 16,
+                    color: isDark
+                        ? AppColors.textTertiaryDark
+                        : AppColors.textTertiaryLight,
+                  ),
+                ],
+              ],
             ),
             const SizedBox(height: 16),
             Text(
@@ -1100,7 +1133,7 @@ class _HomePremiumPromoCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Upgrade to Focusly Premium',
+                      'Upgrade to Zakerly Premium',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                             color: Colors.white,

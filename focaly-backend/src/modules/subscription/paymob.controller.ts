@@ -21,6 +21,7 @@ import { EmailVerifiedGuard } from '../../common/guards/email-verified.guard';
 
 import { PaymobCardPayDto } from './dto/paymob-card-pay.dto';
 import { PaymobCheckoutDto } from './dto/paymob-checkout.dto';
+import { PaymobConfirmSdkDto } from './dto/paymob-confirm-sdk.dto';
 import {
   parseUserIdFromSpecialReference,
   verifyResponseCallbackHmac,
@@ -80,6 +81,16 @@ export class PaymobController {
       dto.checkoutBaseUrl,
       requestOrigin,
     );
+  }
+
+  /** Activate premium immediately after a successful native Paymob SDK payment. */
+  @UseGuards(EmailVerifiedGuard)
+  @Post('confirm-sdk')
+  async confirmSdkPayment(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body() dto: PaymobConfirmSdkDto,
+  ) {
+    return this.subscriptionsService.activatePaymobFromSdk(user.id, dto.plan, dto.transactionId);
   }
 
   /** Hosted card checkout page (replaces broken Paymob /standalone/ SPA on mobile). */
@@ -190,8 +201,8 @@ export class PaymobController {
 
     const success = query.success === 'true';
     const appUrl = success
-      ? (process.env.PAYMOB_APP_SUCCESS_URL ?? 'focusly://payment/success')
-      : (process.env.PAYMOB_APP_FAILURE_URL ?? 'focusly://payment/failure');
+      ? (process.env.PAYMOB_APP_SUCCESS_URL ?? 'zakerly://payment/success')
+      : (process.env.PAYMOB_APP_FAILURE_URL ?? 'zakerly://payment/failure');
 
     res.send(this.renderHtml(success, success ? 'Payment successful' : 'Payment failed', appUrl));
   }
@@ -199,9 +210,9 @@ export class PaymobController {
   private renderHtml(success: boolean, message: string, deepLink?: string): string {
     const color = success ? '#00B894' : '#E17055';
     const linkBlock = deepLink
-      ? `<p><a href="${deepLink}" style="color:#6C5CE7;font-weight:bold;">Return to Focusly app</a></p>`
+      ? `<p><a href="${deepLink}" style="color:#6C5CE7;font-weight:bold;">Return to Zakerly app</a></p>`
       : '<p>You can close this page and return to the app, then tap Refresh on Premium.</p>';
 
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Focusly Payment</title></head><body style="font-family:system-ui,sans-serif;text-align:center;padding:48px 24px;"><h1 style="color:${color}">${message}</h1>${linkBlock}</body></html>`;
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Zakerly Payment</title></head><body style="font-family:system-ui,sans-serif;text-align:center;padding:48px 24px;"><h1 style="color:${color}">${message}</h1>${linkBlock}</body></html>`;
   }
 }

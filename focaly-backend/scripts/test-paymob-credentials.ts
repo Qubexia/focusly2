@@ -18,7 +18,7 @@ async function main(): Promise<void> {
 
     const user =
       (await users.findActiveByEmail('abdelmottale3@gmail.com')) ??
-      (await users.findActiveByEmail('test@focusly.app'));
+      (await users.findActiveByEmail('test@Zakerly.app'));
 
     if (!user) {
       console.error('No test user found. Register/login once, then rerun npm run paymob:test.');

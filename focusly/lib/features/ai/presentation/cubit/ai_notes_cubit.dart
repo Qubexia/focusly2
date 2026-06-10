@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/services/upload_service.dart';
+import '../../../../core/services/premium_refresh_service.dart';
 import '../../data/models/ai_artifact_model.dart';
 import '../../data/repositories/ai_repository.dart';
 import '../../../subjects/data/models/subject_model.dart';
@@ -33,6 +34,7 @@ class AiNotesCubit extends Cubit<AiNotesState> {
   Future<void> loadHub() async {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
+      await PremiumRefreshService.instance.refreshSessionTokens();
       final subjects = await _subjectsRepository.getSubjects();
       emit(
         state.copyWith(
@@ -123,7 +125,7 @@ class AiNotesCubit extends Cubit<AiNotesState> {
         emit(state.copyWith(jobProgress: ((i + 1) / state.pickedImagePaths.length) * 0.5));
       }
 
-      final jobId = await _aiRepository.submitJob(
+      final jobId = await _submitJobWithPremiumRetry(
         imageKeys: keys,
         subjectId: state.selectedSubjectId,
       );
@@ -150,6 +152,27 @@ class AiNotesCubit extends Cubit<AiNotesState> {
           errorMessage: 'Failed to submit AI job.',
         ),
       );
+    }
+  }
+
+  Future<String> _submitJobWithPremiumRetry({
+    required List<String> imageKeys,
+    required String? subjectId,
+  }) async {
+    try {
+      return await _aiRepository.submitJob(
+        imageKeys: imageKeys,
+        subjectId: subjectId,
+      );
+    } on DioException catch (e) {
+      if (isPremiumRequiredError(e.response?.data) &&
+          await PremiumRefreshService.instance.refreshSessionTokens()) {
+        return _aiRepository.submitJob(
+          imageKeys: imageKeys,
+          subjectId: subjectId,
+        );
+      }
+      rethrow;
     }
   }
 

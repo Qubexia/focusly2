@@ -32,7 +32,7 @@ flutter pub get
 
 ## Native SDK install (required once)
 
-Paymob hosts the native binaries on SharePoint (login required). Run the helper script from the `focusly/` folder:
+Paymob hosts the native binaries on SharePoint (login required). Run the helper script from the `Zakerly/` folder:
 
 ```powershell
 .\scripts\setup-paymob-native.ps1 -OpenDownloads

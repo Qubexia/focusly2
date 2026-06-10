@@ -14,6 +14,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       : _authRepository = authRepository ?? AuthRepository(),
         super(const AuthInitial()) {
     on<AuthCheckStatus>(_onCheckStatus);
+    on<AuthRefreshUser>(_onRefreshUser);
+    on<AuthUserSynced>(_onUserSynced);
     on<AuthLoginRequested>(_onLogin);
     on<AuthRegisterRequested>(_onRegister);
     on<AuthGoogleLoginRequested>(_onGoogleLogin);
@@ -37,6 +39,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (_) {
       emit(const AuthUnauthenticated());
     }
+  }
+
+  Future<void> _onRefreshUser(
+    AuthRefreshUser event,
+    Emitter<AuthState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! AuthAuthenticated) return;
+
+    try {
+      await _authRepository.refreshSessionTokens();
+      final user = await _authRepository.fetchCurrentUser();
+      emit(AuthAuthenticated(user: user));
+    } catch (_) {
+      // Keep the current session if refresh fails.
+    }
+  }
+
+  void _onUserSynced(AuthUserSynced event, Emitter<AuthState> emit) {
+    final currentState = state;
+    if (currentState is! AuthAuthenticated) return;
+    if (currentState.user.id != event.user.id) return;
+    emit(AuthAuthenticated(user: event.user));
   }
 
   Future<void> _onLogin(

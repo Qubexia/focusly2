@@ -67,7 +67,8 @@ class ApiClient {
 /// Interceptor that:
 /// 1. Attaches Bearer token to every request
 /// 2. On 401: attempts token refresh, retries original request
-/// 3. On refresh failure: clears tokens
+/// 3. On 403 PREMIUM_REQUIRED: refreshes JWT (updates plan claim) and retries once
+/// 4. On refresh failure after 401: clears tokens
 class _AuthInterceptor extends Interceptor {
   _AuthInterceptor(this._dio);
 
@@ -102,30 +103,62 @@ class _AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401 && !_isRefreshing) {
-      _isRefreshing = true;
-      try {
-        final refreshed = await _attemptRefresh();
-        if (refreshed) {
-          // Retry the original request with new token
-          final token = await SecureStorage.getAccessToken();
-          final retryOptions = err.requestOptions;
-          retryOptions.headers['Authorization'] = 'Bearer $token';
-          // FormData is single-use (its stream is consumed on the first send),
-          // so clone it before retrying a multipart upload after a refresh.
-          if (retryOptions.data is FormData) {
-            retryOptions.data = (retryOptions.data as FormData).clone();
-          }
-          final response = await _dio.fetch(retryOptions);
-          _isRefreshing = false;
-          return handler.resolve(response);
-        }
-      } catch (_) {
-        // Refresh failed — clear tokens
+      final resolved = await _refreshAndRetry(err, handler);
+      if (resolved) return;
+    }
+
+    if (err.response?.statusCode == 403 &&
+        _isPremiumRequired(err) &&
+        err.requestOptions.extra['premiumRetried'] != true) {
+      final resolved = await _refreshAndRetry(
+        err,
+        handler,
+        markPremiumRetried: true,
+      );
+      if (resolved) return;
+    }
+
+    handler.next(err);
+  }
+
+  bool _isPremiumRequired(DioException err) {
+    final data = err.response?.data;
+    if (data is! Map<String, dynamic>) return false;
+    return data['code'] == 'PREMIUM_REQUIRED';
+  }
+
+  Future<bool> _refreshAndRetry(
+    DioException err,
+    ErrorInterceptorHandler handler, {
+    bool markPremiumRetried = false,
+  }) async {
+    if (_isRefreshing) return false;
+
+    _isRefreshing = true;
+    try {
+      final refreshed = await _attemptRefresh();
+      if (!refreshed) return false;
+
+      final token = await SecureStorage.getAccessToken();
+      final retryOptions = err.requestOptions;
+      if (markPremiumRetried) {
+        retryOptions.extra['premiumRetried'] = true;
+      }
+      retryOptions.headers['Authorization'] = 'Bearer $token';
+      if (retryOptions.data is FormData) {
+        retryOptions.data = (retryOptions.data as FormData).clone();
+      }
+      final response = await _dio.fetch(retryOptions);
+      handler.resolve(response);
+      return true;
+    } catch (_) {
+      if (err.response?.statusCode == 401) {
         await SecureStorage.clearTokens();
       }
+      return false;
+    } finally {
       _isRefreshing = false;
     }
-    handler.next(err);
   }
 
   Future<bool> _attemptRefresh() async {

@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
+import { SubscriptionModule } from '../subscription/subscription.module';
 import { UsersModule } from '../users/users.module';
 
 import { AuthSessionsRepository } from './auth-sessions.repository';
@@ -19,6 +20,7 @@ import { AuthSession, AuthSessionSchema } from './schemas/auth-session.schema';
       { name: AuditLog.name, schema: AuditLogSchema },
     ]),
     forwardRef(() => UsersModule),
+    forwardRef(() => SubscriptionModule),
   ],
   controllers: [AuthController],
   providers: [AuthService, AuthSessionsRepository, JwtService, PasswordService, GoogleAuthService],

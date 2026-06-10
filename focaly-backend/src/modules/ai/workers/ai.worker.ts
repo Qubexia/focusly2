@@ -134,6 +134,8 @@ export class AiWorker extends WorkerHost {
           pdfBase64List: files,
           instruction,
           config: studyConfig,
+          detailLevel: aiJob.detailLevel,
+          language: aiJob.language,
         });
       } else {
         // Images use AWS Textract OCR, then an OpenAI-compatible model.
@@ -396,6 +398,61 @@ ${args.instruction}`,
     pdfBase64List: string[];
     instruction: string;
     config: StudyConfig;
+    detailLevel?: string | null;
+    language?: string | null;
+  }): Promise<StudyPack> {
+    const attempts: Array<{ instruction: string; config: StudyConfig }> = [
+      { instruction: args.instruction, config: args.config },
+    ];
+    const detail = (args.detailLevel ?? 'medium').toLowerCase();
+    if (detail !== 'short') {
+      const shortConfig = this.studyConfigFor('short');
+      attempts.push({
+        instruction: this.buildInstruction(args.language, shortConfig),
+        config: shortConfig,
+      });
+    }
+
+    let lastError: Error | null = null;
+    for (const attempt of attempts) {
+      try {
+        return await this.requestStudyPackFromPdfsGemini({
+          apiKey: args.apiKey,
+          model: args.model,
+          temperature: args.temperature,
+          systemPrompt: args.systemPrompt,
+          pdfBase64List: args.pdfBase64List,
+          instruction: attempt.instruction,
+          config: attempt.config,
+        });
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error('Gemini PDF analysis failed.');
+        const retryable =
+          lastError.message.includes('(503)') ||
+          lastError.message.includes('UNAVAILABLE') ||
+          lastError.message.includes('empty response') ||
+          lastError.message.includes('invalid JSON') ||
+          lastError.message.includes('no usable study content');
+        if (!retryable || attempt === attempts[attempts.length - 1]) {
+          throw lastError;
+        }
+        this.logger.warn(
+          `Gemini PDF attempt failed, retrying with shorter output: ${lastError.message}`,
+        );
+      }
+    }
+
+    throw lastError ?? new Error('Gemini PDF analysis failed.');
+  }
+
+  private async requestStudyPackFromPdfsGemini(args: {
+    apiKey: string;
+    model: string;
+    temperature: number;
+    systemPrompt: string | null;
+    pdfBase64List: string[];
+    instruction: string;
+    config: StudyConfig;
   }): Promise<StudyPack> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
       args.model,
@@ -418,26 +475,42 @@ ${args.instruction}`,
       generationConfig: {
         temperature: args.temperature,
         responseMimeType: 'application/json',
-        maxOutputTokens: 8192,
+        maxOutputTokens: 16_384,
       },
     };
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': args.apiKey },
-      body: JSON.stringify(body),
-    });
+    const maxHttpAttempts = 3;
+    let res: Response | null = null;
+    for (let httpAttempt = 0; httpAttempt < maxHttpAttempts; httpAttempt++) {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': args.apiKey },
+        body: JSON.stringify(body),
+      });
 
-    if (!res.ok) {
-      const detail = await res.text();
-      throw new Error(`Gemini request failed (${res.status}): ${detail.slice(0, 300)}`);
+      if (res.ok || (res.status !== 503 && res.status !== 429)) {
+        break;
+      }
+
+      if (httpAttempt < maxHttpAttempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, (httpAttempt + 1) * 1500));
+      }
     }
 
-    const json = (await res.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    if (!res!.ok) {
+      const detail = await res!.text();
+      throw new Error(`Gemini request failed (${res!.status}): ${detail.slice(0, 300)}`);
+    }
+
+    const json = (await res!.json()) as {
+      candidates?: Array<{
+        content?: { parts?: Array<{ text?: string }> };
+        finishReason?: string;
+      }>;
       usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
     };
 
+    const finishReason = json.candidates?.[0]?.finishReason ?? '';
     const raw =
       json.candidates?.[0]?.content?.parts
         ?.map((p) => p.text ?? '')
@@ -446,11 +519,18 @@ ${args.instruction}`,
     if (raw.length === 0) {
       throw new Error('Gemini returned an empty response for the PDF.');
     }
+    if (finishReason === 'MAX_TOKENS') {
+      throw new Error('Gemini response was truncated (MAX_TOKENS).');
+    }
 
-    return this.parseStudyPackFromRaw(raw, args.config, {
+    const pack = this.parseStudyPackFromRaw(raw, args.config, {
       tokensIn: json.usageMetadata?.promptTokenCount,
       tokensOut: json.usageMetadata?.candidatesTokenCount,
     });
+    if (!pack.summary && pack.flashcards.length === 0 && pack.questions.length === 0) {
+      throw new Error('Gemini returned no usable study content for the PDF.');
+    }
+    return pack;
   }
 
   /** Parses (and defensively repairs) the JSON study pack from a raw string. */
@@ -459,14 +539,7 @@ ${args.instruction}`,
     config: StudyConfig,
     usage: { tokensIn?: number; tokensOut?: number },
   ): StudyPack {
-    let parsed: Record<string, unknown>;
-    try {
-      parsed = JSON.parse(raw) as Record<string, unknown>;
-    } catch {
-      // Defensive fallback: try to extract the first JSON object.
-      const match = raw.match(/\{[\s\S]*\}/);
-      parsed = match ? (JSON.parse(match[0]) as Record<string, unknown>) : {};
-    }
+    const parsed = this.parseStudyPackJson(raw);
 
     const summary = asText(parsed.summary).slice(0, config.summaryMaxChars);
 
@@ -509,5 +582,58 @@ ${args.instruction}`,
       tokensIn: usage.tokensIn,
       tokensOut: usage.tokensOut,
     };
+  }
+
+  /** Best-effort JSON parse for model output (handles fences and truncation). */
+  private parseStudyPackJson(raw: string): Record<string, unknown> {
+    const cleaned = raw
+      .trim()
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim();
+
+    const candidates = [cleaned];
+    const objectMatch = cleaned.match(/\{[\s\S]*/);
+    if (objectMatch && objectMatch[0] !== cleaned) {
+      candidates.push(objectMatch[0]);
+    }
+
+    for (const candidate of candidates) {
+      try {
+        return JSON.parse(candidate) as Record<string, unknown>;
+      } catch {
+        const salvaged = this.salvageTruncatedJson(candidate);
+        if (salvaged !== candidate) {
+          try {
+            return JSON.parse(salvaged) as Record<string, unknown>;
+          } catch {
+            // try next candidate
+          }
+        }
+      }
+    }
+
+    throw new Error('Gemini returned invalid JSON for the PDF study pack.');
+  }
+
+  /** Closes unbalanced brackets/braces when the model output was cut off mid-stream. */
+  private salvageTruncatedJson(text: string): string {
+    let s = text.trim().replace(/,\s*$/, '');
+    s = s.replace(/,\s*"[^"]*"?\s*:\s*"[^"]*$/s, '');
+    s = s.replace(/,\s*\{[^}]*$/s, '');
+
+    const openBrackets = (s.match(/\[/g) ?? []).length;
+    const closeBrackets = (s.match(/\]/g) ?? []).length;
+    const openBraces = (s.match(/\{/g) ?? []).length;
+    const closeBraces = (s.match(/\}/g) ?? []).length;
+
+    for (let i = 0; i < openBrackets - closeBrackets; i++) {
+      s += ']';
+    }
+    for (let i = 0; i < openBraces - closeBraces; i++) {
+      s += '}';
+    }
+
+    return s;
   }
 }

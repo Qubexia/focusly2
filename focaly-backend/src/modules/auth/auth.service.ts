@@ -7,6 +7,7 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  forwardRef,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
@@ -18,6 +19,7 @@ import { CurrentUserPayload } from '../../common/decorators/current-user.decorat
 import { ERROR_CODES } from '../../common/dto/api-response';
 import { MAILER, Mailer } from '../../infrastructure/mailer/mailer.module';
 import { REDIS_CLIENT } from '../../infrastructure/redis/redis.tokens';
+import { SubscriptionsService } from '../subscription/subscriptions.service';
 import { UsersRepository } from '../users/users.repository';
 
 import { AuthSessionsRepository } from './auth-sessions.repository';
@@ -56,6 +58,8 @@ export class AuthService {
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     @InjectModel(AuditLog.name) private readonly auditLogModel: Model<AuditLogDocument>,
     private readonly config: ConfigService,
+    @Inject(forwardRef(() => SubscriptionsService))
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
   async register(
@@ -236,14 +240,20 @@ export class AuthService {
       throw this.unauthorized('User no longer exists.');
     }
 
+    await this.subscriptionsService.syncUserPlanFromSubscription(claims.sub);
+    const syncedUser = await this.usersRepository.findActiveById(claims.sub);
+    if (!syncedUser) {
+      throw this.unauthorized('User no longer exists.');
+    }
+
     const tokens = this.jwtService.signTokenPair(
       {
-        id: getDocumentId(user),
-        email: user.email,
-        role: user.role,
-        plan: user.plan,
-        premiumUntil: user.premiumUntil,
-        emailVerified: user.emailVerified,
+        id: getDocumentId(syncedUser),
+        email: syncedUser.email,
+        role: syncedUser.role,
+        plan: syncedUser.plan,
+        premiumUntil: syncedUser.premiumUntil,
+        emailVerified: syncedUser.emailVerified,
       },
       getDocumentId(session),
       dto.deviceId,
@@ -337,7 +347,7 @@ export class AuthService {
       ok = false;
     }
 
-    const appOpenUrl = this.config.get<string>('app.appOpenUrl') ?? 'focusly://login';
+    const appOpenUrl = this.config.get<string>('app.appOpenUrl') ?? 'zakerly://login';
     return { status: ok ? 200 : 400, html: buildVerifyResultPage(ok, appOpenUrl) };
   }
 

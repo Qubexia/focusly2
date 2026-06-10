@@ -63,7 +63,7 @@ describe('AuthService refresh rotation', () => {
         }),
       } as never,
       { create: auditCreate } as never,
-      { get: jest.fn(() => 'focusly://verify-email') } as never,
+      { get: jest.fn(() => 'zakerly://verify-email') } as never,
     );
 
     const claims: RefreshTokenClaims = {

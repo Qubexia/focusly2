@@ -24,14 +24,14 @@ async function j(url, body) {
 }
 
 async function attempt(authToken, integrationId, card, uuid) {
-  const merchantOrderId = `focusly-user-${USER_ID}-${uuid}`;
+  const merchantOrderId = `Zakerly-user-${USER_ID}-${uuid}`;
   const order = await j('https://accept.paymob.com/api/ecommerce/orders', {
     auth_token: authToken,
     delivery_needed: false,
     amount_cents: AMOUNT,
     currency: 'EGP',
     merchant_order_id: merchantOrderId,
-    items: [{ name: 'Focusly Premium Monthly', amount_cents: AMOUNT, quantity: 1, description: 'premium' }],
+    items: [{ name: 'Zakerly Premium Monthly', amount_cents: AMOUNT, quantity: 1, description: 'premium' }],
   });
   if (!order.data.id) {
     return { ok: false, stage: 'order', detail: order.data };

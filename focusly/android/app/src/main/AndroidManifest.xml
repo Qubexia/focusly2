@@ -6,7 +6,7 @@
         android:maxSdkVersion="32" />
 
     <application
-        android:label="focusly"
+        android:label="Zakerly"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:usesCleartextTraffic="true">
@@ -31,12 +31,12 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Paymob / payment return: focusly://payment/success | focusly://payment/failure -->
+            <!-- Paymob / payment return: zakerly://payment/success | zakerly://payment/failure -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="focusly" android:host="payment"/>
+                <data android:scheme="zakerly" android:host="payment"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

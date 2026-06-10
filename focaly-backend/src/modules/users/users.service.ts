@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { CurrentUserPayload } from '../../common/decorators/current-user.decorator';
 import { ERROR_CODES } from '../../common/dto/api-response';
 import { AuthSessionsRepository } from '../auth/auth-sessions.repository';
 import { FcmTokenDto } from '../auth/dto';
+import { SubscriptionsService } from '../subscription/subscriptions.service';
 
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -16,9 +17,12 @@ export class UsersService {
     private readonly usersRepository: UsersRepository,
     private readonly authSessionsRepository: AuthSessionsRepository,
     private readonly configService: ConfigService,
+    @Inject(forwardRef(() => SubscriptionsService))
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
   async getCurrentUser(user: CurrentUserPayload): Promise<unknown> {
+    await this.subscriptionsService.syncUserPlanFromSubscription(user.id);
     const entity = await this.usersRepository.findActiveById(user.id);
     if (!entity) {
       throw new NotFoundException({

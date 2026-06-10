@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:paymob/paymob.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/premium/premium_status.dart';
+import '../../../../core/services/premium_refresh_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/subscription_model.dart';
 import '../../data/repositories/subscription_repository.dart';
@@ -72,7 +74,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       final result = await Paymob.pay(
         publicKey: publicKey,
         clientSecret: clientSecret,
-        appName: 'Focusly',
+        appName: 'Zakerly',
         buttonBackgroundColor: AppColors.premium,
         buttonTextColor: Colors.white,
         saveCardDefault: false,
@@ -86,6 +88,19 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       final message = result.errorMessage?.trim();
 
       if (isSuccess || isPending) {
+        if (isSuccess) {
+          try {
+            await _repository.confirmPaymobSdk(
+              plan: plan,
+              transactionId: extractPaymobTransactionId(
+                result.transactionDetails,
+              ),
+            );
+            await PremiumRefreshService.instance.refreshSessionTokens();
+          } catch (_) {
+            // Webhook may still activate premium; continue syncing below.
+          }
+        }
         await load();
       }
 
@@ -178,14 +193,18 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
   }
 
   Future<void> cancelSubscription() async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, clearFeedback: true));
     try {
-      await _repository.cancelSubscription();
+      final result = await _repository.cancelSubscription();
       await load();
+      final serverMessage = (result['message'] as String?)?.trim();
       emit(
         state.copyWith(
-          feedbackType: SubscriptionFeedbackType.success,
-          feedbackMessage: 'Subscription canceled.',
+          isLoading: false,
+          feedbackType: SubscriptionFeedbackType.cancelSuccess,
+          feedbackMessage: serverMessage?.isNotEmpty == true
+              ? serverMessage!
+              : 'Subscription canceled. Premium access has ended.',
         ),
       );
     } on DioException catch (e) {
@@ -194,6 +213,14 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           isLoading: false,
           feedbackType: SubscriptionFeedbackType.error,
           feedbackMessage: _extractMessage(e),
+        ),
+      );
+    } catch (_) {
+      emit(
+        state.copyWith(
+          isLoading: false,
+          feedbackType: SubscriptionFeedbackType.error,
+          feedbackMessage: 'Could not cancel subscription.',
         ),
       );
     }

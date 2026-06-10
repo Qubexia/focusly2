@@ -46,5 +46,5 @@ void main() async {
     ),
   );
 
-  runApp(const FocuslyApp());
+  runApp(const ZakerlyApp());
 }

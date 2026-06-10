@@ -102,13 +102,16 @@ export function verifyResponseCallbackHmac(
 
 /** Build a unique Paymob order reference that still embeds the Mongo user id. */
 export function buildPaymobSpecialReference(userId: string): string {
-  return `focusly-user-${userId}-${randomUUID()}`;
+  return `zakerly-user-${userId}-${randomUUID()}`;
 }
 
-/** Extract user id from `focusly-user-{mongoId}` or `focusly-user-{mongoId}-{checkoutId}`. */
+/** Extract user id from `zakerly-user-{mongoId}` or legacy `focusly-user-{mongoId}`. */
 export function parseUserIdFromSpecialReference(reference: string | undefined): string | null {
-  if (!reference?.startsWith('focusly-user-')) return null;
-  const rest = reference.slice('focusly-user-'.length);
+  if (!reference) return null;
+  const prefixes = ['zakerly-user-', 'focusly-user-'];
+  const prefix = prefixes.find((p) => reference.startsWith(p));
+  if (!prefix) return null;
+  const rest = reference.slice(prefix.length);
   const match = rest.match(/^([a-f0-9]{24})(?:-|$)/i);
   return match?.[1] ?? null;
 }

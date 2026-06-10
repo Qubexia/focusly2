@@ -10,11 +10,8 @@ export default registerAs('paymob', () => ({
   currency: process.env.PAYMOB_CURRENCY ?? 'EGP',
   monthlyAmountCents: Number(process.env.PAYMOB_PREMIUM_MONTHLY_AMOUNT_CENTS ?? 9900),
   yearlyAmountCents: Number(process.env.PAYMOB_PREMIUM_YEARLY_AMOUNT_CENTS ?? 99900),
-  publicApiBaseUrl: (process.env.PUBLIC_API_BASE_URL ?? 'http://localhost:3000').replace(
-    /\/$/,
-    '',
-  ),
+  publicApiBaseUrl: (process.env.PUBLIC_API_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, ''),
   checkoutBaseUrl: (process.env.PAYMOB_CHECKOUT_BASE_URL ?? '').replace(/\/$/, ''),
-  appRedirectSuccess: process.env.PAYMOB_APP_SUCCESS_URL ?? 'focusly://payment/success',
-  appRedirectFailure: process.env.PAYMOB_APP_FAILURE_URL ?? 'focusly://payment/failure',
+  appRedirectSuccess: process.env.PAYMOB_APP_SUCCESS_URL ?? 'zakerly://payment/success',
+  appRedirectFailure: process.env.PAYMOB_APP_FAILURE_URL ?? 'zakerly://payment/failure',
 }));

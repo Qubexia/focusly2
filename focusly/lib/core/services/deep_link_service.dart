@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:go_router/go_router.dart';
 
-/// Handles `focusly://` URIs (payment return, etc.).
+/// Handles `zakerly://` URIs (payment return, etc.).
 class DeepLinkService {
   DeepLinkService._();
 
@@ -12,9 +12,15 @@ class DeepLinkService {
   final AppLinks _appLinks = AppLinks();
   StreamSubscription<Uri>? _subscription;
   GoRouter? _router;
+  void Function()? _onPaymentReturn;
+  DateTime? _lastPaymentReturnAt;
 
-  Future<void> initialize(GoRouter router) async {
+  Future<void> initialize(
+    GoRouter router, {
+    void Function()? onPaymentReturn,
+  }) async {
     _router = router;
+    _onPaymentReturn = onPaymentReturn;
     await _subscription?.cancel();
     _subscription = _appLinks.uriLinkStream.listen(_handleUri);
 
@@ -27,7 +33,7 @@ class DeepLinkService {
   void _handleUri(Uri uri) {
     final router = _router;
     if (router == null) return;
-    if (uri.scheme != 'focusly') return;
+    if (uri.scheme.toLowerCase() != 'zakerly') return;
 
     switch (uri.host) {
       case 'payment':
@@ -48,6 +54,19 @@ class DeepLinkService {
   void _handlePaymentReturn(GoRouter router, Uri uri) {
     final segment = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : '';
     if (segment == 'success') {
+      final now = DateTime.now();
+      final last = _lastPaymentReturnAt;
+      if (last != null && now.difference(last) < const Duration(seconds: 8)) {
+        return;
+      }
+      _lastPaymentReturnAt = now;
+
+      _onPaymentReturn?.call();
+      final current = router.routeInformationProvider.value.uri;
+      if (current.path == '/premium' &&
+          current.queryParameters['paid'] == '1') {
+        return;
+      }
       router.go('/premium?paid=1');
       return;
     }
@@ -60,5 +79,6 @@ class DeepLinkService {
     await _subscription?.cancel();
     _subscription = null;
     _router = null;
+    _onPaymentReturn = null;
   }
 }

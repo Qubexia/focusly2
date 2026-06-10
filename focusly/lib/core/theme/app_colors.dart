@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Focusly palette aligned with Zakerly-style blue identity (#0088FF).
+/// Zakerly palette aligned with Zakerly-style blue identity (#0088FF).
 class AppColors {
   AppColors._();
 

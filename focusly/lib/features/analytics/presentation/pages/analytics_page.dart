@@ -34,7 +34,18 @@ class _AnalyticsView extends StatelessWidget {
     final isPremiumUser =
         authState is AuthAuthenticated && authState.user.isPremium;
 
-    return DefaultTabController(
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (previous, current) {
+        final wasPremium =
+            previous is AuthAuthenticated && previous.user.isPremium;
+        final isPremium =
+            current is AuthAuthenticated && current.user.isPremium;
+        return !wasPremium && isPremium;
+      },
+      listener: (context, state) {
+        context.read<AnalyticsCubit>().loadAnalytics();
+      },
+      child: DefaultTabController(
       length: 3,
       child: Scaffold(
       appBar: AppBar(
@@ -64,10 +75,12 @@ class _AnalyticsView extends StatelessWidget {
           }
 
           if (state.errorMessage != null && state.summary == null) {
-            if (isPremiumError) {
+            if (isPremiumError && !isPremiumUser) {
               return _PremiumLockView(message: state.errorMessage!);
             }
-            return Center(child: Text(state.errorMessage!));
+            if (state.errorMessage != null) {
+              return Center(child: Text(state.errorMessage!));
+            }
           }
 
           return TabBarView(
@@ -146,6 +159,7 @@ class _AnalyticsView extends StatelessWidget {
             ],
           );
         },
+      ),
       ),
     ),
     );
@@ -352,9 +366,7 @@ class _PremiumLockView extends StatelessWidget {
             ),
             const SizedBox(height: 40),
             ElevatedButton(
-              onPressed: () {
-                // TODO: Open Paywall
-              },
+              onPressed: () => context.push('/premium'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                 shape: RoundedRectangleBorder(

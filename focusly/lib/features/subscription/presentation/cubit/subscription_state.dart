@@ -1,6 +1,6 @@
 part of 'subscription_cubit.dart';
 
-enum SubscriptionFeedbackType { none, success, error }
+enum SubscriptionFeedbackType { none, success, cancelSuccess, error }
 
 class SubscriptionState extends Equatable {
   const SubscriptionState({

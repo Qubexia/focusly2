@@ -183,12 +183,12 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
           feedbackMessage: _extractMessage(e),
         ),
       );
-    } catch (_) {
+    } catch (e) {
       emit(
         state.copyWith(
           analyzingChapterIds: _withoutChapter(chapterId),
           feedbackType: SubjectDetailFeedbackType.error,
-          feedbackMessage: 'Failed to analyze the PDF.',
+          feedbackMessage: _formatAnalysisError(e),
         ),
       );
     }
@@ -235,12 +235,12 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
           feedbackMessage: _extractMessage(e),
         ),
       );
-    } catch (_) {
+    } catch (e) {
       emit(
         state.copyWith(
           isAnalyzingSubject: false,
           feedbackType: SubjectDetailFeedbackType.error,
-          feedbackMessage: 'Failed to analyze the PDF.',
+          feedbackMessage: _formatAnalysisError(e),
         ),
       );
     }
@@ -466,6 +466,17 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
       chaptersTotal: chapters.length,
       chaptersCompleted: completedCount,
     );
+  }
+
+  String _formatAnalysisError(Object error) {
+    if (error is Exception) {
+      final message = error.toString();
+      if (message.startsWith('Exception: ')) {
+        return message.substring('Exception: '.length);
+      }
+      return message;
+    }
+    return 'Failed to analyze the PDF.';
   }
 
   String _extractMessage(DioException e) {
