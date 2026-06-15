@@ -263,7 +263,7 @@ class _CalendarStrip extends StatelessWidget {
                       date.day.toString(),
                       style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w800,
                         color: isSelected
                             ? Colors.white
                             : (isDark

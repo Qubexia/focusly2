@@ -11,7 +11,6 @@ import '../../../auth/presentation/bloc/auth_event_state.dart';
 import '../../../notifications/presentation/pages/notifications_inbox_page.dart';
 import '../../../planner/data/models/planned_item_model.dart';
 import '../../../schedules/data/models/schedule_model.dart';
-import '../../../streaks/data/models/streak_model.dart';
 import '../../../streaks/presentation/cubit/streak_cubit.dart';
 import '../../../streaks/presentation/cubit/streak_state.dart';
 import '../../../streaks/presentation/widgets/streak_detail_sheet.dart';
@@ -63,147 +62,118 @@ class _HomeContent extends StatelessWidget {
 
           return RefreshIndicator(
             onRefresh: () => context.read<HomeCubit>().loadHome(),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 24),
-                  BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, authState) {
-                      final user = authState is AuthAuthenticated
-                          ? authState.user
-                          : null;
-                      final name = user?.name.isNotEmpty == true
-                          ? user!.name
-                          : 'Student';
-                      return _HomeHeader(
-                        greeting: _getGreeting(),
-                        name: name,
-                        avatarUrl: user?.avatarUrl,
-                        isDark: isDark,
-                        subjectsCount: subjects.length,
-                      );
-                    },
-                  ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2),
-                  const SizedBox(height: 28),
-                  _DynamicProgressCard(
-                        averageProgress: averageProgress,
-                        subjectsCount: subjects.length,
-                        completedSubjects: completedSubjects,
-                        isLoading: homeState.isLoading,
-                      )
-                      .animate()
-                      .fadeIn(delay: 200.ms, duration: 600.ms)
-                      .scale(begin: const Offset(0.95, 0.95)),
-                  const SizedBox(height: 20),
-                  _TodayFocusCard(
-                    focusMinutes: homeState.todayFocusMinutes,
-                    sessionCount: homeState.todaySessionCount,
-                    isLoading: homeState.isLoading,
-                    onStartFocus: () => context.go('/home?tab=2'),
-                  ).animate().fadeIn(delay: 220.ms),
-                  const SizedBox(height: 24),
-                  BlocBuilder<StreakCubit, StreakState>(
-                    builder: (context, streakState) {
-                      return _StreaksWidget(
-                        streak: streakState.streak,
-                        onTap: streakState.streak == null
-                            ? null
-                            : () => showStreakDetailSheet(
-                                  context,
-                                  streak: streakState.streak!,
-                                ),
-                      );
-                    },
-                  ).animate().fadeIn(delay: 250.ms).slideX(begin: -0.1),
-                  const SizedBox(height: 32),
-                  _QuickActions(isPremium: isPremium)
-                      .animate()
-                      .fadeIn(delay: 300.ms)
-                      .scale(begin: const Offset(0.98, 0.98)),
-                  const SizedBox(height: 32),
-                  Row(
-                    children: [
-                      _StatItem(
-                        label: 'Daily Target',
-                        value: '${totalDailyTarget}m',
-                        icon: Icons.timer_rounded,
-                        color: AppColors.primary,
-                      ),
-                      const SizedBox(width: 16),
-                      _StatItem(
-                        label: 'Subjects',
-                        value: '${subjects.length}',
-                        icon: Icons.menu_book_rounded,
-                        color: AppColors.primaryLight,
-                      ),
-                    ],
-                  ).animate().fadeIn(delay: 350.ms, duration: 600.ms),
-                  if (homeState.todaySchedules.isNotEmpty ||
-                      homeState.todayTasks.isNotEmpty) ...[
-                    const SizedBox(height: 32),
-                    _UpcomingTodaySection(
-                      schedules: homeState.todaySchedules,
-                      tasks: homeState.todayTasks,
-                      onOpenPlanner: () => context.push('/planner'),
-                      onOpenSchedule: () => context.go('/home?tab=1'),
-                    ).animate().fadeIn(delay: 400.ms),
-                  ],
-                  const SizedBox(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Your Subjects',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => context.push('/subjects'),
-                        child: const Text('See All'),
-                      ),
-                    ],
-                  ).animate().fadeIn(delay: 500.ms, duration: 600.ms),
-                  const SizedBox(height: 16),
-                  if (homeState.errorMessage != null && subjects.isEmpty)
-                    _HomeMessageCard(
-                      title: 'Could not load your dashboard',
-                      subtitle: homeState.errorMessage!,
-                      icon: Icons.cloud_off_rounded,
-                    )
-                  else if (subjects.isEmpty && !homeState.isLoading)
-                    _HomeMessageCard(
-                      title: 'No subjects yet',
-                      subtitle:
-                          'Create your first subject to make the home screen useful and alive.',
-                      icon: Icons.auto_stories_outlined,
-                      actionLabel: 'Create Subject',
-                      onTap: () => context.push('/subjects'),
-                    )
-                  else
-                    SizedBox(
-                      height: 172,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: subjects.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 16),
-                        itemBuilder: (context, index) {
-                          final subject = subjects[index];
-                          return _SubjectPreviewCard(subject: subject);
-                        },
-                      ),
-                    ).animate().fadeIn(delay: 650.ms, duration: 600.ms),
-                  if (!isPremium) ...[
-                    const SizedBox(height: 32),
-                    const _HomePremiumPromoCard()
+            child: SafeArea(
+              bottom: false,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    BlocBuilder<AuthBloc, AuthState>(
+                      builder: (context, authState) {
+                        final user = authState is AuthAuthenticated
+                            ? authState.user
+                            : null;
+                        final name = user?.name.isNotEmpty == true
+                            ? user!.name
+                            : 'Student';
+                        return _HomeHeader(
+                          greeting: _getGreeting(),
+                          dateLabel: _formatToday(),
+                          name: name,
+                          avatarUrl: user?.avatarUrl,
+                          isDark: isDark,
+                        );
+                      },
+                    ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.15),
+                    const SizedBox(height: 24),
+                    _OverviewHero(
+                          averageProgress: averageProgress,
+                          subjectsCount: subjects.length,
+                          completedSubjects: completedSubjects,
+                          focusMinutes: homeState.todayFocusMinutes,
+                          sessionCount: homeState.todaySessionCount,
+                          isLoading: homeState.isLoading,
+                          onStartFocus: () => context.go('/home?tab=2'),
+                        )
                         .animate()
-                        .fadeIn(delay: 800.ms, duration: 600.ms),
+                        .fadeIn(delay: 150.ms, duration: 500.ms)
+                        .scale(begin: const Offset(0.97, 0.97)),
+                    const SizedBox(height: 16),
+                    BlocBuilder<StreakCubit, StreakState>(
+                      builder: (context, streakState) {
+                        final streak = streakState.streak;
+                        return _StatStrip(
+                          streakDays: streak?.current ?? 0,
+                          onStreakTap: streak == null
+                              ? null
+                              : () => showStreakDetailSheet(
+                                    context,
+                                    streak: streak,
+                                  ),
+                          dailyTargetMinutes: totalDailyTarget,
+                          subjectsCount: subjects.length,
+                        );
+                      },
+                    ).animate().fadeIn(delay: 250.ms, duration: 500.ms),
+                    const SizedBox(height: 28),
+                    _QuickActions(isPremium: isPremium)
+                        .animate()
+                        .fadeIn(delay: 320.ms, duration: 500.ms),
+                    if (homeState.todaySchedules.isNotEmpty ||
+                        homeState.todayTasks.isNotEmpty) ...[
+                      const SizedBox(height: 28),
+                      _UpcomingTodaySection(
+                        schedules: homeState.todaySchedules,
+                        tasks: homeState.todayTasks,
+                        onOpenPlanner: () => context.push('/planner'),
+                        onOpenSchedule: () => context.go('/home?tab=1'),
+                      ).animate().fadeIn(delay: 380.ms, duration: 500.ms),
+                    ],
+                    const SizedBox(height: 28),
+                    _SectionHeader(
+                      title: 'Your Subjects',
+                      actionLabel: 'See all',
+                      onAction: () => context.push('/subjects'),
+                    ).animate().fadeIn(delay: 440.ms, duration: 500.ms),
+                    const SizedBox(height: 14),
+                    if (homeState.errorMessage != null && subjects.isEmpty)
+                      _HomeMessageCard(
+                        title: 'Could not load your dashboard',
+                        subtitle: homeState.errorMessage!,
+                        icon: Icons.cloud_off_rounded,
+                      )
+                    else if (subjects.isEmpty && !homeState.isLoading)
+                      _HomeMessageCard(
+                        title: 'No subjects yet',
+                        subtitle:
+                            'Create your first subject to make the home screen useful and alive.',
+                        icon: Icons.auto_stories_outlined,
+                        actionLabel: 'Create Subject',
+                        onTap: () => context.push('/subjects'),
+                      )
+                    else
+                      SizedBox(
+                        height: 168,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: subjects.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 14),
+                          itemBuilder: (context, index) {
+                            final subject = subjects[index];
+                            return _SubjectPreviewCard(subject: subject);
+                          },
+                        ),
+                      ).animate().fadeIn(delay: 520.ms, duration: 500.ms),
+                    if (!isPremium) ...[
+                      const SizedBox(height: 28),
+                      const _HomePremiumPromoCard()
+                          .animate()
+                          .fadeIn(delay: 600.ms, duration: 500.ms),
+                    ],
                   ],
-                  const SizedBox(height: 40),
-                ],
+                ),
               ),
             ),
           );
@@ -221,29 +191,97 @@ class _HomeContent extends StatelessWidget {
     return (total / subjects.length).round();
   }
 
-
   static String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good Morning';
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
   }
+
+  static String _formatToday() {
+    const weekdays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final now = DateTime.now();
+    return '${weekdays[now.weekday - 1]} · ${now.day} ${months[now.month - 1]}';
+  }
+}
+
+/// Shared section title with an optional trailing action.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+        if (actionLabel != null && onAction != null)
+          TextButton(
+            onPressed: onAction,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: const Size(0, 36),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              actionLabel!,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class _HomeHeader extends StatelessWidget {
   const _HomeHeader({
     required this.greeting,
+    required this.dateLabel,
     required this.name,
     this.avatarUrl,
     required this.isDark,
-    required this.subjectsCount,
   });
 
   final String greeting;
+  final String dateLabel;
   final String name;
   final String? avatarUrl;
   final bool isDark;
-  final int subjectsCount;
 
   @override
   Widget build(BuildContext context) {
@@ -251,74 +289,55 @@ class _HomeHeader extends StatelessWidget {
         ? AppColors.textSecondaryDark
         : AppColors.textSecondaryLight;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 380;
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    greeting,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$greeting · $dateLabel',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: subduedText,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Hey ${_firstName(name)}!',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -1.0,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Hey ${_firstName(name)} 👋',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
                       height: 1.05,
                     ),
-                  ),
-                ],
-              ),
-            ),
-            if (avatarUrl != null && avatarUrl!.isNotEmpty) ...[
-              const SizedBox(width: 12),
-              CircleAvatar(
-                radius: 22,
-                backgroundImage: NetworkImage(avatarUrl!),
               ),
             ],
-            const SizedBox(width: 16),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _SubjectsBadge(compact: compact, subjectsCount: subjectsCount),
-                const SizedBox(width: 10),
-                IconButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const NotificationsInboxPage(),
-                    ),
-                  ),
-                  icon: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white10
-                          : Colors.black.withValues(alpha: 0.05),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.notifications_outlined, size: 22),
-                  ),
-                ),
-              ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        if (avatarUrl != null && avatarUrl!.isNotEmpty) ...[
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: AppColors.secondaryLight,
+            backgroundImage: NetworkImage(avatarUrl!),
+          ),
+          const SizedBox(width: 10),
+        ],
+        _IconBubble(
+          icon: Icons.notifications_outlined,
+          isDark: isDark,
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const NotificationsInboxPage(),
             ),
-          ],
-        );
-      },
+          ),
+        ),
+      ],
     );
   }
 
@@ -329,72 +348,77 @@ class _HomeHeader extends StatelessWidget {
   }
 }
 
-class _SubjectsBadge extends StatelessWidget {
-  const _SubjectsBadge({required this.compact, required this.subjectsCount});
+class _IconBubble extends StatelessWidget {
+  const _IconBubble({
+    required this.icon,
+    required this.isDark,
+    required this.onTap,
+  });
 
-  final bool compact;
-  final int subjectsCount;
+  final IconData icon;
+  final bool isDark;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 12 : 14,
-        vertical: compact ? 8 : 10,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.secondaryLight,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.menu_book_rounded,
-            color: AppColors.primary,
-            size: 18,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            compact ? '$subjectsCount' : '$subjectsCount Subjects',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w800,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
             ),
           ),
-        ],
+          child: Icon(
+            icon,
+            size: 22,
+            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+          ),
+        ),
       ),
     );
   }
 }
 
-class _DynamicProgressCard extends StatelessWidget {
-  const _DynamicProgressCard({
+/// Single brand-coloured hero that merges overall progress with today's focus.
+class _OverviewHero extends StatelessWidget {
+  const _OverviewHero({
     required this.averageProgress,
     required this.subjectsCount,
     required this.completedSubjects,
+    required this.focusMinutes,
+    required this.sessionCount,
     required this.isLoading,
+    required this.onStartFocus,
   });
 
   final int averageProgress;
   final int subjectsCount;
   final int completedSubjects;
+  final int focusMinutes;
+  final int sessionCount;
   final bool isLoading;
+  final VoidCallback onStartFocus;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: AppColors.primary.withValues(alpha: 0.28),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -403,57 +427,90 @@ class _DynamicProgressCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.insights_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
+              const Icon(Icons.insights_rounded, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Text(
                 'Study overview',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              _ProgressRing(
+                value: isLoading ? null : (averageProgress.clamp(0, 100)) / 100,
+                label: isLoading ? '—' : '$averageProgress%',
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Overall progress',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      isLoading
+                          ? 'Pulling your subjects and targets…'
+                          : subjectsCount == 0
+                              ? 'Add subjects to start tracking progress.'
+                              : '$completedSubjects of $subjectsCount subjects completed',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 13,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          Text(
-            isLoading
-                ? 'Loading your progress...'
-                : '$averageProgress% Progress',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-            ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              _HeroStat(
+                icon: Icons.schedule_rounded,
+                value: isLoading ? '—' : '${focusMinutes}m',
+                label: 'focused today',
+              ),
+              const SizedBox(width: 12),
+              _HeroStat(
+                icon: Icons.check_circle_rounded,
+                value: isLoading ? '—' : '$sessionCount',
+                label: sessionCount == 1 ? 'session' : 'sessions',
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            isLoading
-                ? 'Pulling your subjects and daily targets.'
-                : '$completedSubjects of $subjectsCount subjects are fully completed.',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.8),
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 24),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: (averageProgress.clamp(0, 100)) / 100,
-              minHeight: 10,
-              backgroundColor: Colors.white.withValues(alpha: 0.2),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onStartFocus,
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.primary,
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              icon: const Icon(Icons.play_arrow_rounded, size: 20),
+              label: const Text(
+                'Start Focus',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
             ),
           ),
         ],
@@ -462,183 +519,228 @@ class _DynamicProgressCard extends StatelessWidget {
   }
 }
 
-class _StreaksWidget extends StatelessWidget {
-  const _StreaksWidget({required this.streak, this.onTap});
+class _ProgressRing extends StatelessWidget {
+  const _ProgressRing({required this.value, required this.label});
 
-  final StreakModel? streak;
-  final VoidCallback? onTap;
+  /// Null renders an indeterminate spinner (loading).
+  final double? value;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final current = streak?.current ?? 0;
-    final longest = streak?.longest ?? 0;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Ink(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.surfaceDark : Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+    return SizedBox(
+      width: 84,
+      height: 84,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          const SizedBox(
+            width: 84,
+            height: 84,
+            child: CircularProgressIndicator(
+              value: 1,
+              strokeWidth: 7,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white24),
             ),
           ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(
-                  Icons.local_fire_department_rounded,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$current day streak',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      current > 0
-                          ? 'Best: $longest days · Tap for milestones'
-                          : 'Start today to build your first study streak.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondaryLight,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              if (onTap != null)
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight,
-                ),
-            ],
+          SizedBox(
+            width: 84,
+            height: 84,
+            child: CircularProgressIndicator(
+              value: value,
+              strokeWidth: 7,
+              strokeCap: StrokeCap.round,
+              backgroundColor: Colors.transparent,
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
           ),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroStat extends StatelessWidget {
+  const _HeroStat({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _TodayFocusCard extends StatelessWidget {
-  const _TodayFocusCard({
-    required this.focusMinutes,
-    required this.sessionCount,
-    required this.isLoading,
-    required this.onStartFocus,
+/// Compact, glanceable stat tiles (streak / daily target / subjects).
+class _StatStrip extends StatelessWidget {
+  const _StatStrip({
+    required this.streakDays,
+    required this.onStreakTap,
+    required this.dailyTargetMinutes,
+    required this.subjectsCount,
   });
 
-  final int focusMinutes;
-  final int sessionCount;
-  final bool isLoading;
-  final VoidCallback onStartFocus;
+  final int streakDays;
+  final VoidCallback? onStreakTap;
+  final int dailyTargetMinutes;
+  final int subjectsCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _StatTile(
+          icon: Icons.local_fire_department_rounded,
+          value: '$streakDays',
+          label: streakDays == 1 ? 'Day streak' : 'Day streak',
+          color: AppColors.primary,
+          onTap: onStreakTap,
+        ),
+        const SizedBox(width: 12),
+        _StatTile(
+          icon: Icons.flag_rounded,
+          value: '${dailyTargetMinutes}m',
+          label: 'Daily target',
+          color: AppColors.primaryLight,
+        ),
+        const SizedBox(width: 12),
+        _StatTile(
+          icon: Icons.menu_book_rounded,
+          value: '$subjectsCount',
+          label: 'Subjects',
+          color: AppColors.primaryDark,
+        ),
+      ],
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  const _StatTile({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: isDark ? AppColors.darkGradient : AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 72,
-            height: 72,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: isLoading ? null : (focusMinutes % 120) / 120,
-                  strokeWidth: 6,
-                  backgroundColor: Colors.white24,
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      isLoading ? '—' : '$focusMinutes',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const Text(
-                      'min',
-                      style: TextStyle(color: Colors.white70, fontSize: 11),
-                    ),
-                  ],
-                ),
-              ],
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Ink(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? AppColors.borderDark : AppColors.borderLight,
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "Today's focus",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  isLoading
-                      ? 'Loading your sessions...'
-                      : '$sessionCount session${sessionCount == 1 ? '' : 's'} completed',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    fontSize: 13,
+                Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: Icon(icon, color: color, size: 18),
                 ),
                 const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: onStartFocus,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 19,
                   ),
-                  child: const Text('Start Focus'),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -662,24 +764,14 @@ class _UpcomingTodaySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Upcoming today',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-            TextButton(
-              onPressed: tasks.isNotEmpty ? onOpenPlanner : onOpenSchedule,
-              child: Text(tasks.isNotEmpty ? 'Planner' : 'Schedule'),
-            ),
-          ],
+        _SectionHeader(
+          title: 'Upcoming today',
+          actionLabel: tasks.isNotEmpty ? 'Planner' : 'Schedule',
+          onAction: tasks.isNotEmpty ? onOpenPlanner : onOpenSchedule,
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 108,
+          height: 104,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: schedules.length + tasks.length,
@@ -742,7 +834,7 @@ class _UpcomingChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Ink(
-          width: 200,
+          width: 196,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isDark ? AppColors.surfaceDark : Colors.white,
@@ -754,7 +846,14 @@ class _UpcomingChip extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: color, size: 22),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 18),
+              ),
               const Spacer(),
               Text(
                 title,
@@ -790,18 +889,14 @@ class _QuickActions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Quick Actions',
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-        ),
+        const _SectionHeader(title: 'Quick Actions'),
         const SizedBox(height: 14),
-        Row(
-          children: const [
+        const Row(
+          children: [
             Expanded(
               child: _QuickActionCard(
                 label: 'Start Focus',
+                subtitle: 'Pomodoro timer',
                 icon: Icons.play_circle_rounded,
                 route: '/home?tab=2',
               ),
@@ -810,6 +905,7 @@ class _QuickActions extends StatelessWidget {
             Expanded(
               child: _QuickActionCard(
                 label: 'Add Task',
+                subtitle: 'Plan your day',
                 icon: Icons.add_task_rounded,
                 route: '/planner',
               ),
@@ -818,37 +914,25 @@ class _QuickActions extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Row(
-          children: const [
-            Expanded(
+          children: [
+            const Expanded(
               child: _QuickActionCard(
                 label: 'Schedule',
+                subtitle: 'Study sessions',
                 icon: Icons.calendar_month_rounded,
                 route: '/home?tab=1',
               ),
             ),
-            SizedBox(width: 12),
-            Expanded(
-              child: _QuickActionCard(
-                label: 'Subjects',
-                icon: Icons.menu_book_rounded,
-                route: '/subjects',
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
+            const SizedBox(width: 12),
             Expanded(
               child: _QuickActionCard(
                 label: 'AI Notes',
+                subtitle: 'Smart summaries',
                 icon: Icons.auto_awesome_rounded,
                 route: '/ai-notes',
                 requiresPremium: !isPremium,
               ),
             ),
-            const SizedBox(width: 12),
-            const Expanded(child: SizedBox()),
           ],
         ),
       ],
@@ -859,12 +943,14 @@ class _QuickActions extends StatelessWidget {
 class _QuickActionCard extends StatelessWidget {
   const _QuickActionCard({
     required this.label,
+    required this.subtitle,
     required this.icon,
     required this.route,
     this.requiresPremium = false,
   });
 
   final String label;
+  final String subtitle;
   final IconData icon;
   final String route;
   final bool requiresPremium;
@@ -873,121 +959,82 @@ class _QuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return InkWell(
-      onTap: () {
-        if (requiresPremium) {
-          context.push('/premium');
-          return;
-        }
-        if (route.startsWith('/home')) {
-          context.go(route);
-        } else {
-          context.push(route);
-        }
-      },
-      borderRadius: BorderRadius.circular(22),
-      child: Ink(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          if (requiresPremium) {
+            context.push('/premium');
+            return;
+          }
+          if (route.startsWith('/home')) {
+            context.go(route);
+          } else {
+            context.push(route);
+          }
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(icon, color: AppColors.primary, size: 22),
                   ),
-                  child: Icon(icon, color: AppColors.primary),
-                ),
-                if (requiresPremium) ...[
                   const Spacer(),
-                  Icon(
-                    Icons.lock_rounded,
-                    size: 16,
-                    color: isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight,
-                  ),
+                  if (requiresPremium)
+                    Icon(
+                      Icons.lock_rounded,
+                      size: 16,
+                      color: isDark
+                          ? AppColors.textTertiaryDark
+                          : AppColors.textTertiaryLight,
+                    )
+                  else
+                    Icon(
+                      Icons.arrow_outward_rounded,
+                      size: 16,
+                      color: isDark
+                          ? AppColors.textTertiaryDark
+                          : AppColors.textTertiaryLight,
+                    ),
                 ],
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              label,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatItem extends StatelessWidget {
-  const _StatItem({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+              ),
+            ],
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -1007,11 +1054,11 @@ class _SubjectPreviewCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push('/subjects/${subject.id}'),
       child: Container(
-        width: 148,
-        padding: const EdgeInsets.all(20),
+        width: 150,
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isDark ? AppColors.borderDark : AppColors.borderLight,
           ),
@@ -1022,13 +1069,13 @@ class _SubjectPreviewCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
                 _HomeSubjectStyle.resolveIcon(subject.icon),
                 color: color,
-                size: 24,
+                size: 22,
               ),
             ),
             const Spacer(),
@@ -1039,23 +1086,39 @@ class _SubjectPreviewCard extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             ),
             const SizedBox(height: 4),
-            Text(
-              '${subject.dailyTargetMinutes} min target',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
+            Row(
+              children: [
+                Text(
+                  '${subject.progressPercent}%',
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '· ${subject.dailyTargetMinutes}m target',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                          fontSize: 11,
+                        ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 10),
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: (subject.progressPercent.clamp(0, 100)) / 100,
-                minHeight: 4,
-                backgroundColor: color.withValues(alpha: 0.1),
+                minHeight: 5,
+                backgroundColor: color.withValues(alpha: 0.12),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
             ),
@@ -1126,7 +1189,7 @@ class _HomePremiumPromoCard extends StatelessWidget {
                         'RECOMMENDED',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: Colors.white,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.w800,
                               letterSpacing: 1.0,
                             ),
                       ),

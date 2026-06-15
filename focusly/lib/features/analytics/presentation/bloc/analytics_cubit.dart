@@ -36,13 +36,10 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
     final fromStr = _formatDate(finalFrom);
     final toStr = _formatDate(finalTo);
 
-    final year = state.heatmapYear ?? DateTime.now().year;
-
     try {
       final results = await Future.wait([
         _repository.getSummary(from: fromStr, to: toStr),
         _repository.getBySubject(from: fromStr, to: toStr),
-        _repository.getHeatmap(year: year),
         _repository.getPerformance(from: fromStr, to: toStr),
       ]);
 
@@ -50,9 +47,7 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
         isLoading: false,
         summary: results[0] as dynamic,
         bySubject: results[1] as dynamic,
-        heatmap: results[2] as dynamic,
-        performance: results[3] as dynamic,
-        heatmapYear: year,
+        performance: results[2] as dynamic,
       ));
     } on DioException catch (e) {
       final message = _extractMessage(e);
@@ -151,11 +146,9 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
     final toStr = _formatDate(toDate);
 
     try {
-      final year = state.heatmapYear ?? DateTime.now().year;
       final results = await Future.wait([
         _repository.getSummary(from: fromStr, to: toStr),
         _repository.getBySubject(from: fromStr, to: toStr),
-        _repository.getHeatmap(year: year),
         _repository.getPerformance(from: fromStr, to: toStr),
       ]);
 
@@ -166,9 +159,7 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
         toDate: toDate,
         summary: results[0] as dynamic,
         bySubject: results[1] as dynamic,
-        heatmap: results[2] as dynamic,
-        performance: results[3] as dynamic,
-        heatmapYear: year,
+        performance: results[2] as dynamic,
         errorMessage: upgradeMessage,
       ));
     } on DioException catch (fallbackError) {

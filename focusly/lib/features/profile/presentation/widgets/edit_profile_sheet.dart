@@ -203,7 +203,7 @@ Future<void> showEditProfileSheet(BuildContext context, UserModel? user) async {
                         Text(
                           'Edit Profile',
                           style: Theme.of(sheetContext).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w800,
                               ),
                         ),
                         const SizedBox(height: 8),

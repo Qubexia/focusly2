@@ -235,7 +235,7 @@ class _AiNotesHubView extends StatelessWidget {
                                     style: Theme.of(context)
                                         .textTheme
                                         .bodyMedium
-                                        ?.copyWith(fontWeight: FontWeight.w600),
+                                        ?.copyWith(fontWeight: FontWeight.w700),
                                   ),
                                 ],
                                 if (state.pickedImagePaths.isNotEmpty) ...[
@@ -448,7 +448,7 @@ class _HeroBadge extends StatelessWidget {
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
           ),
         ],

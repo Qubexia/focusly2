@@ -239,7 +239,7 @@ class _SchedulesViewState extends State<_SchedulesView> {
               color: isDark ? Colors.white : Colors.black87),
           titleTextStyle: TextStyle(
             fontSize: 18,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w800,
             color: isDark ? Colors.white : AppColors.primary,
           ),
           formatButtonDecoration: BoxDecoration(
@@ -249,7 +249,7 @@ class _SchedulesViewState extends State<_SchedulesView> {
           ),
           formatButtonTextStyle: const TextStyle(
             color: AppColors.primary,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w800,
             fontSize: 12,
           ),
           headerPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -270,7 +270,7 @@ class _SchedulesViewState extends State<_SchedulesView> {
           outsideDaysVisible: false,
           defaultTextStyle: TextStyle(
             color: isDark ? Colors.white : Colors.black87,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
           selectedDecoration: BoxDecoration(
             color: AppColors.primary,
@@ -285,7 +285,7 @@ class _SchedulesViewState extends State<_SchedulesView> {
           ),
           selectedTextStyle: const TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w800,
           ),
           todayDecoration: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.1),
@@ -294,11 +294,11 @@ class _SchedulesViewState extends State<_SchedulesView> {
           ),
           todayTextStyle: const TextStyle(
             color: AppColors.primary,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w800,
           ),
           weekendTextStyle: TextStyle(
             color: AppColors.error.withValues(alpha: 0.6),
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
           disabledTextStyle: TextStyle(
             color: (isDark ? Colors.white : Colors.black54).withValues(alpha: 0.28),

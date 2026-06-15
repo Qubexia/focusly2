@@ -204,7 +204,7 @@ class _LoginPageState extends State<LoginPage> {
                               color: isDark
                                   ? AppColors.primaryLight
                                   : AppColors.primary,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),

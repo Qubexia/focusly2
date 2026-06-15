@@ -222,7 +222,7 @@ class _NotificationTile extends StatelessWidget {
                         Text(
                           notification.title,
                           style: TextStyle(
-                            fontWeight: notification.isRead ? FontWeight.bold : FontWeight.w900,
+                            fontWeight: notification.isRead ? FontWeight.bold : FontWeight.w800,
                             fontSize: 15,
                             color: isDark ? Colors.white : Colors.black87,
                           ),
@@ -252,7 +252,7 @@ class _NotificationTile extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 11,
                         color: Colors.grey,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],

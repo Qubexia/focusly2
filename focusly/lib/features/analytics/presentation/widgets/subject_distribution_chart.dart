@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/analytics_subject_model.dart';
 
@@ -8,114 +7,121 @@ class SubjectDistributionChart extends StatelessWidget {
 
   final List<AnalyticsSubjectModel> subjects;
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    if (subjects.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.borderLight,
-          ),
-        ),
-        child: const Center(child: Text('No subject data for this range.')),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'By Subject',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 200,
-            child: BarChart(
-              BarChartData(
-                gridData: const FlGridData(show: false),
-                titlesData: FlTitlesData(
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index < 0 || index >= subjects.length) return const SizedBox.shrink();
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            subjects[index].subjectName.substring(0, 3).toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: subjects.asMap().entries.map((e) {
-                  final color = _parseColor(e.value.color);
-                  return BarChartGroupData(
-                    x: e.key,
-                    barRods: [
-                      BarChartRodData(
-                        toY: e.value.focusMinutes.toDouble(),
-                        color: color,
-                        width: 16,
-                        borderRadius: BorderRadius.circular(4),
-                        backDrawRodData: BackgroundBarChartRodData(
-                          show: true,
-                          toY: _getMaxMinutes(subjects).toDouble(),
-                          color: color.withValues(alpha: 0.1),
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Color _parseColor(String? hex) {
     if (hex == null || hex.isEmpty) return AppColors.primary;
     try {
-      final color = hex.replaceAll('#', '');
-      return Color(int.parse('FF$color', radix: 16));
+      return Color(int.parse('FF${hex.replaceAll('#', '')}', radix: 16));
     } catch (_) {
       return AppColors.primary;
     }
   }
 
-  int _getMaxMinutes(List<AnalyticsSubjectModel> subjects) {
-    if (subjects.isEmpty) return 100;
-    int max = 0;
-    for (final s in subjects) {
-      if (s.focusMinutes > max) max = s.focusMinutes;
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (subjects.isEmpty) {
+      return _card(
+        isDark: isDark,
+        child: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(8),
+            child: Text('No subject data for this range.'),
+          ),
+        ),
+      );
     }
-    return max == 0 ? 100 : max;
+
+    final maxMinutes = subjects
+        .map((s) => s.focusMinutes)
+        .reduce((a, b) => a > b ? a : b);
+
+    return _card(
+      isDark: isDark,
+      child: Column(
+        children: List.generate(subjects.length, (i) {
+          final s = subjects[i];
+          final color = _parseColor(s.color);
+          final ratio =
+              maxMinutes == 0 ? 0.0 : s.focusMinutes / maxMinutes;
+          final h = s.focusMinutes ~/ 60;
+          final m = s.focusMinutes % 60;
+          final timeLabel = h > 0 ? '${h}h ${m}m' : '${m}m';
+
+          return Padding(
+            padding: EdgeInsets.only(
+                bottom: i < subjects.length - 1 ? 18 : 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        s.subjectName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      timeLabel,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 7),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: ratio.toDouble(),
+                    backgroundColor: color.withValues(alpha: 0.12),
+                    valueColor: AlwaysStoppedAnimation<Color>(color),
+                    minHeight: 7,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _card({required bool isDark, required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: child,
+    );
   }
 }

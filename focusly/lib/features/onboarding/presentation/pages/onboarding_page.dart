@@ -158,7 +158,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             : 'Continue',
                         style: const TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),

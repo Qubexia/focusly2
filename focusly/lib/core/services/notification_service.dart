@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' show Color;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -57,6 +58,9 @@ class NotificationService {
       channelDescription: 'Main channel for Zakerly alerts',
       importance: Importance.max,
       priority: Priority.high,
+      icon: 'ic_notification',
+      largeIcon: DrawableResourceAndroidBitmap('ic_notification_large'),
+      color: Color(0xFF1EA1FC),
     ),
     iOS: DarwinNotificationDetails(),
   );
@@ -68,6 +72,9 @@ class NotificationService {
       channelDescription: 'Channel for scheduled study reminders',
       importance: Importance.max,
       priority: Priority.high,
+      icon: 'ic_notification',
+      largeIcon: DrawableResourceAndroidBitmap('ic_notification_large'),
+      color: Color(0xFF1EA1FC),
     ),
     iOS: DarwinNotificationDetails(),
   );
@@ -78,7 +85,7 @@ class NotificationService {
     tz.initializeTimeZones();
 
     const initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('ic_notification');
     const initializationSettingsDarwin = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -228,7 +235,7 @@ class NotificationService {
 
     final plugin = FlutterLocalNotificationsPlugin();
     const initializationSettings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      android: AndroidInitializationSettings('ic_notification'),
       iOS: DarwinInitializationSettings(),
     );
 

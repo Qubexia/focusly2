@@ -158,8 +158,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                     Text(
                       'Create Study Block',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
+                            fontWeight: FontWeight.w800,
                           ),
                     ),
                     IconButton(
@@ -507,7 +506,7 @@ class _InfoChip extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           ),
         ],
       ),
@@ -543,7 +542,7 @@ class _PickerButton extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                 overflow: TextOverflow.ellipsis,
               ),
             ),

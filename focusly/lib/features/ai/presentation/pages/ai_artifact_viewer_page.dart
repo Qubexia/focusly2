@@ -201,7 +201,7 @@ class _PackHeader extends StatelessWidget {
                         isRtl ? 'محتوى جاهز للمراجعة' : 'Ready to review',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                               color: Colors.white.withValues(alpha: 0.88),
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                       ),
                       const SizedBox(height: 4),
@@ -364,7 +364,7 @@ class _StudyPackTabBar extends StatelessWidget {
             isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
         labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
         unselectedLabelStyle:
-            const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
         tabs: [
           Tab(
             height: 44,

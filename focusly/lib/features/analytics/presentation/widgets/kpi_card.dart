@@ -49,9 +49,8 @@ class KpiCard extends StatelessWidget {
               Text(
                 value,
                 style: const TextStyle(
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                   fontSize: 24,
-                  letterSpacing: -0.5,
                 ),
               ),
               const SizedBox(width: 4),
@@ -59,7 +58,7 @@ class KpiCard extends StatelessWidget {
                 unit,
                 style: TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   color: isDark
                       ? AppColors.textTertiaryDark
                       : AppColors.textTertiaryLight,

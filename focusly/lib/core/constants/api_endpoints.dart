@@ -126,7 +126,6 @@ class ApiEndpoints {
   static const String analytics = '/v1/analytics';
   static const String analyticsSummary = '$analytics/summary';
   static const String analyticsBySubject = '$analytics/by-subject';
-  static const String analyticsHeatmap = '$analytics/heatmap';
   static const String analyticsPerformance = '$analytics/performance';
 
   // Streaks

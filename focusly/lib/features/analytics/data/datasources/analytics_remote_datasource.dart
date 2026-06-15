@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/api_client.dart';
-import '../models/analytics_heatmap_model.dart';
 import '../models/analytics_performance_model.dart';
 import '../models/analytics_summary_model.dart';
 import '../models/analytics_subject_model.dart';
@@ -35,16 +34,6 @@ class AnalyticsRemoteDataSource {
     return data
         .map((e) => AnalyticsSubjectModel.fromJson(e as Map<String, dynamic>))
         .toList();
-  }
-
-  Future<AnalyticsHeatmapModel> getHeatmap({required int year}) async {
-    final response = await _dio.get(
-      ApiEndpoints.analyticsHeatmap,
-      queryParameters: {'year': year},
-    );
-    return AnalyticsHeatmapModel.fromJson(
-      response.data as Map<String, dynamic>,
-    );
   }
 
   Future<AnalyticsPerformanceModel> getPerformance({

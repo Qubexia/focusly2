@@ -41,10 +41,6 @@ class AppColors {
   static const Color dividerDark = Color(0xFF243B5C);
   static const Color borderDark = Color(0xFF2D4A6F);
 
-  // Charts / heatmap empty cells
-  static const Color heatmapEmptyLight = Color(0xFFE6F4FF);
-  static const Color heatmapEmptyDark = Color(0xFF1A2D4D);
-
   // Subject picker colors (blue family)
   static const List<Color> subjectColors = [
     Color(0xFF0088FF),

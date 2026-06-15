@@ -111,8 +111,7 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
                   Text(
                     'Add New Plan',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.5,
+                          fontWeight: FontWeight.w800,
                         ),
                   ),
                   IconButton(
@@ -339,7 +338,7 @@ class _PickerButton extends StatelessWidget {
             const SizedBox(width: 10),
             Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             ),
           ],
         ),
