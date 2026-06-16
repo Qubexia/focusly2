@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -62,32 +60,35 @@ class AiNotesHubPage extends StatelessWidget {
 class _AiNotesHubView extends StatelessWidget {
   const _AiNotesHubView();
 
-  Future<void> _showImageSourceSheet(BuildContext context) async {
-    final cubit = context.read<AiNotesCubit>();
-    final source = await showModalBottomSheet<String>(
+  Future<void> _confirmDeletePack(
+    BuildContext context,
+    AiJobGroup group,
+  ) async {
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library_rounded),
-              title: const Text('Photo library'),
-              onTap: () => Navigator.pop(ctx, 'gallery'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt_rounded),
-              title: const Text('Camera'),
-              onTap: () => Navigator.pop(ctx, 'camera'),
-            ),
-          ],
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete study pack?'),
+        content: const Text(
+          'This will permanently remove the summary, flashcards, and quiz questions for this pack.',
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.error,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
-    if (source == 'gallery') {
-      await cubit.pickFromGallery();
-    } else if (source == 'camera') {
-      await cubit.pickFromCamera();
+
+    if (confirmed == true && context.mounted) {
+      await context.read<AiNotesCubit>().deleteJobPack(group.jobId);
     }
   }
 
@@ -109,11 +110,6 @@ class _AiNotesHubView extends StatelessWidget {
             ),
           );
         }
-        final viewer = state.viewerArtifacts;
-        if (viewer != null && viewer.isNotEmpty) {
-          context.read<AiNotesCubit>().clearViewerNavigation();
-          context.push('/ai-notes/viewer', extra: viewer);
-        }
       },
       builder: (context, state) {
         final jobGroups = groupArtifactsByJob(state.artifacts);
@@ -126,30 +122,7 @@ class _AiNotesHubView extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: const Text('AI Notes'),
-            actions: [
-              IconButton(
-                onPressed: () => _showImageSourceSheet(context),
-                icon: const Icon(Icons.add_photo_alternate_outlined),
-              ),
-            ],
           ),
-          floatingActionButton: state.isSubmitting
-              ? null
-              : FloatingActionButton.extended(
-                  onPressed: state.pickedImagePaths.isEmpty
-                      ? () => _showImageSourceSheet(context)
-                      : () => context.read<AiNotesCubit>().submitJob(),
-                  icon: Icon(
-                    state.pickedImagePaths.isEmpty
-                        ? Icons.camera_alt_rounded
-                        : Icons.auto_awesome_rounded,
-                  ),
-                  label: Text(
-                    state.pickedImagePaths.isEmpty
-                        ? 'Add photos'
-                        : 'Generate (${state.pickedImagePaths.length})',
-                  ),
-                ),
           body: state.isLoading
               ? const Center(child: CircularProgressIndicator())
               : state.subjects.isEmpty
@@ -177,13 +150,11 @@ class _AiNotesHubView extends StatelessWidget {
                               ),
                       ),
                       child: ListView(
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
                         children: [
                           _HubHeroCard(
                             subjectName: selectedSubject?.name ?? 'Your subject',
-                            selectedCount: state.pickedImagePaths.length,
-                            isSubmitting: state.isSubmitting,
-                            progress: state.jobProgress,
+                            packsCount: jobGroups.length,
                           ),
                           const SizedBox(height: 18),
                           _GlassCard(
@@ -191,14 +162,14 @@ class _AiNotesHubView extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Build a fresh study pack',
+                                  'Browse your study packs',
                                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                         fontWeight: FontWeight.w800,
                                       ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Pick a subject, attach lecture photos, then generate a cleaner AI recap with cards and quiz questions.',
+                                  'Choose a subject to review AI summaries, flashcards, and quiz questions generated from your materials.',
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodyMedium
@@ -223,41 +194,6 @@ class _AiNotesHubView extends StatelessWidget {
                                     }
                                   },
                                 ),
-                                if (state.isSubmitting) ...[
-                                  const SizedBox(height: 18),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(99),
-                                    child: LinearProgressIndicator(value: state.jobProgress),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    'Generating your study notes...',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(fontWeight: FontWeight.w700),
-                                  ),
-                                ],
-                                if (state.pickedImagePaths.isNotEmpty) ...[
-                                  const SizedBox(height: 18),
-                                  SizedBox(
-                                    height: 96,
-                                    child: ListView.separated(
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount: state.pickedImagePaths.length,
-                                      separatorBuilder: (_, _) =>
-                                          const SizedBox(width: 10),
-                                      itemBuilder: (context, index) {
-                                        return _PickedImageTile(
-                                          path: state.pickedImagePaths[index],
-                                          onRemove: () => context
-                                              .read<AiNotesCubit>()
-                                              .removeImageAt(index),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
                               ],
                             ),
                           ),
@@ -270,7 +206,7 @@ class _AiNotesHubView extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Open any pack to review the summary, flashcards, and practice questions in a richer layout.',
+                            'Open any pack to review the summary, flashcards, and practice questions. Swipe or tap delete to remove one.',
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
@@ -285,29 +221,51 @@ class _AiNotesHubView extends StatelessWidget {
                             ...jobGroups.map(
                               (group) => Padding(
                                 padding: const EdgeInsets.only(bottom: 14),
-                                child: _PackListCard(
-                                  title: group.createdAt != null
-                                      ? dateFormat.format(group.createdAt!)
-                                      : 'Study pack',
-                                  preview: group.preview,
-                                  flashcardsCount: group.artifacts
-                                      .where((artifact) => artifact.kind == 'flashcards')
-                                      .fold<int>(
-                                        0,
-                                        (total, artifact) =>
-                                            total + artifact.flashcards.length,
-                                      ),
-                                  questionsCount: group.artifacts
-                                      .where((artifact) => artifact.kind == 'questions')
-                                      .fold<int>(
-                                        0,
-                                        (total, artifact) =>
-                                            total + artifact.questions.length,
-                                      ),
-                                  isRtl: _looksArabic(group.preview),
-                                  onTap: () => context.push(
-                                    '/ai-notes/viewer',
-                                    extra: group.artifacts,
+                                child: Dismissible(
+                                  key: ValueKey(group.jobId),
+                                  direction: DismissDirection.endToStart,
+                                  confirmDismiss: (_) async {
+                                    await _confirmDeletePack(context, group);
+                                    return false;
+                                  },
+                                  background: Container(
+                                    alignment: Alignment.centerRight,
+                                    padding: const EdgeInsets.only(right: 24),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(26),
+                                    ),
+                                    child: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      color: AppColors.error,
+                                    ),
+                                  ),
+                                  child: _PackListCard(
+                                    title: group.createdAt != null
+                                        ? dateFormat.format(group.createdAt!)
+                                        : 'Study pack',
+                                    preview: group.preview,
+                                    flashcardsCount: group.artifacts
+                                        .where((artifact) => artifact.kind == 'flashcards')
+                                        .fold<int>(
+                                          0,
+                                          (total, artifact) =>
+                                              total + artifact.flashcards.length,
+                                        ),
+                                    questionsCount: group.artifacts
+                                        .where((artifact) => artifact.kind == 'questions')
+                                        .fold<int>(
+                                          0,
+                                          (total, artifact) =>
+                                              total + artifact.questions.length,
+                                        ),
+                                    isRtl: _looksArabic(group.preview),
+                                    isDeleting: state.deletingJobId == group.jobId,
+                                    onTap: () => context.push(
+                                      '/ai-notes/viewer',
+                                      extra: group.artifacts,
+                                    ),
+                                    onDelete: () => _confirmDeletePack(context, group),
                                   ),
                                 ),
                               ),
@@ -355,15 +313,11 @@ class _EmptySubjects extends StatelessWidget {
 class _HubHeroCard extends StatelessWidget {
   const _HubHeroCard({
     required this.subjectName,
-    required this.selectedCount,
-    required this.isSubmitting,
-    required this.progress,
+    required this.packsCount,
   });
 
   final String subjectName;
-  final int selectedCount;
-  final bool isSubmitting;
-  final double progress;
+  final int packsCount;
 
   @override
   Widget build(BuildContext context) {
@@ -392,7 +346,7 @@ class _HubHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Exclusive, modern packs built from your study material',
+            'Review and manage your AI study packs',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -411,10 +365,9 @@ class _HubHeroCard extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
-              _HeroBadge(icon: Icons.photo_library_rounded, label: '$selectedCount photos'),
               _HeroBadge(
-                icon: isSubmitting ? Icons.hourglass_top_rounded : Icons.auto_awesome_rounded,
-                label: isSubmitting ? '${(progress * 100).round()}% generating' : 'Ready to generate',
+                icon: Icons.auto_stories_rounded,
+                label: '$packsCount packs',
               ),
             ],
           ),
@@ -485,52 +438,6 @@ class _GlassCard extends StatelessWidget {
   }
 }
 
-class _PickedImageTile extends StatelessWidget {
-  const _PickedImageTile({required this.path, required this.onRemove});
-
-  final String path;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(
-          width: 96,
-          height: 96,
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.18),
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.file(
-              File(path),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        Positioned(
-          top: 6,
-          right: 6,
-          child: GestureDetector(
-            onTap: onRemove,
-            child: CircleAvatar(
-              radius: 13,
-              backgroundColor: Colors.black.withValues(alpha: 0.65),
-              child: const Icon(Icons.close, size: 14, color: Colors.white),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _PackListCard extends StatelessWidget {
   const _PackListCard({
     required this.title,
@@ -538,7 +445,9 @@ class _PackListCard extends StatelessWidget {
     required this.flashcardsCount,
     required this.questionsCount,
     required this.isRtl,
+    required this.isDeleting,
     required this.onTap,
+    required this.onDelete,
   });
 
   final String title;
@@ -546,12 +455,14 @@ class _PackListCard extends StatelessWidget {
   final int flashcardsCount;
   final int questionsCount;
   final bool isRtl;
+  final bool isDeleting;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: isDeleting ? null : onTap,
       borderRadius: BorderRadius.circular(26),
       child: Ink(
         padding: const EdgeInsets.all(18),
@@ -588,6 +499,21 @@ class _PackListCard extends StatelessWidget {
                         ),
                   ),
                 ),
+                if (isDeleting)
+                  const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  IconButton(
+                    tooltip: 'Delete study pack',
+                    onPressed: onDelete,
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppColors.error,
+                    ),
+                  ),
                 const Icon(Icons.chevron_right_rounded, color: AppColors.primary),
               ],
             ),
@@ -659,7 +585,7 @@ class _HubEmptyPacks extends StatelessWidget {
           ),
           SizedBox(height: 8),
           Text(
-            'Add photos and generate your first exclusive study pack.',
+            'Upload a PDF from a subject page to generate your first study pack.',
           ),
         ],
       ),

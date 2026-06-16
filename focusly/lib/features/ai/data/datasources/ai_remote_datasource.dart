@@ -52,4 +52,8 @@ class AiRemoteDataSource {
         )
         .toList();
   }
+
+  Future<void> deleteJobArtifacts(String jobId) async {
+    await _dio.delete(ApiEndpoints.aiArtifactsJobById(jobId));
+  }
 }

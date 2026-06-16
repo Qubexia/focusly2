@@ -34,4 +34,8 @@ class AiRepository {
   }) {
     return _remote.getArtifacts(subjectId: subjectId, chapterId: chapterId);
   }
+
+  Future<void> deleteJobArtifacts(String jobId) {
+    return _remote.deleteJobArtifacts(jobId);
+  }
 }

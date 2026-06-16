@@ -1,12 +1,7 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 
-import '../../../../core/services/upload_service.dart';
 import '../../../../core/services/premium_refresh_service.dart';
 import '../../data/models/ai_artifact_model.dart';
 import '../../data/repositories/ai_repository.dart';
@@ -19,17 +14,12 @@ class AiNotesCubit extends Cubit<AiNotesState> {
   AiNotesCubit({
     AiRepository? aiRepository,
     SubjectsRepository? subjectsRepository,
-    UploadService? uploadService,
   })  : _aiRepository = aiRepository ?? AiRepository(),
         _subjectsRepository = subjectsRepository ?? SubjectsRepository(),
-        _uploadService = uploadService ?? UploadService(),
         super(const AiNotesState());
 
   final AiRepository _aiRepository;
   final SubjectsRepository _subjectsRepository;
-  final UploadService _uploadService;
-  final ImagePicker _picker = ImagePicker();
-  Timer? _pollTimer;
 
   Future<void> loadHub() async {
     emit(state.copyWith(isLoading: true, clearError: true));
@@ -74,153 +64,40 @@ class AiNotesCubit extends Cubit<AiNotesState> {
     }
   }
 
-  Future<void> pickFromGallery() async {
-    final files = await _picker.pickMultiImage(imageQuality: 85);
-    _appendPaths(files.map((f) => f.path));
-  }
+  Future<void> deleteJobPack(String jobId) async {
+    if (state.deletingJobId != null) return;
 
-  Future<void> pickFromCamera() async {
-    final file = await _picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 85,
-    );
-    if (file == null) return;
-    _appendPaths([file.path]);
-  }
-
-  void _appendPaths(Iterable<String> paths) {
-    final list = paths.where((p) => p.isNotEmpty).toList();
-    if (list.isEmpty) return;
-    emit(
-      state.copyWith(
-        pickedImagePaths: [...state.pickedImagePaths, ...list],
-      ),
-    );
-  }
-
-  void removeImageAt(int index) {
-    final paths = [...state.pickedImagePaths]..removeAt(index);
-    emit(state.copyWith(pickedImagePaths: paths));
-  }
-
-  Future<void> submitJob() async {
-    if (state.selectedSubjectId == null) {
-      emit(state.copyWith(errorMessage: 'Select a subject first.'));
-      return;
-    }
-    if (state.pickedImagePaths.isEmpty) {
-      emit(state.copyWith(errorMessage: 'Add at least one image.'));
-      return;
-    }
-
-    emit(state.copyWith(isSubmitting: true, clearError: true, jobProgress: 0));
+    emit(state.copyWith(deletingJobId: jobId, clearError: true));
     try {
-      final keys = <String>[];
-      for (var i = 0; i < state.pickedImagePaths.length; i++) {
-        final key = await _uploadService.uploadFile(
-          file: File(state.pickedImagePaths[i]),
-          kind: 'ai-notes-image',
-        );
-        keys.add(key);
-        emit(state.copyWith(jobProgress: ((i + 1) / state.pickedImagePaths.length) * 0.5));
-      }
-
-      final jobId = await _submitJobWithPremiumRetry(
-        imageKeys: keys,
-        subjectId: state.selectedSubjectId,
-      );
-
+      await _aiRepository.deleteJobArtifacts(jobId);
+      final updatedArtifacts =
+          state.artifacts.where((artifact) => artifact.jobId != jobId).toList();
       emit(
         state.copyWith(
-          activeJobId: jobId,
-          jobProgress: 0.55,
-          pickedImagePaths: const [],
+          deletingJobId: null,
+          artifacts: updatedArtifacts,
+          feedbackMessage: 'Study pack deleted.',
         ),
       );
-      _startPolling(jobId);
     } on DioException catch (e) {
       emit(
         state.copyWith(
-          isSubmitting: false,
+          deletingJobId: null,
           errorMessage: _extractMessage(e),
         ),
       );
     } catch (_) {
       emit(
         state.copyWith(
-          isSubmitting: false,
-          errorMessage: 'Failed to submit AI job.',
+          deletingJobId: null,
+          errorMessage: 'Failed to delete study pack.',
         ),
       );
     }
   }
 
-  Future<String> _submitJobWithPremiumRetry({
-    required List<String> imageKeys,
-    required String? subjectId,
-  }) async {
-    try {
-      return await _aiRepository.submitJob(
-        imageKeys: imageKeys,
-        subjectId: subjectId,
-      );
-    } on DioException catch (e) {
-      if (isPremiumRequiredError(e.response?.data) &&
-          await PremiumRefreshService.instance.refreshSessionTokens()) {
-        return _aiRepository.submitJob(
-          imageKeys: imageKeys,
-          subjectId: subjectId,
-        );
-      }
-      rethrow;
-    }
-  }
-
-  void _startPolling(String jobId) {
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
-      try {
-        final job = await _aiRepository.getJob(jobId);
-        if (job.isCompleted) {
-          _pollTimer?.cancel();
-          final subjectId = state.selectedSubjectId;
-          var jobArtifacts = <AiArtifactModel>[];
-          if (subjectId != null) {
-            final artifacts = await loadArtifacts(subjectId);
-            jobArtifacts =
-                artifacts.where((a) => a.jobId == jobId).toList();
-          }
-          emit(
-            state.copyWith(
-              isSubmitting: false,
-              jobProgress: 1,
-              activeJobId: null,
-              feedbackMessage: 'Notes generated successfully!',
-              viewerArtifacts: jobArtifacts.isNotEmpty ? jobArtifacts : null,
-            ),
-          );
-        } else if (job.isFailed) {
-          _pollTimer?.cancel();
-          emit(
-            state.copyWith(
-              isSubmitting: false,
-              activeJobId: null,
-              errorMessage: job.failureReason ?? 'AI job failed.',
-            ),
-          );
-        } else {
-          emit(state.copyWith(jobProgress: 0.75));
-        }
-      } catch (_) {}
-    });
-  }
-
   void clearFeedback() {
     emit(state.copyWith(clearFeedback: true));
-  }
-
-  void clearViewerNavigation() {
-    emit(state.copyWith(clearViewer: true));
   }
 
   String _extractMessage(DioException e) {
@@ -232,11 +109,5 @@ class AiNotesCubit extends Cubit<AiNotesState> {
       return (data['message'] as String?) ?? 'Something went wrong.';
     }
     return 'Something went wrong.';
-  }
-
-  @override
-  Future<void> close() {
-    _pollTimer?.cancel();
-    return super.close();
   }
 }

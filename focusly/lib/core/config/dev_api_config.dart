@@ -9,7 +9,7 @@ class DevApiConfig {
   DevApiConfig._();
 
   /// Must match PORT in focaly-backend/.env (default 5000).
-  static const String physicalDeviceBaseUrl = 'http://192.168.1.5:5000';
+  static const String physicalDeviceBaseUrl = 'http://192.168.1.3:5000';
 
   /// Set false when using Android emulator (10.0.2.2) or adb reverse.
   static const bool useOnMobileInDebug = true;

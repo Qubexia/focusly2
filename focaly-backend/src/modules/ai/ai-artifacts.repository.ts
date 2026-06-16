@@ -35,4 +35,11 @@ export class AiArtifactsRepository {
   findByJob(jobId: string): Promise<AiArtifactDocument[]> {
     return this.model.find({ jobId }).exec();
   }
+
+  deleteByJob(userId: string, jobId: string): Promise<number> {
+    return this.model
+      .deleteMany({ userId, jobId })
+      .exec()
+      .then((result) => result.deletedCount ?? 0);
+  }
 }

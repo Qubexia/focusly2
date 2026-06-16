@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpException,
   HttpStatus,
+  NotFoundException,
   Param,
   Post,
   Query,
@@ -97,5 +99,17 @@ export class AiController {
       return this.aiArtifactsRepo.findByChapter(user.id, chapterId);
     }
     return this.aiArtifactsRepo.findBySubject(user.id, subjectId ?? '');
+  }
+
+  @Delete('artifacts/jobs/:jobId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteJobArtifacts(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('jobId') jobId: string,
+  ): Promise<void> {
+    const deletedCount = await this.aiArtifactsRepo.deleteByJob(user.id, jobId);
+    if (deletedCount === 0) {
+      throw new NotFoundException('Study pack not found.');
+    }
   }
 }
