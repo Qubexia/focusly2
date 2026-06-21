@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
@@ -62,6 +63,7 @@ class _AnalyticsView extends StatelessWidget {
     bool isPremiumUser,
     bool isDark,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (state.isLoading && state.summary == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -99,19 +101,19 @@ class _AnalyticsView extends StatelessWidget {
                 isDark: isDark,
               ),
             const SizedBox(height: 28),
-            const _SectionLabel(title: 'Focus Trend'),
+            _SectionLabel(title: l10n.analyticsFocusTrend),
             const SizedBox(height: 12),
             FocusTrendChart(dailyFocus: state.summary!.dailyFocus),
           ],
           if (state.bySubject.isNotEmpty) ...[
             const SizedBox(height: 28),
-            const _SectionLabel(title: 'By Subject'),
+            _SectionLabel(title: l10n.analyticsBySubject),
             const SizedBox(height: 12),
             SubjectDistributionChart(subjects: state.bySubject),
           ],
           if (state.performance != null) ...[
             const SizedBox(height: 28),
-            const _SectionLabel(title: 'Performance Score'),
+            _SectionLabel(title: l10n.analyticsPerformanceScore),
             const SizedBox(height: 12),
             PerformanceCard(performance: state.performance!),
           ],
@@ -153,9 +155,9 @@ class _AnalyticsAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ),
-      title: const Text(
-        'Statistics',
-        style: TextStyle(
+      title: Text(
+        AppLocalizations.of(context).analyticsTitle,
+        style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w800,
           fontSize: 22,
@@ -193,17 +195,20 @@ class _HeroFocusCard extends StatelessWidget {
   final int totalMinutes;
   final int totalSessions;
 
-  String _formatTime(int minutes) {
+  String _formatTime(AppLocalizations l10n, int minutes) {
     if (minutes >= 60) {
       final h = minutes ~/ 60;
       final m = minutes % 60;
-      return m == 0 ? '${h}h' : '${h}h ${m}m';
+      return m == 0
+          ? l10n.analyticsDurationHours(h)
+          : l10n.analyticsDurationHoursMinutes(h, m);
     }
-    return '${minutes}m';
+    return l10n.analyticsDurationMinutes(minutes);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -243,9 +248,9 @@ class _HeroFocusCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Total Focus Time',
-                      style: TextStyle(
+                    Text(
+                      l10n.analyticsTotalFocusTime,
+                      style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -255,7 +260,7 @@ class _HeroFocusCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  _formatTime(totalMinutes),
+                  _formatTime(l10n, totalMinutes),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 44,
@@ -265,7 +270,7 @@ class _HeroFocusCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '$totalMinutes minutes total',
+                  l10n.analyticsMinutesTotal(totalMinutes),
                   style: const TextStyle(
                     color: Colors.white60,
                     fontSize: 12,
@@ -295,9 +300,9 @@ class _HeroFocusCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'sessions',
-                  style: TextStyle(
+                Text(
+                  l10n.analyticsSessionsLabel,
+                  style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -329,13 +334,14 @@ class _QuickStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         Expanded(
           child: _MiniStat(
             icon: Icons.task_alt_rounded,
             value: '$tasksCompleted',
-            label: 'Tasks Done',
+            label: l10n.analyticsTasksDone,
             color: const Color(0xFF00BB77),
             isDark: isDark,
           ),
@@ -344,8 +350,8 @@ class _QuickStats extends StatelessWidget {
         Expanded(
           child: _MiniStat(
             icon: Icons.show_chart_rounded,
-            value: '$avgDailyMinutes m',
-            label: 'Daily Avg',
+            value: l10n.analyticsMinutesShort(avgDailyMinutes),
+            label: l10n.analyticsDailyAvg,
             color: AppColors.primary,
             isDark: isDark,
           ),
@@ -354,8 +360,8 @@ class _QuickStats extends StatelessWidget {
         Expanded(
           child: _MiniStat(
             icon: Icons.stars_rounded,
-            value: '$score%',
-            label: 'Score',
+            value: l10n.analyticsPercent(score),
+            label: l10n.analyticsScore,
             color: score >= 70 ? const Color(0xFFFF9500) : AppColors.primary,
             isDark: isDark,
           ),
@@ -473,6 +479,7 @@ class _PremiumBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -498,18 +505,18 @@ class _PremiumBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Unlock deeper insights',
-                  style: TextStyle(
+                Text(
+                  l10n.analyticsUnlockDeeperInsights,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
                     fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 3),
-                const Text(
-                  'Monthly & yearly trends with premium.',
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                Text(
+                  l10n.analyticsPremiumTrendsSubtitle,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
                 ),
                 const SizedBox(height: 12),
                 GestureDetector(
@@ -521,9 +528,9 @@ class _PremiumBanner extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'Upgrade',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.analyticsUpgrade,
+                      style: const TextStyle(
                         color: Color(0xFF004C99),
                         fontWeight: FontWeight.w800,
                         fontSize: 12,
@@ -555,6 +562,7 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (isPremiumError) {
       return Center(
         child: Padding(
@@ -576,7 +584,7 @@ class _ErrorView extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                'Unlock Full Insights',
+                l10n.analyticsUnlockFullInsights,
                 style: Theme.of(context)
                     .textTheme
                     .headlineSmall
@@ -602,14 +610,14 @@ class _ErrorView extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20)),
                 ),
-                child: const Text('Upgrade to Premium'),
+                child: Text(l10n.analyticsUpgradeToPremium),
               ),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => context
                     .read<AnalyticsCubit>()
                     .loadAnalytics(range: AnalyticsDateRange.week),
-                child: const Text('Return to current week'),
+                child: Text(l10n.analyticsReturnToCurrentWeek),
               ),
             ],
           ),
@@ -626,7 +634,7 @@ class _ErrorView extends StatelessWidget {
           const SizedBox(height: 16),
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 16),
-          TextButton(onPressed: onRetry, child: const Text('Try again')),
+          TextButton(onPressed: onRetry, child: Text(l10n.commonRetry)),
         ],
       ),
     );
@@ -645,6 +653,7 @@ class _DateRangeSelector extends StatelessWidget {
   final bool isPremiumUser;
 
   void _showPremiumSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -656,16 +665,16 @@ class _DateRangeSelector extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Premium analytics',
+                l10n.analyticsPremiumAnalyticsTitle,
                 style: Theme.of(context)
                     .textTheme
                     .titleLarge
                     ?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Month and Year insights are available for premium users only. Upgrade to unlock broader trends and comparisons.',
-                style: TextStyle(height: 1.45),
+              Text(
+                l10n.analyticsPremiumAnalyticsBody,
+                style: const TextStyle(height: 1.45),
               ),
               const SizedBox(height: 18),
               SizedBox(
@@ -675,7 +684,7 @@ class _DateRangeSelector extends StatelessWidget {
                     Navigator.of(sheetContext).pop();
                     sheetContext.push('/premium');
                   },
-                  child: const Text('Upgrade to Premium'),
+                  child: Text(l10n.analyticsUpgradeToPremium),
                 ),
               ),
             ],
@@ -687,6 +696,7 @@ class _DateRangeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
@@ -696,14 +706,14 @@ class _DateRangeSelector extends StatelessWidget {
       child: Row(
         children: [
           _RangeBtn(
-            label: 'Week',
+            label: l10n.analyticsRangeWeek,
             isSelected: currentRange == AnalyticsDateRange.week,
             onTap: () => context
                 .read<AnalyticsCubit>()
                 .loadAnalytics(range: AnalyticsDateRange.week),
           ),
           _RangeBtn(
-            label: 'Month',
+            label: l10n.analyticsRangeMonth,
             isSelected: currentRange == AnalyticsDateRange.month,
             isLocked: !isPremiumUser,
             onTap: () {
@@ -717,7 +727,7 @@ class _DateRangeSelector extends StatelessWidget {
             },
           ),
           _RangeBtn(
-            label: 'Year',
+            label: l10n.analyticsRangeYear,
             isSelected: currentRange == AnalyticsDateRange.year,
             isLocked: !isPremiumUser,
             onTap: () {

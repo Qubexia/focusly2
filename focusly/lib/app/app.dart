@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
+import '../core/localization/app_l10n.dart';
+import '../core/localization/locale_cubit.dart';
 import '../core/services/deep_link_service.dart';
 import '../core/services/premium_refresh_service.dart';
 import '../core/theme/app_theme.dart';
@@ -74,6 +77,7 @@ class _ZakerlyAppState extends State<ZakerlyApp> with WidgetsBindingObserver {
           _subscriptionCubit = cubit;
           return cubit;
         }),
+        BlocProvider(create: (_) => LocaleCubit()),
       ],
       child: MultiBlocListener(
         listeners: [
@@ -91,13 +95,24 @@ class _ZakerlyAppState extends State<ZakerlyApp> with WidgetsBindingObserver {
             },
           ),
         ],
-        child: MaterialApp.router(
-        title: 'Zakerly',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.system,
-        routerConfig: appRouter,
+        child: BlocBuilder<LocaleCubit, Locale?>(
+          builder: (context, locale) => MaterialApp.router(
+            title: 'Zakerly',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: ThemeMode.system,
+            locale: locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: appRouter,
+            builder: (context, child) {
+              // Keep context-free layers (cubits/services) in sync with the
+              // locale Flutter actually resolved for the UI.
+              AppL10n.update(Localizations.localeOf(context));
+              return child ?? const SizedBox.shrink();
+            },
+          ),
         ),
       ),
     );

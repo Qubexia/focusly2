@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/ai_artifact_model.dart';
@@ -66,6 +67,7 @@ class _AiArtifactViewerPageState extends State<AiArtifactViewerPage>
     );
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF4F8FC),
@@ -75,7 +77,7 @@ class _AiArtifactViewerPageState extends State<AiArtifactViewerPage>
         backgroundColor: surface,
         surfaceTintColor: Colors.transparent,
         title: Text(
-          isRtl ? 'حزمة المراجعة' : 'Study Pack',
+          l10n.aiStudyPack,
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         bottom: PreferredSize(
@@ -149,6 +151,7 @@ class _PackHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     final readMinutes = (summaryText.length / 900).ceil().clamp(1, 99);
     final preview = summaryText
         .split(RegExp(r'\n+'))
@@ -198,7 +201,7 @@ class _PackHeader extends StatelessWidget {
                         : CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isRtl ? 'محتوى جاهز للمراجعة' : 'Ready to review',
+                        l10n.aiReadyToReview,
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                               color: Colors.white.withValues(alpha: 0.88),
                               fontWeight: FontWeight.w700,
@@ -206,9 +209,7 @@ class _PackHeader extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        isRtl
-                            ? '$readMinutes د قراءة تقريبية'
-                            : '~$readMinutes min read',
+                        l10n.aiMinRead(readMinutes),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Colors.white.withValues(alpha: 0.78),
                             ),
@@ -238,7 +239,7 @@ class _PackHeader extends StatelessWidget {
                   child: _HeaderStat(
                     icon: Icons.article_outlined,
                     value: sectionCount > 0 ? '$sectionCount' : '—',
-                    label: isRtl ? 'أقسام' : 'Sections',
+                    label: l10n.aiSections,
                     isDarkCard: isDark,
                   ),
                 ),
@@ -247,7 +248,7 @@ class _PackHeader extends StatelessWidget {
                   child: _HeaderStat(
                     icon: Icons.style_outlined,
                     value: '$flashcardsCount',
-                    label: isRtl ? 'بطاقات' : 'Cards',
+                    label: l10n.aiCards,
                     isDarkCard: isDark,
                   ),
                 ),
@@ -256,7 +257,7 @@ class _PackHeader extends StatelessWidget {
                   child: _HeaderStat(
                     icon: Icons.quiz_outlined,
                     value: '$questionsCount',
-                    label: isRtl ? 'أسئلة' : 'Quiz',
+                    label: l10n.aiQuiz,
                     isDarkCard: isDark,
                   ),
                 ),
@@ -324,6 +325,7 @@ class _StudyPackTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.cardDark : Colors.white;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       height: 52,
@@ -375,7 +377,7 @@ class _StudyPackTabBar extends StatelessWidget {
                 children: [
                   const Icon(Icons.notes_rounded, size: 17),
                   const SizedBox(width: 6),
-                  Text(isRtl ? 'ملخص' : 'Summary'),
+                  Text(l10n.aiTabSummary),
                 ],
               ),
             ),
@@ -389,7 +391,7 @@ class _StudyPackTabBar extends StatelessWidget {
                 children: [
                   const Icon(Icons.style_rounded, size: 17),
                   const SizedBox(width: 6),
-                  Text(isRtl ? 'بطاقات' : 'Cards'),
+                  Text(l10n.aiTabCards),
                 ],
               ),
             ),
@@ -403,7 +405,7 @@ class _StudyPackTabBar extends StatelessWidget {
                 children: [
                   const Icon(Icons.quiz_rounded, size: 17),
                   const SizedBox(width: 6),
-                  Text(isRtl ? 'اختبار' : 'Quiz'),
+                  Text(l10n.aiTabQuiz),
                 ],
               ),
             ),
@@ -429,6 +431,7 @@ class _SummaryTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final text = artifact?.summaryText ?? '';
     if (text.isEmpty) {
       return _ScrollableStudyPackShell(
@@ -436,10 +439,8 @@ class _SummaryTab extends StatelessWidget {
         tabBar: tabBar,
         child: _EmptyArtifactState(
           icon: Icons.notes_rounded,
-          title: isRtl ? 'لا يوجد ملخص' : 'No summary yet',
-          message: isRtl
-              ? 'سيظهر الملخص هنا بعد توليد حزمة المراجعة.'
-              : 'Your AI summary will appear here once generated.',
+          title: l10n.aiNoSummaryTitle,
+          message: l10n.aiNoSummaryMessage,
           isRtl: isRtl,
         ),
       );
@@ -495,7 +496,7 @@ class _SummaryTab extends StatelessWidget {
                               ),
                               const SizedBox(width: 10),
                               Text(
-                                isRtl ? 'قسم ${index + 1}' : 'Section ${index + 1}',
+                                l10n.aiSectionLabel(index + 1),
                                 style: Theme.of(context)
                                     .textTheme
                                     .labelLarge
@@ -648,6 +649,7 @@ class _FlashcardsTabState extends State<_FlashcardsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final cards = widget.artifact?.flashcards ?? const [];
     if (cards.isEmpty) {
       return _ScrollableStudyPackShell(
@@ -655,10 +657,8 @@ class _FlashcardsTabState extends State<_FlashcardsTab> {
         tabBar: widget.tabBar,
         child: _EmptyArtifactState(
           icon: Icons.style_rounded,
-          title: widget.isRtl ? 'لا توجد بطاقات' : 'No flashcards yet',
-          message: widget.isRtl
-              ? 'ستظهر بطاقات المراجعة هنا بعد التوليد.'
-              : 'Flashcards will show up here once your pack is ready.',
+          title: l10n.aiNoFlashcardsTitle,
+          message: l10n.aiNoFlashcardsMessage,
           isRtl: widget.isRtl,
         ),
       );
@@ -685,9 +685,7 @@ class _FlashcardsTabState extends State<_FlashcardsTab> {
                 Row(
                   children: [
                     Text(
-                      widget.isRtl
-                          ? 'بطاقة ${_index + 1} من ${cards.length}'
-                          : 'Card ${_index + 1} of ${cards.length}',
+                      l10n.aiCardCounter(_index + 1, cards.length),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
@@ -783,8 +781,8 @@ class _FlashcardsTabState extends State<_FlashcardsTab> {
                                   ),
                                   child: Text(
                                     showingBack
-                                        ? (widget.isRtl ? 'الإجابة' : 'Answer')
-                                        : (widget.isRtl ? 'السؤال' : 'Question'),
+                                        ? l10n.aiAnswer
+                                        : l10n.aiQuestion,
                                     style: Theme.of(context)
                                         .textTheme
                                         .labelMedium
@@ -845,13 +843,9 @@ class _FlashcardsTabState extends State<_FlashcardsTab> {
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      widget.isRtl
-                                          ? (showingBack
-                                              ? 'اضغط للعودة'
-                                              : 'اضغط لإظهار الإجابة')
-                                          : (showingBack
-                                              ? 'Tap to hide answer'
-                                              : 'Tap to reveal answer'),
+                                      showingBack
+                                          ? l10n.aiTapToHideAnswer
+                                          : l10n.aiTapToRevealAnswer,
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodySmall
@@ -883,7 +877,7 @@ class _FlashcardsTabState extends State<_FlashcardsTab> {
                               : Icons.arrow_back_rounded,
                           size: 18,
                         ),
-                        label: Text(widget.isRtl ? 'السابق' : 'Previous'),
+                        label: Text(l10n.aiPrevious),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(48),
                           shape: RoundedRectangleBorder(
@@ -904,7 +898,7 @@ class _FlashcardsTabState extends State<_FlashcardsTab> {
                               : Icons.arrow_forward_rounded,
                           size: 18,
                         ),
-                        label: Text(widget.isRtl ? 'التالي' : 'Next'),
+                        label: Text(l10n.commonNext),
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(48),
                           backgroundColor: AppColors.primary,
@@ -947,6 +941,7 @@ class _QuestionsTabState extends State<_QuestionsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final questions = widget.artifact?.questions ?? const [];
     if (questions.isEmpty) {
       return _ScrollableStudyPackShell(
@@ -954,10 +949,8 @@ class _QuestionsTabState extends State<_QuestionsTab> {
         tabBar: widget.tabBar,
         child: _EmptyArtifactState(
           icon: Icons.quiz_rounded,
-          title: widget.isRtl ? 'لا توجد أسئلة' : 'No quiz questions yet',
-          message: widget.isRtl
-              ? 'ستظهر أسئلة التدريب هنا بعد التوليد.'
-              : 'Practice questions will appear here once generated.',
+          title: l10n.aiNoQuestionsTitle,
+          message: l10n.aiNoQuestionsMessage,
           isRtl: widget.isRtl,
         ),
       );
@@ -980,7 +973,7 @@ class _QuestionsTabState extends State<_QuestionsTab> {
             itemBuilder: (context, index) {
               final q = questions[index];
               final prompt =
-                  (q['question'] ?? q['prompt'] ?? 'Question').toString();
+                  (q['question'] ?? q['prompt'] ?? l10n.aiQuestion).toString();
               final answer = (q['answer'] ?? '').toString();
               final isExpanded = _expandedIndex == index;
 
@@ -1056,6 +1049,7 @@ class _QuizCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return _SurfaceCard(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
@@ -1110,9 +1104,7 @@ class _QuizCard extends StatelessWidget {
                   size: 18,
                 ),
                 label: Text(
-                  isExpanded
-                      ? (isRtl ? 'إخفاء الإجابة' : 'Hide answer')
-                      : (isRtl ? 'إظهار الإجابة' : 'Show answer'),
+                  isExpanded ? l10n.aiHideAnswer : l10n.aiShowAnswer,
                 ),
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.primary,
@@ -1150,9 +1142,7 @@ class _QuizCard extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    answer.isEmpty
-                        ? (isRtl ? 'لا توجد إجابة.' : 'No answer available.')
-                        : answer,
+                    answer.isEmpty ? l10n.aiNoAnswerAvailable : answer,
                     textAlign: isRtl ? TextAlign.right : TextAlign.left,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           height: 1.65,

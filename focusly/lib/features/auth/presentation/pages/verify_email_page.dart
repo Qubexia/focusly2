@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../data/repositories/auth_repository_impl.dart';
@@ -17,7 +18,6 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
   final _repository = AuthRepository();
   bool _isLoading = true;
   bool _success = false;
-  String? _error;
 
   @override
   void initState() {
@@ -37,15 +37,15 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'Verification link is invalid or expired.';
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Verify email')),
+      appBar: AppBar(title: Text(l10n.authVerifyEmailAppBar)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -57,20 +57,20 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
               else if (_success) ...[
                 const Icon(Icons.verified_rounded, size: 72, color: AppColors.secondary),
                 const SizedBox(height: 16),
-                const Text(
-                  'Email verified successfully!',
+                Text(
+                  l10n.authEmailVerifiedSuccess,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 24),
                 FilledButton(
                   onPressed: () => context.go('/login'),
-                  child: const Text('Continue to login'),
+                  child: Text(l10n.authContinueToLoginButton),
                 ),
               ] else ...[
                 const Icon(Icons.error_outline_rounded, size: 72, color: AppColors.error),
                 const SizedBox(height: 16),
-                Text(_error ?? 'Verification failed', textAlign: TextAlign.center),
+                Text(l10n.authVerifyFailed, textAlign: TextAlign.center),
               ],
             ],
           ),

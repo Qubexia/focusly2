@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../subjects/data/models/subject_model.dart';
 import '../../../subjects/data/repositories/subjects_repository.dart';
@@ -122,6 +124,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final l10n = AppLocalizations.of(context);
 
     return ConstrainedBox(
       constraints: BoxConstraints(
@@ -156,7 +159,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Create Study Block',
+                      l10n.schedulesCreateBlockTitle,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
@@ -177,7 +180,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                const _SectionLabel(label: 'Subject'),
+                _SectionLabel(label: l10n.schedulesSubjectLabel),
                 const SizedBox(height: 12),
                 _isLoadingSubjects
                     ? const Center(child: LinearProgressIndicator())
@@ -187,7 +190,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                           contentPadding:
                               EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         ),
-                        hint: const Text('Select Subject'),
+                        hint: Text(l10n.schedulesSelectSubjectHint),
                         items: _subjects
                             .map((s) => DropdownMenuItem(
                                   value: s.id,
@@ -197,34 +200,37 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                             .toList(),
                         onChanged: (val) =>
                             setState(() => _selectedSubjectId = val),
-                        validator: (val) => val == null ? 'Required' : null,
+                        validator: (val) =>
+                            val == null ? l10n.schedulesFieldRequired : null,
                       ),
                 const SizedBox(height: 24),
-                const _SectionLabel(label: 'Block Title'),
+                _SectionLabel(label: l10n.schedulesBlockTitleLabel),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _titleController,
-                  decoration: const InputDecoration(
-                    hintText: 'e.g., Deep Work Session',
+                  decoration: InputDecoration(
+                    hintText: l10n.schedulesBlockTitleHint,
                   ),
-                  validator: (val) =>
-                      (val == null || val.isEmpty) ? 'Required' : null,
+                  validator: (val) => (val == null || val.isEmpty)
+                      ? l10n.schedulesFieldRequired
+                      : null,
                 ),
                 const SizedBox(height: 24),
-                const _SectionLabel(label: 'Selected Day'),
+                _SectionLabel(label: l10n.schedulesSelectedDayLabel),
                 const SizedBox(height: 12),
                 _InfoChip(
                   icon: Icons.event_rounded,
-                  label: _formatDate(widget.selectedDate),
+                  label: _formatDate(context, widget.selectedDate),
                 ),
                 const SizedBox(height: 24),
-                const _SectionLabel(label: 'Time Range'),
+                _SectionLabel(label: l10n.schedulesTimeRangeLabel),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
                       child: _PickerButton(
-                        label: 'Starts at ${_startTime.format(context)}',
+                        label: l10n
+                            .schedulesStartsAt(_startTime.format(context)),
                         icon: Icons.login_rounded,
                         onTap: () async {
                           final time = await showTimePicker(
@@ -234,7 +240,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                           if (time == null) return;
                           if (_isPastStartTime(time)) {
                             _showValidationMessage(
-                              'You cannot choose a start time before the current time.',
+                              l10n.schedulesStartTimePastError,
                             );
                             return;
                           }
@@ -255,7 +261,8 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _PickerButton(
-                        label: 'Ends at ${_endTime.format(context)}',
+                        label:
+                            l10n.schedulesEndsAt(_endTime.format(context)),
                         icon: Icons.logout_rounded,
                         onTap: () async {
                           final time = await showTimePicker(
@@ -274,7 +281,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
 
                           if (!selectedEnd.isAfter(selectedStart)) {
                             _showValidationMessage(
-                              'End time must be after start time.',
+                              l10n.schedulesEndAfterStartError,
                             );
                             return;
                           }
@@ -286,7 +293,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                const _SectionLabel(label: 'Days of Week'),
+                _SectionLabel(label: l10n.schedulesDaysOfWeekLabel),
                 const SizedBox(height: 12),
                 _DaysPicker(
                   selectedDays: _selectedDays,
@@ -296,7 +303,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const _SectionLabel(label: 'Reminders'),
+                    _SectionLabel(label: l10n.schedulesRemindersLabel),
                     Switch.adaptive(
                       value: _reminderEnabled,
                       activeThumbColor: AppColors.primary,
@@ -312,13 +319,21 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 0, child: Text('At start time')),
-                      DropdownMenuItem(value: 5, child: Text('5 minutes before')),
+                    items: [
                       DropdownMenuItem(
-                          value: 15, child: Text('15 minutes before')),
+                          value: 0,
+                          child: Text(l10n.schedulesReminderAtStart)),
                       DropdownMenuItem(
-                          value: 30, child: Text('30 minutes before')),
+                          value: 5,
+                          child: Text(l10n.schedulesReminderMinutesBefore(5))),
+                      DropdownMenuItem(
+                          value: 15,
+                          child:
+                              Text(l10n.schedulesReminderMinutesBefore(15))),
+                      DropdownMenuItem(
+                          value: 30,
+                          child:
+                              Text(l10n.schedulesReminderMinutesBefore(30))),
                     ],
                     onChanged: (val) => setState(() => _reminderOffset = val ?? 15),
                   ),
@@ -334,7 +349,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                             width: 20,
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: Colors.white))
-                        : const Text('Create Schedule'),
+                        : Text(l10n.schedulesCreateButton),
                   ),
                 ),
               ],
@@ -348,11 +363,12 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
   void _submit() {
     if (!_formKey.currentState!.validate() || _selectedSubjectId == null) return;
 
+    final l10n = AppLocalizations.of(context);
     final today = _dateOnly(DateTime.now());
     final selectedDay = _dateOnly(widget.selectedDate);
 
     if (selectedDay.isBefore(today)) {
-      _showValidationMessage('You cannot create a schedule for a past day.');
+      _showValidationMessage(l10n.schedulesPastDayError);
       return;
     }
 
@@ -361,13 +377,13 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
 
     if (_isSameDay(selectedDay, today) && start.isBefore(DateTime.now())) {
       _showValidationMessage(
-        'You cannot create a schedule with a start time before the current time.',
+        l10n.schedulesStartTimePastError,
       );
       return;
     }
 
     if (!end.isAfter(start)) {
-      _showValidationMessage('End time must be after start time.');
+      _showValidationMessage(l10n.schedulesEndAfterStartError);
       return;
     }
 
@@ -386,24 +402,9 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
     return DateTime(date.year, date.month, date.day);
   }
 
-  String _formatDate(DateTime date) {
-    const monthNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
-    final month = monthNames[date.month - 1];
-    return '$month ${date.day}, ${date.year}';
+  String _formatDate(BuildContext context, DateTime date) {
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.yMMMd(locale).format(date);
   }
 }
 
@@ -414,7 +415,13 @@ class _DaysPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final locale = Localizations.localeOf(context).toString();
+    final narrowWeekday = DateFormat('EEEEE', locale);
+    // 2024-01-01 is a Monday; offsetting by index yields Mon..Sun (day 1..7).
+    final labels = List.generate(
+      7,
+      (index) => narrowWeekday.format(DateTime(2024, 1, 1 + index)),
+    );
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Row(

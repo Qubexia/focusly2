@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_utils.dart';
@@ -17,7 +18,7 @@ class _PomodoroHistoryPageState extends State<PomodoroHistoryPage> {
   final PomodoroRepository _repository = PomodoroRepository();
   List<PomodoroSessionModel> _sessions = const [];
   bool _isLoading = true;
-  String? _error;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -28,7 +29,7 @@ class _PomodoroHistoryPageState extends State<PomodoroHistoryPage> {
   Future<void> _load() async {
     setState(() {
       _isLoading = true;
-      _error = null;
+      _hasError = false;
     });
 
     final now = DateTime.now();
@@ -49,17 +50,18 @@ class _PomodoroHistoryPageState extends State<PomodoroHistoryPage> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'Could not load session history.';
+        _hasError = true;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Focus History')),
+      appBar: AppBar(title: Text(l10n.pomodoroHistoryTitle)),
       body: RefreshIndicator(
         onRefresh: _load,
         child: _isLoading
@@ -69,17 +71,17 @@ class _PomodoroHistoryPageState extends State<PomodoroHistoryPage> {
                   Center(child: CircularProgressIndicator()),
                 ],
               )
-            : _error != null
+            : _hasError
                 ? ListView(
                     padding: const EdgeInsets.all(24),
                     children: [
                       const SizedBox(height: 120),
-                      Center(child: Text(_error!)),
+                      Center(child: Text(l10n.pomodoroHistoryLoadError)),
                       const SizedBox(height: 16),
                       Center(
                         child: FilledButton(
                           onPressed: _load,
-                          child: const Text('Retry'),
+                          child: Text(l10n.commonRetry),
                         ),
                       ),
                     ],
@@ -87,11 +89,11 @@ class _PomodoroHistoryPageState extends State<PomodoroHistoryPage> {
                 : _sessions.isEmpty
                     ? ListView(
                         padding: const EdgeInsets.all(24),
-                        children: const [
-                          SizedBox(height: 120),
+                        children: [
+                          const SizedBox(height: 120),
                           Center(
                             child: Text(
-                              'No focus sessions in the last 30 days.',
+                              l10n.pomodoroHistoryEmpty,
                               textAlign: TextAlign.center,
                             ),
                           ),
@@ -121,8 +123,10 @@ class _HistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateLabel =
-        DateFormat('MMM d, yyyy · HH:mm').format(session.startedAt);
+    final l10n = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
+    final dateLabel = DateFormat('MMM d, yyyy · HH:mm', locale)
+        .format(session.startedAt);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -150,7 +154,7 @@ class _HistoryTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${session.totalFocusMinutes} min focus',
+                  l10n.pomodoroMinutesFocus(session.totalFocusMinutes),
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -181,12 +185,21 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final normalized = status.toLowerCase();
     final color = normalized == 'completed'
         ? AppColors.secondary
         : normalized == 'aborted'
             ? AppColors.error
             : AppColors.primary;
+
+    final label = switch (normalized) {
+      'completed' => l10n.pomodoroStatusCompleted,
+      'aborted' => l10n.pomodoroStatusAborted,
+      'paused' => l10n.pomodoroStatusPaused,
+      'active' => l10n.pomodoroStatusActive,
+      _ => status,
+    };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -195,7 +208,7 @@ class _StatusChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        status,
+        label,
         style: TextStyle(
           color: color,
           fontSize: 12,

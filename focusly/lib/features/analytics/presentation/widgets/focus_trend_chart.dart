@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/analytics_summary_model.dart';
 
@@ -12,6 +13,7 @@ class FocusTrendChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -31,9 +33,9 @@ class FocusTrendChart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Focus Trend',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+          Text(
+            l10n.analyticsFocusTrend,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
           const SizedBox(height: 24),
           SizedBox(

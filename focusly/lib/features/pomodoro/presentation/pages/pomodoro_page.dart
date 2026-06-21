@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../subjects/data/models/subject_model.dart';
@@ -130,11 +131,12 @@ class _HeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Focus Timer',
+          l10n.pomodoroFocusTimer,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: isDark
@@ -192,6 +194,7 @@ class _TimerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final totalSeconds = state.timerPhase == PomodoroTimerPhase.breakTime
         ? state.breakMinutes * 60
         : state.focusMinutes * 60;
@@ -201,9 +204,9 @@ class _TimerSection extends StatelessWidget {
         : 0.0;
 
     final phaseLabel = switch (state.timerPhase) {
-      PomodoroTimerPhase.focus => 'FOCUS',
-      PomodoroTimerPhase.breakTime => 'BREAK',
-      PomodoroTimerPhase.idle => 'READY',
+      PomodoroTimerPhase.focus => l10n.pomodoroPhaseFocus,
+      PomodoroTimerPhase.breakTime => l10n.pomodoroPhaseBreak,
+      PomodoroTimerPhase.idle => l10n.pomodoroPhaseReady,
     };
 
     return Column(
@@ -277,7 +280,7 @@ class _TimerSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    activeSubject?.name ?? 'General Focus',
+                    activeSubject?.name ?? l10n.pomodoroGeneralFocus,
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -300,16 +303,16 @@ class _TimerSection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _PhaseChip(
-              label: 'Focus',
-              value: '${state.focusMinutes}m',
+              label: l10n.pomodoroFocus,
+              value: l10n.pomodoroMinutesShort(state.focusMinutes),
               isActive: state.timerPhase == PomodoroTimerPhase.focus,
               accentColor: AppColors.primary,
               isDark: isDark,
             ),
             const SizedBox(width: 12),
             _PhaseChip(
-              label: 'Break',
-              value: '${state.breakMinutes}m',
+              label: l10n.pomodoroBreak,
+              value: l10n.pomodoroMinutesShort(state.breakMinutes),
               isActive: state.timerPhase == PomodoroTimerPhase.breakTime,
               accentColor: _breakColor,
               isDark: isDark,
@@ -497,12 +500,13 @@ class _ActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final cubit = context.read<PomodoroCubit>();
 
     if (state.activeSession == null) {
       return Center(
         child: _PrimaryBtn(
-          label: 'Start Session',
+          label: l10n.pomodoroStartSession,
           icon: Icons.play_arrow_rounded,
           accentColor: accentColor,
           onTap: state.isSaving ? null : cubit.startSession,
@@ -517,12 +521,12 @@ class _ActionButtons extends StatelessWidget {
       children: [
         _SecondaryBtn(
           icon: Icons.close_rounded,
-          label: 'Stop',
+          label: l10n.pomodoroStop,
           onTap: state.isSaving ? null : cubit.abortSession,
         ),
         const SizedBox(width: 12),
         _PrimaryBtn(
-          label: isPaused ? 'Resume' : 'Pause',
+          label: isPaused ? l10n.pomodoroResume : l10n.pomodoroPause,
           icon: isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
           accentColor: accentColor,
           compact: true,
@@ -533,7 +537,7 @@ class _ActionButtons extends StatelessWidget {
         const SizedBox(width: 12),
         _SecondaryBtn(
           icon: Icons.check_rounded,
-          label: 'Done',
+          label: l10n.commonDone,
           onTap: state.isSaving ? null : cubit.completeSession,
         ),
       ],
@@ -696,6 +700,7 @@ class _SessionSetupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final locked = state.activeSession != null;
 
     return Container(
@@ -722,7 +727,7 @@ class _SessionSetupCard extends StatelessWidget {
               Icon(Icons.tune_rounded, size: 18, color: accentColor),
               const SizedBox(width: 8),
               Text(
-                'Session Setup',
+                l10n.pomodoroSessionSetup,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -737,7 +742,7 @@ class _SessionSetupCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    'Locked',
+                    l10n.pomodoroLocked,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -750,7 +755,7 @@ class _SessionSetupCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Subject',
+            l10n.pomodoroSubject,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -772,7 +777,7 @@ class _SessionSetupCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _TimeStepper(
-                  label: 'Focus',
+                  label: l10n.pomodoroFocus,
                   icon: Icons.timer_outlined,
                   value: state.focusMinutes,
                   min: 15,
@@ -787,7 +792,7 @@ class _SessionSetupCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _TimeStepper(
-                  label: 'Break',
+                  label: l10n.pomodoroBreak,
                   icon: Icons.coffee_outlined,
                   value: state.breakMinutes,
                   min: 5,
@@ -831,13 +836,14 @@ class _SubjectChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final subjects = _uniqueSubjects();
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
           _SubjectChip(
-            label: 'General',
+            label: l10n.pomodoroGeneral,
             isSelected: state.selectedSubjectId == null,
             accentColor: accentColor,
             isDark: isDark,
@@ -935,6 +941,7 @@ class _TimeStepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -971,7 +978,7 @@ class _TimeStepper extends StatelessWidget {
               ),
               Flexible(
                 child: Text(
-                  '$value min',
+                  l10n.pomodoroMinutesUnit(value),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.clip,
@@ -1056,17 +1063,18 @@ class _TodayStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final totalFocus = state.today?.totalFocusMinutes ?? 0;
     final sessions = state.today?.sessions ?? const [];
     final completed = sessions.where((s) => s.status == 'completed').length;
-    final subjectName = activeSubject?.name ?? 'General';
+    final subjectName = activeSubject?.name ?? l10n.pomodoroGeneral;
 
     return Row(
       children: [
         Expanded(
           child: _StatCard(
-            label: 'Focus Time',
-            value: '${totalFocus}m',
+            label: l10n.pomodoroFocusTime,
+            value: l10n.pomodoroMinutesShort(totalFocus),
             icon: Icons.timer_outlined,
             isDark: isDark,
           ),
@@ -1074,7 +1082,7 @@ class _TodayStatsRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _StatCard(
-            label: 'Sessions',
+            label: l10n.pomodoroSessions,
             value: '$completed',
             icon: Icons.check_circle_outline_rounded,
             isDark: isDark,
@@ -1083,7 +1091,7 @@ class _TodayStatsRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _StatCard(
-            label: 'Subject',
+            label: l10n.pomodoroSubject,
             value: subjectName,
             icon: Icons.book_outlined,
             isDark: isDark,
@@ -1184,6 +1192,7 @@ class _TodaySessionsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1207,14 +1216,14 @@ class _TodaySessionsList extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Today's Sessions",
+                l10n.pomodoroTodaysSessions,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
               ),
               if (sessions.isNotEmpty)
                 Text(
-                  '${sessions.length} total',
+                  l10n.pomodoroSessionsTotal(sessions.length),
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark
@@ -1240,7 +1249,7 @@ class _TodaySessionsList extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'No sessions yet today',
+                      l10n.pomodoroNoSessionsToday,
                       style: TextStyle(
                         color: isDark
                             ? AppColors.textSecondaryDark
@@ -1294,7 +1303,17 @@ class _SessionTile extends StatelessWidget {
         _ => Icons.pause_circle_rounded,
       };
 
-  String get _statusLabel {
+  String _statusLabel(AppLocalizations l10n) {
+    switch (session.status) {
+      case 'completed':
+        return l10n.pomodoroStatusCompleted;
+      case 'aborted':
+        return l10n.pomodoroStatusAborted;
+      case 'paused':
+        return l10n.pomodoroStatusPaused;
+      case 'active':
+        return l10n.pomodoroStatusActive;
+    }
     final s = session.status;
     if (s.isEmpty) return s;
     return s[0].toUpperCase() + s.substring(1);
@@ -1302,6 +1321,7 @@ class _SessionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         Container(
@@ -1319,7 +1339,7 @@ class _SessionTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                subject?.name ?? 'General Focus',
+                subject?.name ?? l10n.pomodoroGeneralFocus,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -1330,7 +1350,10 @@ class _SessionTile extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '${session.totalFocusMinutes} min · $_statusLabel',
+                l10n.pomodoroSessionMinutesStatus(
+                  session.totalFocusMinutes,
+                  _statusLabel(l10n),
+                ),
                 style: TextStyle(
                   fontSize: 12,
                   color: isDark

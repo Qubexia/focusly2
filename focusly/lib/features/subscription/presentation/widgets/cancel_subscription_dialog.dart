@@ -1,27 +1,26 @@
 import 'package:flutter/material.dart';
 
+import 'package:zakerly/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// Returns `true` when the user confirms cancellation.
 Future<bool> confirmCancelSubscription(BuildContext context) async {
+  final l10n = AppLocalizations.of(context);
   final result = await showDialog<bool>(
     context: context,
     builder: (dialogContext) {
       return AlertDialog(
-        title: const Text('Cancel subscription?'),
-        content: const Text(
-          'Your subscription will stop renewing. '
-          'You keep Premium access until the end of the current billing period.',
-        ),
+        title: Text(l10n.subscriptionCancelDialogTitle),
+        content: Text(l10n.subscriptionCancelDialogContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Keep Premium'),
+            child: Text(l10n.subscriptionKeepPremium),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Cancel subscription'),
+            child: Text(l10n.subscriptionCancelAction),
           ),
         ],
       );

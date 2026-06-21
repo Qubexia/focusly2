@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:zakerly/core/localization/app_l10n.dart';
 import '../../data/models/planned_item_model.dart';
 import '../../data/repositories/planner_repository.dart';
 
@@ -43,7 +44,7 @@ class PlannerCubit extends Cubit<PlannerState> {
     } catch (_) {
       emit(state.copyWith(
         isLoading: false,
-        errorMessage: 'Failed to load items for this date.',
+        errorMessage: AppL10n.current.plannerLoadFailed,
       ));
     }
   }
@@ -69,7 +70,7 @@ class PlannerCubit extends Cubit<PlannerState> {
       emit(state.copyWith(
         isSaving: false,
         feedbackType: PlannerFeedbackType.success,
-        feedbackMessage: 'Item created successfully!',
+        feedbackMessage: AppL10n.current.plannerCreateSuccess,
       ));
       
       // Refresh list for the selected date
@@ -84,7 +85,7 @@ class PlannerCubit extends Cubit<PlannerState> {
       emit(state.copyWith(
         isSaving: false,
         feedbackType: PlannerFeedbackType.error,
-        feedbackMessage: 'Failed to create item.',
+        feedbackMessage: AppL10n.current.plannerCreateFailed,
       ));
     }
   }
@@ -97,12 +98,12 @@ class PlannerCubit extends Cubit<PlannerState> {
       
       emit(state.copyWith(
         feedbackType: PlannerFeedbackType.success,
-        feedbackMessage: 'Item completed! +Points earned',
+        feedbackMessage: AppL10n.current.plannerCompleteSuccess,
       ));
     } catch (e) {
       emit(state.copyWith(
         feedbackType: PlannerFeedbackType.error,
-        feedbackMessage: 'Failed to complete item.',
+        feedbackMessage: AppL10n.current.plannerCompleteFailed,
       ));
     }
   }
@@ -114,12 +115,12 @@ class PlannerCubit extends Cubit<PlannerState> {
       
       emit(state.copyWith(
         feedbackType: PlannerFeedbackType.success,
-        feedbackMessage: 'Item deleted successfully.',
+        feedbackMessage: AppL10n.current.plannerDeleteSuccess,
       ));
     } catch (e) {
       emit(state.copyWith(
         feedbackType: PlannerFeedbackType.error,
-        feedbackMessage: 'Failed to delete item.',
+        feedbackMessage: AppL10n.current.plannerDeleteFailed,
       ));
     }
   }
@@ -171,8 +172,8 @@ class PlannerCubit extends Cubit<PlannerState> {
   String _extractMessage(DioException e) {
     final data = e.response?.data;
     if (data is Map<String, dynamic>) {
-      return (data['message'] as String?) ?? 'Something went wrong.';
+      return (data['message'] as String?) ?? AppL10n.current.commonError;
     }
-    return 'Something went wrong.';
+    return AppL10n.current.commonError;
   }
 }

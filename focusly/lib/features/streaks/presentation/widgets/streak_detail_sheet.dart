@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/streak_model.dart';
@@ -11,6 +12,7 @@ Future<void> showStreakDetailSheet(
     context: context,
     showDragHandle: true,
     builder: (sheetContext) {
+      final l10n = AppLocalizations.of(sheetContext);
       final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
       final milestones = _milestones(streak.current);
 
@@ -40,14 +42,14 @@ Future<void> showStreakDetailSheet(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${streak.current} day streak',
+                        l10n.streaksDayStreak(streak.current),
                         style: Theme.of(sheetContext)
                             .textTheme
                             .headlineSmall
                             ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       Text(
-                        'Best: ${streak.longest} days',
+                        l10n.streaksBest(streak.longest),
                         style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
                               color: isDark
                                   ? AppColors.textSecondaryDark
@@ -61,7 +63,7 @@ Future<void> showStreakDetailSheet(
             ),
             const SizedBox(height: 20),
             _StreakStatRow(
-              label: 'Total points',
+              label: l10n.streaksTotalPoints,
               value: '${streak.points}',
               icon: Icons.stars_rounded,
               color: AppColors.premium,
@@ -69,7 +71,7 @@ Future<void> showStreakDetailSheet(
             if (streak.lastActiveDate != null) ...[
               const SizedBox(height: 10),
               _StreakStatRow(
-                label: 'Last active',
+                label: l10n.streaksLastActive,
                 value: streak.lastActiveDate!,
                 icon: Icons.calendar_today_rounded,
                 color: AppColors.secondary,
@@ -77,7 +79,7 @@ Future<void> showStreakDetailSheet(
             ],
             const SizedBox(height: 20),
             Text(
-              'Milestones',
+              l10n.streaksMilestones,
               style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -145,6 +147,7 @@ class _MilestoneChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -166,7 +169,7 @@ class _MilestoneChip extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            '${days}d',
+            l10n.streaksMilestoneDays(days),
             style: TextStyle(
               fontWeight: FontWeight.w700,
               color: unlocked ? AppColors.secondary : Colors.grey,

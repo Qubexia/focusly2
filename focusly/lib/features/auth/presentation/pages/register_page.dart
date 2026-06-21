@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../bloc/auth_bloc.dart';
@@ -50,6 +51,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return BlocListener<AuthBloc, AuthState>(
@@ -116,7 +118,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                       // Header
                       Text(
-                            'Create Account',
+                            l10n.authRegisterTitle,
                             style: Theme.of(context).textTheme.headlineLarge
                                 ?.copyWith(
                                   fontWeight: FontWeight.w800,
@@ -130,7 +132,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       const SizedBox(height: 8),
 
                       Text(
-                        'Start your journey to academic excellence',
+                        l10n.authRegisterSubtitle,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: isDark
                               ? AppColors.textSecondaryDark
@@ -143,13 +145,13 @@ class _RegisterPageState extends State<RegisterPage> {
                       // Name
                       AuthTextField(
                         controller: _nameController,
-                        label: 'Full Name',
-                        hint: 'John Doe',
+                        label: l10n.authFullNameLabel,
+                        hint: l10n.authFullNameHint,
                         prefixIcon: Icons.person_outline_rounded,
                         textCapitalization: TextCapitalization.words,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Please enter your name';
+                            return l10n.authNameRequired;
                           }
                           return null;
                         },
@@ -160,18 +162,18 @@ class _RegisterPageState extends State<RegisterPage> {
                       // Email
                       AuthTextField(
                         controller: _emailController,
-                        label: 'Email',
-                        hint: 'your@email.com',
+                        label: l10n.authEmailLabel,
+                        hint: l10n.authEmailHint,
                         keyboardType: TextInputType.emailAddress,
                         prefixIcon: Icons.mail_outline_rounded,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
+                            return l10n.authEmailRequired;
                           }
                           if (!RegExp(
                             r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$',
                           ).hasMatch(value)) {
-                            return 'Please enter a valid email';
+                            return l10n.authEmailInvalid;
                           }
                           return null;
                         },
@@ -182,7 +184,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       // Password
                       AuthTextField(
                         controller: _passwordController,
-                        label: 'Password',
+                        label: l10n.authPasswordLabel,
                         hint: '••••••••',
                         obscureText: _obscurePassword,
                         prefixIcon: Icons.lock_outline_rounded,
@@ -202,10 +204,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter a password';
+                            return l10n.authPasswordRequired;
                           }
                           if (value.length < 8) {
-                            return 'Password must be at least 8 characters';
+                            return l10n.authPasswordTooShort;
                           }
                           return null;
                         },
@@ -216,7 +218,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       // Confirm Password
                       AuthTextField(
                         controller: _confirmPasswordController,
-                        label: 'Confirm Password',
+                        label: l10n.authConfirmPasswordLabel,
                         hint: '••••••••',
                         obscureText: _obscureConfirm,
                         prefixIcon: Icons.lock_outline_rounded,
@@ -236,7 +238,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         validator: (value) {
                           if (value != _passwordController.text) {
-                            return 'Passwords do not match';
+                            return l10n.authPasswordsMismatch;
                           }
                           return null;
                         },
@@ -265,7 +267,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                             ),
                                       ),
                                     )
-                                  : const Text('Create Account'),
+                                  : Text(l10n.authCreateAccountButton),
                             ),
                           );
                         },
@@ -290,7 +292,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Already have an account? ',
+                            l10n.authHaveAccountPrompt,
                             style: TextStyle(
                               color: isDark
                                   ? AppColors.textSecondaryDark
@@ -300,7 +302,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           GestureDetector(
                             onTap: () => context.pop(),
                             child: Text(
-                              'Sign In',
+                              l10n.authSignInLink,
                               style: TextStyle(
                                 color: isDark
                                     ? AppColors.primaryLight

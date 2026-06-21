@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../data/repositories/auth_repository_impl.dart';
@@ -42,21 +43,23 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password updated. You can sign in now.')),
+        SnackBar(content: Text(AppLocalizations.of(context).authPasswordUpdated)),
       );
       context.go('/login');
     } catch (_) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'Invalid or expired reset link.';
+        _error = AppLocalizations.of(context).authResetLinkInvalid;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Reset password')),
+      appBar: AppBar(title: Text(l10n.authResetPasswordAppBar)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -65,27 +68,27 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Choose a new password for your account.',
-                  style: TextStyle(height: 1.4),
+                Text(
+                  l10n.authResetPasswordSubtitle,
+                  style: const TextStyle(height: 1.4),
                 ),
                 const SizedBox(height: 24),
                 AuthTextField(
                   controller: _passwordController,
-                  label: 'New password',
-                  hint: 'At least 8 characters',
+                  label: l10n.authNewPasswordLabel,
+                  hint: l10n.authNewPasswordHint,
                   obscureText: true,
                   validator: (v) =>
-                      (v == null || v.length < 8) ? 'Min 8 characters' : null,
+                      (v == null || v.length < 8) ? l10n.authPasswordMinLength : null,
                 ),
                 const SizedBox(height: 16),
                 AuthTextField(
                   controller: _confirmController,
-                  label: 'Confirm password',
-                  hint: 'Repeat your password',
+                  label: l10n.authConfirmPasswordLabel,
+                  hint: l10n.authConfirmPasswordHint,
                   obscureText: true,
                   validator: (v) => v != _passwordController.text
-                      ? 'Passwords do not match'
+                      ? l10n.authPasswordsMismatch
                       : null,
                 ),
                 if (_error != null) ...[
@@ -101,7 +104,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           width: 22,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Update password'),
+                      : Text(l10n.authUpdatePasswordButton),
                 ),
               ],
             ),

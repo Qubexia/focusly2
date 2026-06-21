@@ -10,6 +10,7 @@ import '../../../schedules/data/datasources/schedules_remote_datasource.dart';
 import '../../../schedules/data/models/schedule_model.dart';
 import '../../../subjects/data/models/subject_model.dart';
 import '../../../subjects/data/repositories/subjects_repository.dart';
+import '../../../../core/localization/app_l10n.dart';
 import '../../../../core/utils/date_utils.dart';
 
 part 'home_state.dart';
@@ -83,7 +84,7 @@ class HomeCubit extends Cubit<HomeState> {
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: 'Failed to load home data.',
+          errorMessage: AppL10n.current.homeLoadFailed,
         ),
       );
     }
@@ -92,8 +93,8 @@ class HomeCubit extends Cubit<HomeState> {
   String _extractMessage(DioException e) {
     final data = e.response?.data;
     if (data is Map<String, dynamic>) {
-      return (data['message'] as String?) ?? 'Something went wrong.';
+      return (data['message'] as String?) ?? AppL10n.current.commonError;
     }
-    return 'Something went wrong.';
+    return AppL10n.current.commonError;
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../bloc/auth_bloc.dart';
@@ -37,6 +38,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return BlocListener<AuthBloc, AuthState>(
@@ -126,7 +128,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   if (!_emailSent) ...[
                     // Header
                     Text(
-                      'Reset\nPassword 🔑',
+                      l10n.authForgotPasswordTitle,
                       style: Theme.of(context)
                           .textTheme
                           .headlineLarge
@@ -139,7 +141,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     const SizedBox(height: 12),
 
                     Text(
-                      "Enter the email address associated with your account and we'll send you a link to reset your password.",
+                      l10n.authForgotPasswordSubtitle,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             color: isDark
                                 ? AppColors.textSecondaryDark
@@ -152,17 +154,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
                     AuthTextField(
                       controller: _emailController,
-                      label: 'Email',
-                      hint: 'your@email.com',
+                      label: l10n.authEmailLabel,
+                      hint: l10n.authEmailHint,
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: Icons.mail_outline_rounded,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return l10n.authEmailRequired;
                         }
                         if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$')
                             .hasMatch(value)) {
-                          return 'Please enter a valid email';
+                          return l10n.authEmailInvalid;
                         }
                         return null;
                       },
@@ -190,7 +192,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                       ),
                                     ),
                                   )
-                                : const Text('Send Reset Link'),
+                                : Text(l10n.authSendResetLinkButton),
                           ),
                         );
                       },
@@ -228,7 +230,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           const SizedBox(height: 32),
 
                           Text(
-                            'Check Your Email',
+                            l10n.authCheckEmailTitle,
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineSmall
@@ -238,7 +240,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           const SizedBox(height: 12),
 
                           Text(
-                            'We\'ve sent a password reset link to\n${_emailController.text}',
+                            l10n.authResetLinkSentTo(_emailController.text),
                             textAlign: TextAlign.center,
                             style:
                                 Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -256,7 +258,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             height: 56,
                             child: ElevatedButton(
                               onPressed: () => context.go('/login'),
-                              child: const Text('Back to Sign In'),
+                              child: Text(l10n.authBackToSignInButton),
                             ),
                           ).animate(delay: 400.ms).fadeIn(duration: 400.ms),
                         ],

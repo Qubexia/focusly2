@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
@@ -8,6 +9,7 @@ class OrDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final color =
         isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight;
@@ -22,7 +24,7 @@ class OrDivider extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            'OR',
+            l10n.authOrDivider,
             style: TextStyle(
               color: color,
               fontSize: 13,

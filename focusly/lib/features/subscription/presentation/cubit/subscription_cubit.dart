@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:paymob/paymob.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/localization/app_l10n.dart';
 import '../../../../core/premium/premium_status.dart';
 import '../../../../core/services/premium_refresh_service.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -29,7 +30,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: 'Could not load subscription info.',
+          errorMessage: AppL10n.current.subscriptionLoadFailed,
         ),
       );
     }
@@ -51,7 +52,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           state.copyWith(
             isPurchasing: false,
             feedbackType: SubscriptionFeedbackType.error,
-            feedbackMessage: 'Paymob SDK session data is incomplete.',
+            feedbackMessage: AppL10n.current.subscriptionPaymobSessionIncomplete,
           ),
         );
         return;
@@ -62,10 +63,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           state.copyWith(
             isPurchasing: false,
             feedbackType: SubscriptionFeedbackType.error,
-            feedbackMessage:
-                'Paymob is still configured with a legacy integration on the server. '
-                'To use the in-app Flutter SDK, switch PAYMOB_INTEGRATION_ID to an Online Card '
-                '(MIGS) integration that returns a client secret from Intention API.',
+            feedbackMessage: AppL10n.current.subscriptionPaymobUnavailable,
           ),
         );
         return;
@@ -111,16 +109,16 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
               ? SubscriptionFeedbackType.success
               : SubscriptionFeedbackType.error,
           feedbackMessage: isSuccess
-              ? 'Payment completed successfully.'
+              ? AppL10n.current.subscriptionPaymentCompleted
               : isPending
-              ? 'Payment submitted and is pending confirmation.'
+              ? AppL10n.current.subscriptionPaymentPending
               : isRejected
               ? (message?.isNotEmpty == true
                     ? message!
-                    : 'Payment was rejected.')
+                    : AppL10n.current.subscriptionPaymentRejected)
               : (message?.isNotEmpty == true
                     ? message!
-                    : 'Could not complete Paymob payment.'),
+                    : AppL10n.current.subscriptionPaymentFailed),
         ),
       );
     } on DioException catch (e) {
@@ -136,7 +134,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         state.copyWith(
           isPurchasing: false,
           feedbackType: SubscriptionFeedbackType.error,
-          feedbackMessage: 'Could not start Paymob checkout.',
+          feedbackMessage: AppL10n.current.subscriptionCheckoutFailed,
         ),
       );
     }
@@ -151,8 +149,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           state.copyWith(
             isPurchasing: false,
             feedbackType: SubscriptionFeedbackType.error,
-            feedbackMessage:
-                'Stripe is not configured on the server. Set STRIPE keys in backend .env.',
+            feedbackMessage: AppL10n.current.subscriptionStripeUnavailable,
           ),
         );
         return;
@@ -169,8 +166,8 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
               ? SubscriptionFeedbackType.success
               : SubscriptionFeedbackType.error,
           feedbackMessage: launched
-              ? 'Complete payment in the browser, then return and tap Refresh.'
-              : 'Could not open the payment page.',
+              ? AppL10n.current.subscriptionStripeBrowserPrompt
+              : AppL10n.current.subscriptionPaymentPageFailed,
         ),
       );
     } on DioException catch (e) {
@@ -186,7 +183,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         state.copyWith(
           isPurchasing: false,
           feedbackType: SubscriptionFeedbackType.error,
-          feedbackMessage: 'Could not start card checkout.',
+          feedbackMessage: AppL10n.current.subscriptionCardCheckoutFailed,
         ),
       );
     }
@@ -204,7 +201,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           feedbackType: SubscriptionFeedbackType.cancelSuccess,
           feedbackMessage: serverMessage?.isNotEmpty == true
               ? serverMessage!
-              : 'Subscription canceled. Premium access has ended.',
+              : AppL10n.current.subscriptionCanceledEnded,
         ),
       );
     } on DioException catch (e) {
@@ -220,7 +217,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         state.copyWith(
           isLoading: false,
           feedbackType: SubscriptionFeedbackType.error,
-          feedbackMessage: 'Could not cancel subscription.',
+          feedbackMessage: AppL10n.current.subscriptionCancelError,
         ),
       );
     }
@@ -233,8 +230,8 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
   String _extractMessage(DioException e) {
     final data = e.response?.data;
     if (data is Map<String, dynamic>) {
-      return (data['message'] as String?) ?? 'Something went wrong.';
+      return (data['message'] as String?) ?? AppL10n.current.commonError;
     }
-    return 'Something went wrong.';
+    return AppL10n.current.commonError;
   }
 }

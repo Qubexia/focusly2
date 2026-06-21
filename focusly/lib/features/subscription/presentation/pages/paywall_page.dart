@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 import '../../../../core/premium/premium_status.dart';
 import '../../../../core/services/payment_flow_guard.dart';
 import '../../../../core/services/premium_refresh_service.dart';
@@ -65,8 +66,8 @@ class _PaywallViewState extends State<_PaywallView> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
-          content: Text('Payment was not completed.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).subscriptionPaymentNotCompleted),
           backgroundColor: AppColors.error,
         ),
       );
@@ -84,14 +85,15 @@ class _PaywallViewState extends State<_PaywallView> {
       if (!mounted) return;
 
       if (showSnackBar) {
+        final l10n = AppLocalizations.of(context);
         final messenger = ScaffoldMessenger.of(context);
         messenger.hideCurrentSnackBar();
         messenger.showSnackBar(
           SnackBar(
             content: Text(
               becamePremium
-                  ? 'Premium is active. Enjoy your upgraded study flow.'
-                  : 'Payment received. Premium may take a moment to activate.',
+                  ? l10n.subscriptionPremiumActive
+                  : l10n.subscriptionPaymentReceived,
             ),
             backgroundColor: becamePremium ? AppColors.secondary : AppColors.premium,
             duration: const Duration(seconds: 4),
@@ -122,11 +124,11 @@ class _PaywallViewState extends State<_PaywallView> {
     );
   }
 
-  static const _features = [
-    ('Unlimited subjects', Icons.menu_book_rounded),
-    ('Full analytics', Icons.insights_rounded),
-    ('AI study notes', Icons.auto_awesome_rounded),
-    ('Priority reminders', Icons.notifications_active_rounded),
+  List<(String, IconData)> _features(AppLocalizations l10n) => [
+    (l10n.subscriptionFeatureUnlimitedSubjects, Icons.menu_book_rounded),
+    (l10n.subscriptionFeatureFullAnalytics, Icons.insights_rounded),
+    (l10n.subscriptionFeatureAiNotes, Icons.auto_awesome_rounded),
+    (l10n.subscriptionFeaturePriorityReminders, Icons.notifications_active_rounded),
   ];
 
   @override
@@ -164,6 +166,7 @@ class _PaywallViewState extends State<_PaywallView> {
         unawaited(handleFeedback());
       },
       builder: (context, state) {
+        final l10n = AppLocalizations.of(context);
         final authState = context.watch<AuthBloc>().state;
         final user = authState is AuthAuthenticated ? authState.user : null;
         final subscription = state.subscription;
@@ -178,10 +181,10 @@ class _PaywallViewState extends State<_PaywallView> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Zakerly Premium'),
+            title: Text(l10n.subscriptionAppBarTitle),
             actions: [
               IconButton(
-                tooltip: 'Refresh status',
+                tooltip: l10n.subscriptionRefreshStatus,
                 onPressed: state.isLoading
                     ? null
                     : () {
@@ -199,13 +202,13 @@ class _PaywallViewState extends State<_PaywallView> {
                   children: [
                     _HeroCard(isPremium: isPremium),
                     const SizedBox(height: 24),
-                    ..._features.map(
+                    ..._features(l10n).map(
                       (f) => _FeatureRow(title: f.$1, icon: f.$2),
                     ),
                     const SizedBox(height: 28),
                     if (!isPremium) ...[
                       Text(
-                        'Choose payment method',
+                        l10n.subscriptionChoosePaymentMethod,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w800),
                       ),
@@ -222,7 +225,7 @@ class _PaywallViewState extends State<_PaywallView> {
                           minimumSize: const Size.fromHeight(52),
                         ),
                         icon: const Icon(Icons.payments_rounded),
-                        label: const Text('Pay with Paymob — Monthly (EGP)'),
+                        label: Text(l10n.subscriptionPayPaymobMonthly),
                       ),
                       const SizedBox(height: 10),
                       FilledButton.icon(
@@ -235,12 +238,11 @@ class _PaywallViewState extends State<_PaywallView> {
                           minimumSize: const Size.fromHeight(52),
                         ),
                         icon: const Icon(Icons.calendar_month_rounded),
-                        label: const Text('Pay with Paymob — Yearly (EGP)'),
+                        label: Text(l10n.subscriptionPayPaymobYearly),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Cards, wallets, and local methods via Paymob. '
-                        'Uses the native Paymob payment sheet inside the app.',
+                        l10n.subscriptionPaymobNote,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 16),
@@ -251,7 +253,7 @@ class _PaywallViewState extends State<_PaywallView> {
                                   .read<SubscriptionCubit>()
                                   .payWithStripe(),
                         icon: const Icon(Icons.credit_card_rounded),
-                        label: const Text('International card (Stripe)'),
+                        label: Text(l10n.subscriptionPayStripe),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(48),
                         ),
@@ -280,16 +282,17 @@ class _PaywallViewState extends State<_PaywallView> {
                             side: const BorderSide(color: AppColors.error),
                             minimumSize: const Size.fromHeight(48),
                           ),
-                          label: const Text('Cancel subscription'),
+                          label: Text(l10n.subscriptionCancelAction),
                         ),
                       ],
                       if (isPendingCancel) ...[
                         const SizedBox(height: 12),
                         Text(
                           user?.premiumUntil != null
-                              ? 'Renewal canceled. Premium access until '
-                                  '${_formatDate(user!.premiumUntil!)}.'
-                              : 'Renewal canceled. Premium access remains for this period.',
+                              ? l10n.subscriptionRenewalCanceledUntil(
+                                  _formatDate(user!.premiumUntil!),
+                                )
+                              : l10n.subscriptionRenewalCanceledPeriod,
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -313,6 +316,7 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -330,7 +334,9 @@ class _HeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            isPremium ? 'You are Premium' : 'Upgrade your study flow',
+            isPremium
+                ? l10n.subscriptionHeroTitlePremium
+                : l10n.subscriptionHeroTitleUpgrade,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w800,
@@ -339,8 +345,8 @@ class _HeroCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             isPremium
-                ? 'All premium features are unlocked on your account.'
-                : 'Remove limits and unlock AI notes, analytics, and more.',
+                ? l10n.subscriptionHeroSubtitlePremium
+                : l10n.subscriptionHeroSubtitleUpgrade,
             style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
           ),
         ],
@@ -395,6 +401,7 @@ class _ActivePlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final status = subscription?.status ?? (isPendingCancel ? 'canceled' : 'active');
     final provider = subscription?.provider;
     final renewsOn = subscription?.currentPeriodEnd ?? premiumUntil;
@@ -410,19 +417,21 @@ class _ActivePlanCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isPendingCancel ? 'Premium (canceling)' : 'Premium active',
+            isPendingCancel
+                ? l10n.subscriptionPremiumCanceling
+                : l10n.subscriptionPremiumActiveTitle,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
           ),
           const SizedBox(height: 8),
-          Text('Status: $status'),
-          if (provider != null) Text('Provider: $provider'),
+          Text(l10n.subscriptionStatusLabel(status)),
+          if (provider != null) Text(l10n.subscriptionProviderLabel(provider)),
           if (renewsOn != null)
             Text(
               isPendingCancel
-                  ? 'Access until: ${_formatDate(renewsOn)}'
-                  : 'Renews: ${_formatDate(renewsOn)}',
+                  ? l10n.subscriptionAccessUntil(_formatDate(renewsOn))
+                  : l10n.subscriptionRenewsOn(_formatDate(renewsOn)),
             ),
         ],
       ),

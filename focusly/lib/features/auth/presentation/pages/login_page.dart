@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_logo.dart';
@@ -44,6 +45,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return BlocListener<AuthBloc, AuthState>(
@@ -119,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       // Header
                       Text(
-                        'Welcome\nBack',
+                        l10n.authLoginTitle,
                         style: Theme.of(context).textTheme.headlineLarge
                             ?.copyWith(
                               fontWeight: FontWeight.w800,
@@ -130,7 +132,7 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 12),
 
                       Text(
-                        'Login to continue your focus journey.',
+                        l10n.authLoginSubtitle,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: isDark
                               ? AppColors.textSecondaryDark
@@ -143,18 +145,18 @@ class _LoginPageState extends State<LoginPage> {
                       // Email Field
                       AuthTextField(
                         controller: _emailController,
-                        label: 'Email',
-                        hint: 'your@email.com',
+                        label: l10n.authEmailLabel,
+                        hint: l10n.authEmailHint,
                         keyboardType: TextInputType.emailAddress,
                         prefixIcon: Icons.mail_outline_rounded,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
+                            return l10n.authEmailRequired;
                           }
                           if (!RegExp(
                             r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$',
                           ).hasMatch(value)) {
-                            return 'Please enter a valid email';
+                            return l10n.authEmailInvalid;
                           }
                           return null;
                         },
@@ -165,7 +167,7 @@ class _LoginPageState extends State<LoginPage> {
                       // Password Field
                       AuthTextField(
                         controller: _passwordController,
-                        label: 'Password',
+                        label: l10n.authPasswordLabel,
                         hint: '••••••••',
                         obscureText: _obscurePassword,
                         prefixIcon: Icons.lock_outline_rounded,
@@ -185,7 +187,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your password';
+                            return l10n.authPasswordRequired;
                           }
                           return null;
                         },
@@ -199,7 +201,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: TextButton(
                           onPressed: () => context.push('/forgot-password'),
                           child: Text(
-                            'Forgot Password?',
+                            l10n.authForgotPasswordLink,
                             style: TextStyle(
                               color: isDark
                                   ? AppColors.primaryLight
@@ -233,7 +235,7 @@ class _LoginPageState extends State<LoginPage> {
                                             ),
                                       ),
                                     )
-                                  : const Text('Sign In'),
+                                  : Text(l10n.authSignInButton),
                             ),
                           );
                         },
@@ -253,7 +255,7 @@ class _LoginPageState extends State<LoginPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "Don't have an account? ",
+                            l10n.authNoAccountPrompt,
                             style: TextStyle(
                               color: isDark
                                   ? AppColors.textSecondaryDark
@@ -263,7 +265,7 @@ class _LoginPageState extends State<LoginPage> {
                           GestureDetector(
                             onTap: () => context.push('/register'),
                             child: Text(
-                              'Sign Up',
+                              l10n.authSignUpLink,
                               style: TextStyle(
                                 color: isDark
                                     ? AppColors.primaryLight

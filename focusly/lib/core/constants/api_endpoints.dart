@@ -8,6 +8,11 @@ class ApiEndpoints {
 
   static const int defaultPort = 5000;
 
+  /// Production backend. Used by release builds (APK/IPA) when no
+  /// `API_BASE_URL` dart-define is provided. Localhost defaults below are for
+  /// local development only and never reach a real device's backend.
+  static const String productionBaseUrl = 'https://zakerlyai.tech';
+
   static const String _configuredBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: '',
@@ -39,6 +44,12 @@ class ApiEndpoints {
       final host = Uri.base.host.isEmpty ? 'localhost' : Uri.base.host;
       final scheme = Uri.base.scheme.isEmpty ? 'http' : Uri.base.scheme;
       return '$scheme://$host:$defaultPort';
+    }
+
+    // Release builds default to production so a plain `flutter build apk`
+    // works without passing --dart-define=API_BASE_URL.
+    if (!kDebugMode) {
+      return _normalizeBaseUrl(productionBaseUrl);
     }
 
     switch (defaultTargetPlatform) {

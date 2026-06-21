@@ -1,0 +1,863 @@
+{
+  "@@locale": "en",
+  "languageName": "English",
+  "@languageName": {
+    "description": "Native name of this locale, shown in the language picker"
+  },
+  "commonCancel": "Cancel",
+  "commonSave": "Save",
+  "commonDelete": "Delete",
+  "commonClose": "Close",
+  "commonRetry": "Retry",
+  "commonDone": "Done",
+  "commonEdit": "Edit",
+  "commonNext": "Next",
+  "commonBack": "Back",
+  "commonConfirm": "Confirm",
+  "commonLoading": "Loading…",
+  "commonError": "Something went wrong",
+  "commonSearch": "Search",
+  "commonAdd": "Add",
+  "commonYes": "Yes",
+  "commonNo": "No",
+  "commonOk": "OK",
+  "commonSkip": "Skip",
+  "settingsTitle": "Settings",
+  "settingsLanguageSection": "Language",
+  "settingsLanguageTile": "App language",
+  "languageSystemDefault": "System default",
+  "languageEnglish": "English",
+  "languageArabic": "العربية",
+  "settingsAccountSection": "Account",
+  "settingsEditProfile": "Edit profile",
+  "settingsPremium": "Premium",
+  "settingsPremiumActive": "Active",
+  "settingsPremiumUpgrade": "Upgrade",
+  "settingsCancelSubscription": "Cancel subscription",
+  "settingsCancelSubscriptionSubtitle": "Stop renewal at period end",
+  "settingsAiNotes": "AI Notes",
+  "settingsNotificationsSection": "Notifications",
+  "settingsStudyReminders": "Study reminders",
+  "settingsStreakAlerts": "Streak alerts",
+  "settingsProductUpdates": "Product updates",
+  "settingsNotificationsSaved": "Notification preferences saved",
+  "settingsFocusSection": "Focus",
+  "settingsFocusMode": "Focus mode",
+  "settingsFocusModeSubtitle": "Reduce non-essential notifications",
+  "settingsActiveDevices": "Active devices",
+  "settingsThisDevice": "This device",
+  "settingsOtherDevice": "Other device",
+  "settingsDangerZone": "Danger zone",
+  "settingsLogOut": "Log out",
+  "settingsDeleteAccount": "Delete account",
+  "settingsDeleteAccountConfirmTitle": "Delete account?",
+  "settingsDeleteAccountConfirmBody": "This permanently removes your data. Type DELETE to confirm.",
+  "homeNavHome": "Home",
+  "homeNavSchedule": "Schedule",
+  "homeNavFocus": "Focus",
+  "homeNavStats": "Stats",
+  "homeNavProfile": "Profile",
+  "homeNavPlanner": "Planner",
+  "homeDefaultName": "Student",
+  "homeGreetingMorning": "Good Morning",
+  "homeGreetingAfternoon": "Good Afternoon",
+  "homeGreetingEvening": "Good Evening",
+  "homeGreetingName": "Hey {name} 👋",
+  "@homeGreetingName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeSubjectsTitle": "Your Subjects",
+  "homeSeeAll": "See all",
+  "homeDashboardLoadErrorTitle": "Could not load your dashboard",
+  "homeNoSubjectsTitle": "No subjects yet",
+  "homeNoSubjectsSubtitle": "Create your first subject to make the home screen useful and alive.",
+  "homeCreateSubject": "Create Subject",
+  "homeSubjectTargetMinutes": "· {minutes}m target",
+  "@homeSubjectTargetMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "homeStudyOverview": "Study overview",
+  "homeOverallProgress": "Overall progress",
+  "homeOverviewLoading": "Pulling your subjects and targets…",
+  "homeOverviewEmpty": "Add subjects to start tracking progress.",
+  "homeSubjectsCompleted": "{completed} of {total} subjects completed",
+  "@homeSubjectsCompleted": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "homeFocusedToday": "focused today",
+  "homeSessionsLabel": "{count, plural, =1{session} other{sessions}}",
+  "@homeSessionsLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeStartFocus": "Start Focus",
+  "homeDayStreak": "Day streak",
+  "homeDailyTarget": "Daily target",
+  "homeSubjectsStat": "Subjects",
+  "homeUpcomingToday": "Upcoming today",
+  "homeToday": "Today",
+  "homeQuickActions": "Quick Actions",
+  "homeQuickFocusLabel": "Start Focus",
+  "homeQuickFocusSubtitle": "Pomodoro timer",
+  "homeQuickAddTaskLabel": "Add Task",
+  "homeQuickAddTaskSubtitle": "Plan your day",
+  "homeQuickScheduleLabel": "Schedule",
+  "homeQuickScheduleSubtitle": "Study sessions",
+  "homeQuickAiNotesLabel": "AI Notes",
+  "homeQuickAiNotesSubtitle": "Smart summaries",
+  "homePremiumRecommended": "RECOMMENDED",
+  "homePremiumUpgradeTitle": "Upgrade to Zakerly Premium",
+  "homePremiumBody": "Unlock unlimited subjects, deep weekly & monthly analytics insights, and personalized study targets to build an unbreakable streak.",
+  "homeViewSubscriptions": "View Subscriptions",
+  "onboardingSlide1Title": "Organize Your\nStudy Life",
+  "onboardingSlide1Subtitle": "Manage subjects, schedules, tasks, and exams all in one place. Stay on top of every deadline.",
+  "onboardingSlide2Title": "Deep Focus\nSessions",
+  "onboardingSlide2Subtitle": "Use the Pomodoro timer to build laser-sharp focus. Track your study hours and build streaks.",
+  "onboardingSlide3Title": "AI-Powered\nStudy Notes",
+  "onboardingSlide3Subtitle": "Snap your lecture notes and let AI generate summaries, flashcards, and practice questions.",
+  "onboardingGetStarted": "Get Started",
+  "splashTagline": "Study smarter. Stay focused.",
+  "aiNotesTitle": "AI Notes",
+  "aiStudyPack": "Study Pack",
+  "aiNotesStudio": "AI Notes Studio",
+  "aiNotesStudioSubtitle": "Review and manage your AI study packs",
+  "aiSubjectName": "Subject: {subject}",
+  "@aiSubjectName": {
+    "placeholders": {
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "aiPacksCount": "{count, plural, =1{{count} pack} other{{count} packs}}",
+  "@aiPacksCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiYourSubject": "Your subject",
+  "aiSubjectLabel": "Subject",
+  "aiBrowsePacksTitle": "Browse your study packs",
+  "aiBrowsePacksSubtitle": "Choose a subject to review AI summaries, flashcards, and quiz questions generated from your materials.",
+  "aiRecentPacksTitle": "Recent study packs",
+  "aiRecentPacksSubtitle": "Open any pack to review the summary, flashcards, and practice questions. Swipe or tap delete to remove one.",
+  "aiPremiumFeature": "AI Notes are a Premium feature.",
+  "aiUpgradeToPremium": "Upgrade to Premium",
+  "aiNoSubjectsMessage": "Create a subject first, then generate AI notes for it.",
+  "aiGoToSubjects": "Go to Subjects",
+  "aiNoNotesYet": "No AI notes yet",
+  "aiNoNotesYetHint": "Upload a PDF from a subject page to generate your first study pack.",
+  "aiDeletePackTitle": "Delete study pack?",
+  "aiDeletePackMessage": "This will permanently remove the summary, flashcards, and quiz questions for this pack.",
+  "aiDeletePackTooltip": "Delete study pack",
+  "aiCardsCount": "{count, plural, =1{{count} card} other{{count} cards}}",
+  "@aiCardsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiQuestionsCount": "{count, plural, =1{{count} question} other{{count} questions}}",
+  "@aiQuestionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiReadyToReview": "Ready to review",
+  "aiMinRead": "~{minutes} min read",
+  "@aiMinRead": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "aiSections": "Sections",
+  "aiCards": "Cards",
+  "aiQuiz": "Quiz",
+  "aiTabSummary": "Summary",
+  "aiTabCards": "Cards",
+  "aiTabQuiz": "Quiz",
+  "aiSectionLabel": "Section {number}",
+  "@aiSectionLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "aiNoSummaryTitle": "No summary yet",
+  "aiNoSummaryMessage": "Your AI summary will appear here once generated.",
+  "aiNoFlashcardsTitle": "No flashcards yet",
+  "aiNoFlashcardsMessage": "Flashcards will show up here once your pack is ready.",
+  "aiNoQuestionsTitle": "No quiz questions yet",
+  "aiNoQuestionsMessage": "Practice questions will appear here once generated.",
+  "aiCardCounter": "Card {current} of {total}",
+  "@aiCardCounter": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "aiQuestion": "Question",
+  "aiAnswer": "Answer",
+  "aiTapToRevealAnswer": "Tap to reveal answer",
+  "aiTapToHideAnswer": "Tap to hide answer",
+  "aiPrevious": "Previous",
+  "aiShowAnswer": "Show answer",
+  "aiHideAnswer": "Hide answer",
+  "aiNoAnswerAvailable": "No answer available.",
+  "analyticsTitle": "Statistics",
+  "analyticsFocusTrend": "Focus Trend",
+  "analyticsBySubject": "By Subject",
+  "analyticsPerformanceScore": "Performance Score",
+  "analyticsTotalFocusTime": "Total Focus Time",
+  "analyticsMinutesTotal": "{minutes} minutes total",
+  "@analyticsMinutesTotal": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "analyticsSessionsLabel": "sessions",
+  "analyticsDurationHours": "{hours}h",
+  "@analyticsDurationHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "analyticsDurationHoursMinutes": "{hours}h {minutes}m",
+  "@analyticsDurationHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "analyticsDurationMinutes": "{minutes}m",
+  "@analyticsDurationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "analyticsMinutesShort": "{minutes} m",
+  "@analyticsMinutesShort": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "analyticsPercent": "{percent}%",
+  "@analyticsPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "analyticsTasksDone": "Tasks Done",
+  "analyticsDailyAvg": "Daily Avg",
+  "analyticsScore": "Score",
+  "analyticsUnlockDeeperInsights": "Unlock deeper insights",
+  "analyticsPremiumTrendsSubtitle": "Monthly & yearly trends with premium.",
+  "analyticsUpgrade": "Upgrade",
+  "analyticsUnlockFullInsights": "Unlock Full Insights",
+  "analyticsUpgradeToPremium": "Upgrade to Premium",
+  "analyticsReturnToCurrentWeek": "Return to current week",
+  "analyticsPremiumAnalyticsTitle": "Premium analytics",
+  "analyticsPremiumAnalyticsBody": "Month and Year insights are available for premium users only. Upgrade to unlock broader trends and comparisons.",
+  "analyticsRangeWeek": "Week",
+  "analyticsRangeMonth": "Month",
+  "analyticsRangeYear": "Year",
+  "analyticsPerformance": "Performance",
+  "analyticsSessions": "Sessions",
+  "analyticsFocusMin": "Focus min",
+  "analyticsNoSubjectData": "No subject data for this range.",
+  "authLoginTitle": "Welcome\nBack",
+  "authLoginSubtitle": "Login to continue your focus journey.",
+  "authRegisterTitle": "Create Account",
+  "authRegisterSubtitle": "Start your journey to academic excellence",
+  "authEmailLabel": "Email",
+  "authEmailHint": "your@email.com",
+  "authEmailRequired": "Please enter your email",
+  "authEmailInvalid": "Please enter a valid email",
+  "authPasswordLabel": "Password",
+  "authPasswordRequired": "Please enter your password",
+  "authPasswordTooShort": "Password must be at least 8 characters",
+  "authFullNameLabel": "Full Name",
+  "authFullNameHint": "John Doe",
+  "authNameRequired": "Please enter your name",
+  "authConfirmPasswordLabel": "Confirm Password",
+  "authConfirmPasswordHint": "Repeat your password",
+  "authPasswordsMismatch": "Passwords do not match",
+  "authForgotPasswordLink": "Forgot Password?",
+  "authSignInButton": "Sign In",
+  "authNoAccountPrompt": "Don't have an account? ",
+  "authSignUpLink": "Sign Up",
+  "authHaveAccountPrompt": "Already have an account? ",
+  "authSignInLink": "Sign In",
+  "authCreateAccountButton": "Create Account",
+  "authContinueWithGoogle": "Continue with Google",
+  "authOrDivider": "OR",
+  "authForgotPasswordTitle": "Reset\nPassword 🔑",
+  "authForgotPasswordSubtitle": "Enter the email address associated with your account and we'll send you a link to reset your password.",
+  "authSendResetLinkButton": "Send Reset Link",
+  "authCheckEmailTitle": "Check Your Email",
+  "authResetLinkSentTo": "We've sent a password reset link to\n{email}",
+  "@authResetLinkSentTo": {
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "your@email.com"
+      }
+    }
+  },
+  "authBackToSignInButton": "Back to Sign In",
+  "authResetPasswordAppBar": "Reset password",
+  "authResetPasswordSubtitle": "Choose a new password for your account.",
+  "authNewPasswordLabel": "New password",
+  "authNewPasswordHint": "At least 8 characters",
+  "authPasswordMinLength": "Min 8 characters",
+  "authUpdatePasswordButton": "Update password",
+  "authPasswordUpdated": "Password updated. You can sign in now.",
+  "authResetLinkInvalid": "Invalid or expired reset link.",
+  "authVerifyEmailAppBar": "Verify email",
+  "authEmailVerifiedSuccess": "Email verified successfully!",
+  "authContinueToLoginButton": "Continue to login",
+  "authVerifyFailed": "Verification link is invalid or expired.",
+  "notificationsTitle": "Notifications",
+  "notificationsMarkAllRead": "Mark all read",
+  "notificationsDeleteAllShown": "Delete all shown",
+  "notificationsEmptyTitle": "Your inbox is empty",
+  "notificationsEmptySubtitle": "We will notify you about your study progress.",
+  "notificationsDeleteAllTitle": "Delete all notifications?",
+  "notificationsDeleteAllMessage": "Each notification will be removed from your inbox.",
+  "notificationsDeleteAllConfirm": "Delete all",
+  "plannerTitle": "Daily Planner",
+  "plannerTabTasks": "Tasks",
+  "plannerTabRevisions": "Revisions",
+  "plannerTabLectures": "Lectures",
+  "plannerTabExams": "Exams",
+  "plannerEmptyTasks": "No tasks for this day.",
+  "plannerEmptyRevisions": "No revisions for this day.",
+  "plannerEmptyLectures": "No lectures for this day.",
+  "plannerEmptyExams": "No exams for this day.",
+  "plannerAddNewPlan": "Add New Plan",
+  "plannerCategory": "Category",
+  "plannerDetails": "Details",
+  "plannerTitleLabel": "Title",
+  "plannerTitleHint": "e.g., Mathematics Chapter 3",
+  "plannerTitleRequired": "Required",
+  "plannerNotesLabel": "Notes (Optional)",
+  "plannerNotesHint": "Brief description...",
+  "plannerTime": "Time",
+  "plannerSetTime": "Set Time",
+  "plannerSubject": "Subject",
+  "plannerSubjectSelect": "Select",
+  "plannerSubjectGeneral": "General",
+  "plannerSavePlan": "Save Plan",
+  "plannerTypeTask": "Task",
+  "plannerTypeRevision": "Revision",
+  "plannerTypeLecture": "Lecture",
+  "plannerTypeExam": "Exam",
+  "pomodoroFocusTimer": "Focus Timer",
+  "pomodoroPhaseFocus": "FOCUS",
+  "pomodoroPhaseBreak": "BREAK",
+  "pomodoroPhaseReady": "READY",
+  "pomodoroGeneralFocus": "General Focus",
+  "pomodoroGeneral": "General",
+  "pomodoroFocus": "Focus",
+  "pomodoroBreak": "Break",
+  "pomodoroMinutesShort": "{minutes}m",
+  "@pomodoroMinutesShort": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "pomodoroMinutesUnit": "{minutes} min",
+  "@pomodoroMinutesUnit": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "pomodoroStartSession": "Start Session",
+  "pomodoroStop": "Stop",
+  "pomodoroResume": "Resume",
+  "pomodoroPause": "Pause",
+  "pomodoroSessionSetup": "Session Setup",
+  "pomodoroLocked": "Locked",
+  "pomodoroSubject": "Subject",
+  "pomodoroFocusTime": "Focus Time",
+  "pomodoroSessions": "Sessions",
+  "pomodoroTodaysSessions": "Today's Sessions",
+  "pomodoroSessionsTotal": "{count} total",
+  "@pomodoroSessionsTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pomodoroNoSessionsToday": "No sessions yet today",
+  "pomodoroSessionMinutesStatus": "{minutes} min · {status}",
+  "@pomodoroSessionMinutesStatus": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "pomodoroStatusCompleted": "Completed",
+  "pomodoroStatusAborted": "Aborted",
+  "pomodoroStatusPaused": "Paused",
+  "pomodoroStatusActive": "Active",
+  "pomodoroHistoryTitle": "Focus History",
+  "pomodoroHistoryLoadError": "Could not load session history.",
+  "pomodoroHistoryEmpty": "No focus sessions in the last 30 days.",
+  "pomodoroMinutesFocus": "{minutes} min focus",
+  "@pomodoroMinutesFocus": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "profileTitle": "Profile",
+  "profileSettings": "Settings",
+  "profileSettingsSubtitle": "Manage account actions and preferences.",
+  "profileOverviewTitle": "Overview",
+  "profileOverviewSubtitle": "A quick snapshot of your account and study pace.",
+  "profileTotalPoints": "Total Points",
+  "profileCurrentStreak": "Current Streak",
+  "profileStreakDays": "{count, plural, =1{{count} day} other{{count} days}}",
+  "@profileStreakDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileFocusSessions": "Focus Sessions",
+  "profilePlanStatus": "Plan Status",
+  "profilePremium": "Premium",
+  "profileFree": "Free",
+  "profileAccountTitle": "Account",
+  "profileAccountSubtitle": "Email, verification, subscription, and sign out.",
+  "profileEmailAddress": "Email Address",
+  "profileNoEmail": "No email available",
+  "profileCurrentPlan": "Current Plan",
+  "profileDailyPlanner": "Daily Planner",
+  "profileDailyPlannerSubtitle": "Tasks, revisions, lectures, and exams.",
+  "profileAiNotes": "AI Notes",
+  "profileAiNotesSubtitle": "Generate summaries and flashcards.",
+  "profileCancelSubscription": "Cancel subscription",
+  "profileCancelSubscriptionSubtitle": "Stop renewal at the end of the billing period",
+  "profileLogout": "Log Out",
+  "profileLogoutSubtitle": "Sign out from this device.",
+  "profileLogoutTitle": "Log out?",
+  "profileLogoutMessage": "You will need to sign in again to access your study dashboard.",
+  "profileFreePlan": "Free plan",
+  "profilePremiumPlan": "Premium plan",
+  "profileDefaultName": "Zakerly Student",
+  "profileVerified": "Verified",
+  "profileUnverified": "Unverified",
+  "profileHeroDescription": "Your account is ready for focused sessions, structured planning, and long-term progress tracking.",
+  "profileEditProfile": "Edit Profile",
+  "profileEditProfileSubtitle": "Update your profile image, name, and security access.",
+  "profileVerification": "Verification",
+  "profileVerificationPending": "Pending — verify to secure your account.",
+  "profileResend": "Resend",
+  "profileVerificationEmailSent": "Verification email sent. Check your inbox.",
+  "profileVerificationEmailError": "Could not send the email. Please try again.",
+  "profilePhotoAccessBlocked": "Photo access is blocked. Please enable it from app settings.",
+  "profilePhotoAccessRequired": "Photo access is required to choose an avatar.",
+  "profilePhotoLibraryError": "Could not open your photo library right now.",
+  "profilePasswordResetSent": "Password reset link sent to your email.",
+  "profilePasswordResetError": "Could not send reset link right now.",
+  "profileChangePhoto": "Change Photo",
+  "profileDisplayName": "Display name",
+  "profileDisplayNameHint": "Enter your full name",
+  "profileNameRequired": "Name is required",
+  "profileNameTooShort": "Name is too short",
+  "profileEmail": "Email",
+  "profileEmailChangeUnavailable": "Email change is not available yet.",
+  "profileSendPasswordReset": "Send Password Reset Link",
+  "profileSaveChanges": "Save Changes",
+  "schedulesTitle": "Study Schedule",
+  "schedulesEmptyMessage": "No study sessions scheduled for today.",
+  "schedulesEmptyAddFirst": "Add your first session",
+  "schedulesActionsTooltip": "Schedule actions",
+  "schedulesDeleteDialogTitle": "Delete schedule?",
+  "schedulesDeleteDialogMessage": "“{title}” will be removed from your study schedule.",
+  "@schedulesDeleteDialogMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "schedulesCreateBlockTitle": "Create Study Block",
+  "schedulesSubjectLabel": "Subject",
+  "schedulesSelectSubjectHint": "Select Subject",
+  "schedulesFieldRequired": "Required",
+  "schedulesBlockTitleLabel": "Block Title",
+  "schedulesBlockTitleHint": "e.g., Deep Work Session",
+  "schedulesSelectedDayLabel": "Selected Day",
+  "schedulesTimeRangeLabel": "Time Range",
+  "schedulesStartsAt": "Starts at {time}",
+  "@schedulesStartsAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "schedulesEndsAt": "Ends at {time}",
+  "@schedulesEndsAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "schedulesStartTimePastError": "You cannot choose a start time before the current time.",
+  "schedulesEndAfterStartError": "End time must be after start time.",
+  "schedulesDaysOfWeekLabel": "Days of Week",
+  "schedulesRemindersLabel": "Reminders",
+  "schedulesReminderAtStart": "At start time",
+  "schedulesReminderMinutesBefore": "{minutes, plural, =1{1 minute before} other{{minutes} minutes before}}",
+  "@schedulesReminderMinutesBefore": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "schedulesCreateButton": "Create Schedule",
+  "schedulesPastDayError": "You cannot create a schedule for a past day.",
+  "streaksDayStreak": "{count, plural, =0{{count} day streak} =1{{count} day streak} other{{count} day streak}}",
+  "@streaksDayStreak": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "streaksBest": "Best: {count, plural, =0{{count} days} =1{{count} day} other{{count} days}}",
+  "@streaksBest": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "streaksTotalPoints": "Total points",
+  "streaksLastActive": "Last active",
+  "streaksMilestones": "Milestones",
+  "streaksMilestoneDays": "{days}d",
+  "@streaksMilestoneDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "subjectsTitle": "Subjects",
+  "subjectsNewSubject": "New Subject",
+  "subjectsHeroTitle": "Build your study map",
+  "subjectsHeroSubtitle": "Organize each subject with its own color, icon, and daily target.",
+  "subjectsActiveCount": "{count} active subjects",
+  "@subjectsActiveCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subjectsFreeCount": "{count}/3 free subjects",
+  "@subjectsFreeCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subjectsLoadErrorTitle": "Could not load subjects",
+  "subjectsEmptyTitle": "No subjects yet",
+  "subjectsEmptyDescription": "Create your first subject to start tracking study progress and daily goals.",
+  "subjectsCreateSubject": "Create Subject",
+  "subjectsEditSubject": "Edit Subject",
+  "subjectsEditorSubtitle": "Choose a subject name, a distinct icon, and a realistic daily goal.",
+  "subjectsEditSubjectSubtitle": "Update the subject identity, color, icon, and daily target.",
+  "subjectsSubjectNameLabel": "Subject Name",
+  "subjectsSubjectNameHint": "Physics 101",
+  "subjectsNameRequired": "Please enter a subject name",
+  "subjectsNameTooShort": "Subject name is too short",
+  "subjectsColorLabel": "Color",
+  "subjectsIconLabel": "Icon",
+  "subjectsDailyTarget": "Daily Target",
+  "subjectsDailyTargetLabel": "{minutes} min daily target",
+  "@subjectsDailyTargetLabel": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "subjectsMinutesValue": "{minutes} min",
+  "@subjectsMinutesValue": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "subjectsMinutesPlannedDaily": "{minutes} minutes planned every day",
+  "@subjectsMinutesPlannedDaily": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "subjectsProgressLabel": "Progress",
+  "subjectsPercentValue": "{percent}%",
+  "@subjectsPercentValue": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "subjectsSaveChanges": "Save Changes",
+  "subjectsArchive": "Archive",
+  "subjectsArchiveTitle": "Archive subject?",
+  "subjectsArchiveMessage": "“{name}” will be removed from the active subjects list.",
+  "@subjectsArchiveMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subjectsFreeLimitTitle": "Free plan limit reached",
+  "subjectsDetailTitle": "Subject Detail",
+  "subjectsAddChapter": "Add Chapter",
+  "subjectsChaptersHeader": "Chapters",
+  "subjectsChaptersSubtitle": "Track the units you have finished and keep momentum visible.",
+  "subjectsChaptersDone": "Chapters Done",
+  "subjectsEditChapter": "Edit Chapter",
+  "subjectsChapterTitleLabel": "Chapter title",
+  "subjectsFieldRequired": "This field is required",
+  "subjectsNoChaptersTitle": "No chapters yet",
+  "subjectsNoChaptersDescription": "Break the subject into clear chapters so progress becomes easier to track.",
+  "subjectsAddFirstChapter": "Add First Chapter",
+  "subjectsAnalyzingPdf": "Analyzing PDF…",
+  "subjectsChapterCompleted": "Completed",
+  "subjectsChapterInProgress": "In progress",
+  "subjectsAiStudyMaterialsTooltip": "AI study materials",
+  "subjectsAiCardTitle": "AI Study Materials",
+  "subjectsAiCardSubtitle": "Upload a PDF and let AI build a summary, flashcards, and quiz.",
+  "subjectsAnalyzing": "Analyzing…",
+  "subjectsUploadPdf": "Upload PDF",
+  "subjectsView": "View",
+  "subjectsAttachPdfHint": "Attach a PDF (optional) for AI analysis",
+  "subjectsLanguageLabel": "Language",
+  "subjectsSummaryLengthLabel": "Summary length",
+  "subjectsAnalyzePdfTitle": "Analyze PDF",
+  "subjectsAnalyzeWithAi": "Analyze with AI",
+  "subjectsNoMaterials": "No AI materials yet. Upload a PDF to generate them.",
+  "subscriptionAppBarTitle": "Zakerly Premium",
+  "subscriptionRefreshStatus": "Refresh status",
+  "subscriptionHeroTitlePremium": "You are Premium",
+  "subscriptionHeroTitleUpgrade": "Upgrade your study flow",
+  "subscriptionHeroSubtitlePremium": "All premium features are unlocked on your account.",
+  "subscriptionHeroSubtitleUpgrade": "Remove limits and unlock AI notes, analytics, and more.",
+  "subscriptionFeatureUnlimitedSubjects": "Unlimited subjects",
+  "subscriptionFeatureFullAnalytics": "Full analytics",
+  "subscriptionFeatureAiNotes": "AI study notes",
+  "subscriptionFeaturePriorityReminders": "Priority reminders",
+  "subscriptionChoosePaymentMethod": "Choose payment method",
+  "subscriptionPayPaymobMonthly": "Pay with Paymob — Monthly (EGP)",
+  "subscriptionPayPaymobYearly": "Pay with Paymob — Yearly (EGP)",
+  "subscriptionPaymobNote": "Cards, wallets, and local methods via Paymob. Uses the native Paymob payment sheet inside the app.",
+  "subscriptionPayStripe": "International card (Stripe)",
+  "subscriptionPremiumActiveTitle": "Premium active",
+  "subscriptionPremiumCanceling": "Premium (canceling)",
+  "subscriptionStatusLabel": "Status: {status}",
+  "@subscriptionStatusLabel": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionProviderLabel": "Provider: {provider}",
+  "@subscriptionProviderLabel": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionAccessUntil": "Access until: {date}",
+  "@subscriptionAccessUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionRenewsOn": "Renews: {date}",
+  "@subscriptionRenewsOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionCancelAction": "Cancel subscription",
+  "subscriptionRenewalCanceledUntil": "Renewal canceled. Premium access until {date}.",
+  "@subscriptionRenewalCanceledUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionRenewalCanceledPeriod": "Renewal canceled. Premium access remains for this period.",
+  "subscriptionCancelDialogTitle": "Cancel subscription?",
+  "subscriptionCancelDialogContent": "Your subscription will stop renewing. You keep Premium access until the end of the current billing period.",
+  "subscriptionKeepPremium": "Keep Premium",
+  "subscriptionCanceled": "Subscription canceled.",
+  "subscriptionCancelError": "Could not cancel subscription.",
+  "subscriptionPaymentNotCompleted": "Payment was not completed.",
+  "subscriptionPremiumActive": "Premium is active. Enjoy your upgraded study flow.",
+  "subscriptionPaymentReceived": "Payment received. Premium may take a moment to activate.",
+  "aiLoadSubjectsFailed": "Failed to load subjects.",
+  "aiStudyPackDeleted": "Study pack deleted.",
+  "aiDeleteStudyPackFailed": "Failed to delete study pack.",
+  "aiRateLimitReached": "AI rate limit reached. Try again later.",
+  "analyticsLoadFailed": "Failed to load analytics data.",
+  "authGoogleTokenFailed": "Failed to get Google sign-in token. Please try again.",
+  "authGoogleSignInFailed": "Google sign-in failed. Please try again.",
+  "authServerUnreachable": "Cannot reach the server. Please check your internet connection and try again.",
+  "authGenericRetry": "Something went wrong. Please try again.",
+  "homeLoadFailed": "Failed to load home data.",
+  "notificationsLoadFailed": "Failed to load notifications",
+  "plannerLoadFailed": "Failed to load items for this date.",
+  "plannerCreateSuccess": "Item created successfully!",
+  "plannerCreateFailed": "Failed to create item.",
+  "plannerCompleteSuccess": "Item completed! Points earned",
+  "plannerCompleteFailed": "Failed to complete item.",
+  "plannerDeleteSuccess": "Item deleted successfully.",
+  "plannerDeleteFailed": "Failed to delete item.",
+  "pomodoroLoadFailed": "Failed to load focus data.",
+  "pomodoroSessionStarted": "Focus session started.",
+  "pomodoroSessionRestored": "An active focus session was restored.",
+  "pomodoroStartFailed": "Failed to start session.",
+  "pomodoroSessionPaused": "Session paused.",
+  "pomodoroSessionResumed": "Session resumed.",
+  "pomodoroSessionCompleted": "Session completed successfully.",
+  "pomodoroSessionStopped": "Session stopped.",
+  "pomodoroTimeUpTitle": "Time is up!",
+  "pomodoroBreakOverBody": "Great job! Take a well-deserved break.",
+  "schedulesLoadFailed": "Failed to load schedules.",
+  "schedulesCreateSuccess": "Schedule created successfully!",
+  "schedulesCreateFailed": "Failed to create schedule.",
+  "schedulesCreateInvalidData": "Failed to create schedule. Please check the selected data.",
+  "schedulesDeleteSuccess": "Schedule deleted.",
+  "schedulesDeleteFailed": "Failed to delete schedule.",
+  "schedulesReminderNotificationTitle": "Study Reminder: {title}",
+  "@schedulesReminderNotificationTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "schedulesReminderNotificationBody": "{minutes, plural, =1{Your study session starts in 1 minute.} other{Your study session starts in {minutes} minutes.}}",
+  "@schedulesReminderNotificationBody": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "streaksLoadFailed": "Failed to load streak.",
+  "subjectsLoadFailed": "Failed to load subjects.",
+  "subjectsCreateSuccess": "Subject created successfully.",
+  "subjectsCreateFailed": "Failed to create subject.",
+  "subjectsUpdateSuccess": "Subject updated successfully.",
+  "subjectsUpdateFailed": "Failed to update subject.",
+  "subjectsArchiveSuccess": "Subject archived successfully.",
+  "subjectsArchiveFailed": "Failed to archive subject.",
+  "subjectsDetailLoadFailed": "Failed to load subject details",
+  "subjectsChapterAddedAnalyzing": "Chapter added. Analyzing the PDF…",
+  "subjectsChapterAddedSuccess": "Chapter added successfully.",
+  "subjectsChapterAddFailed": "Failed to add chapter",
+  "subjectsChapterMaterialsReady": "AI study materials are ready for this chapter.",
+  "subjectsMaterialsReady": "AI study materials are ready for this subject.",
+  "subjectsAiJobFailed": "AI job failed.",
+  "subjectsAiAnalysisTimedOut": "AI analysis timed out.",
+  "subjectsChapterUpdateSuccess": "Chapter updated successfully.",
+  "subjectsChapterUpdateFailed": "Failed to update chapter",
+  "subjectsChapterUpdateFailedShort": "Failed to update chapter.",
+  "subjectsAnalyzePdfFailed": "Failed to analyze the PDF.",
+  "subscriptionLoadFailed": "Could not load subscription info.",
+  "subscriptionPaymobSessionIncomplete": "Paymob session data is incomplete. Please try again.",
+  "subscriptionPaymobUnavailable": "Paymob payments are temporarily unavailable. Please try another method or try again later.",
+  "subscriptionPaymentCompleted": "Payment completed successfully.",
+  "subscriptionPaymentPending": "Payment submitted and is pending confirmation.",
+  "subscriptionPaymentRejected": "Payment was rejected.",
+  "subscriptionPaymentFailed": "Could not complete the payment.",
+  "subscriptionCheckoutFailed": "Could not start Paymob checkout.",
+  "subscriptionStripeUnavailable": "Card payments are temporarily unavailable. Please try another method or try again later.",
+  "subscriptionStripeBrowserPrompt": "Complete payment in the browser, then return and tap Refresh.",
+  "subscriptionPaymentPageFailed": "Could not open the payment page.",
+  "subscriptionCardCheckoutFailed": "Could not start card checkout.",
+  "subscriptionCanceledEnded": "Subscription canceled. Premium access has ended."
+}

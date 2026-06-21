@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:zakerly/core/localization/app_l10n.dart';
 import '../../data/models/subject_model.dart';
 import '../../data/repositories/subjects_repository.dart';
 
@@ -38,7 +39,7 @@ class SubjectsCubit extends Cubit<SubjectsState> {
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: 'Failed to load subjects.',
+          errorMessage: AppL10n.current.subjectsLoadFailed,
           feedbackType: SubjectsFeedbackType.error,
           feedbackMessage: e.toString(),
         ),
@@ -65,7 +66,7 @@ class SubjectsCubit extends Cubit<SubjectsState> {
           isSaving: false,
           subjects: [created, ...state.subjects],
           feedbackType: SubjectsFeedbackType.success,
-          feedbackMessage: 'Subject created successfully.',
+          feedbackMessage: AppL10n.current.subjectsCreateSuccess,
         ),
       );
       return true;
@@ -86,7 +87,7 @@ class SubjectsCubit extends Cubit<SubjectsState> {
         state.copyWith(
           isSaving: false,
           feedbackType: SubjectsFeedbackType.error,
-          feedbackMessage: 'Failed to create subject.',
+          feedbackMessage: AppL10n.current.subjectsCreateFailed,
         ),
       );
       return false;
@@ -119,7 +120,7 @@ class SubjectsCubit extends Cubit<SubjectsState> {
           isSaving: false,
           subjects: nextSubjects,
           feedbackType: SubjectsFeedbackType.success,
-          feedbackMessage: 'Subject updated successfully.',
+          feedbackMessage: AppL10n.current.subjectsUpdateSuccess,
         ),
       );
       return true;
@@ -137,7 +138,7 @@ class SubjectsCubit extends Cubit<SubjectsState> {
         state.copyWith(
           isSaving: false,
           feedbackType: SubjectsFeedbackType.error,
-          feedbackMessage: 'Failed to update subject.',
+          feedbackMessage: AppL10n.current.subjectsUpdateFailed,
         ),
       );
       return false;
@@ -155,7 +156,7 @@ class SubjectsCubit extends Cubit<SubjectsState> {
               .where((subject) => subject.id != id)
               .toList(),
           feedbackType: SubjectsFeedbackType.success,
-          feedbackMessage: 'Subject archived successfully.',
+          feedbackMessage: AppL10n.current.subjectsArchiveSuccess,
         ),
       );
     } on DioException catch (e) {
@@ -171,7 +172,7 @@ class SubjectsCubit extends Cubit<SubjectsState> {
         state.copyWith(
           isSaving: false,
           feedbackType: SubjectsFeedbackType.error,
-          feedbackMessage: 'Failed to archive subject.',
+          feedbackMessage: AppL10n.current.subjectsArchiveFailed,
         ),
       );
     }
@@ -184,9 +185,9 @@ class SubjectsCubit extends Cubit<SubjectsState> {
   String _extractMessage(DioException e) {
     final data = e.response?.data;
     if (data is Map<String, dynamic>) {
-      return (data['message'] as String?) ?? 'Something went wrong.';
+      return (data['message'] as String?) ?? AppL10n.current.commonError;
     }
-    return 'Something went wrong.';
+    return AppL10n.current.commonError;
   }
 
   String? _extractCode(DioException e) {

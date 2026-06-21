@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../bloc/auth_bloc.dart';
@@ -11,6 +12,7 @@ class GoogleSignInButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SizedBox(
@@ -54,7 +56,7 @@ class GoogleSignInButton extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text(
-              'Continue with Google',
+              l10n.authContinueWithGoogle,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,

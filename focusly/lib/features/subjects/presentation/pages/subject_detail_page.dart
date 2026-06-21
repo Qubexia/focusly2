@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../ai/presentation/pages/ai_artifact_viewer_page.dart';
@@ -54,13 +55,14 @@ class _SubjectDetailView extends StatelessWidget {
         context.read<SubjectDetailCubit>().clearFeedback();
       },
       builder: (context, state) {
+        final l10n = AppLocalizations.of(context);
         final subject = state.subject;
         final progress = state.progress;
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(subject?.name ?? 'Subject Detail'),
+            title: Text(subject?.name ?? l10n.subjectsDetailTitle),
             actions: [
               if (subject != null)
                 IconButton(
@@ -78,7 +80,7 @@ class _SubjectDetailView extends StatelessWidget {
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   icon: const Icon(Icons.add_rounded),
-                  label: const Text('Add Chapter'),
+                  label: Text(l10n.subjectsAddChapter),
                 ),
           body: state.isLoading && subject == null
               ? const Center(child: CircularProgressIndicator())
@@ -115,7 +117,7 @@ class _SubjectDetailView extends StatelessWidget {
                             ),
                             const SizedBox(height: 20),
                             Text(
-                              'Chapters',
+                              l10n.subjectsChaptersHeader,
                               style: Theme.of(context)
                                   .textTheme
                                   .titleLarge
@@ -123,7 +125,7 @@ class _SubjectDetailView extends StatelessWidget {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Track the units you have finished and keep momentum visible.',
+                              l10n.subjectsChaptersSubtitle,
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -198,15 +200,16 @@ class _SubjectDetailView extends StatelessWidget {
       return;
     }
 
+    final l10n = AppLocalizations.of(context);
     final result = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _TextEditorSheet(
-        title: 'Edit Chapter',
-        hintText: 'Chapter title',
+        title: l10n.subjectsEditChapter,
+        hintText: l10n.subjectsChapterTitleLabel,
         initialValue: chapter.title,
-        submitLabel: 'Save Changes',
+        submitLabel: l10n.subjectsSaveChanges,
       ),
     );
 
@@ -222,6 +225,7 @@ class _SubjectDetailView extends StatelessWidget {
     BuildContext context,
     ChapterModel chapter,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final cubit = context.read<SubjectDetailCubit>();
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
@@ -231,8 +235,8 @@ class _SubjectDetailView extends StatelessWidget {
 
     if (artifacts.isEmpty) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('No AI materials yet. Upload a PDF to generate them.'),
+        SnackBar(
+          content: Text(l10n.subjectsNoMaterials),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -247,6 +251,7 @@ class _SubjectDetailView extends StatelessWidget {
   }
 
   Future<void> _openSubjectMaterials(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final cubit = context.read<SubjectDetailCubit>();
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
@@ -256,8 +261,8 @@ class _SubjectDetailView extends StatelessWidget {
 
     if (artifacts.isEmpty) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('No AI materials yet. Upload a PDF to generate them.'),
+        SnackBar(
+          content: Text(l10n.subjectsNoMaterials),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -330,6 +335,7 @@ class _SubjectOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = _SubjectPalette.resolveColor(subject.color);
 
@@ -373,7 +379,9 @@ class _SubjectOverviewCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${subject.dailyTargetMinutes} minutes planned every day',
+                      l10n.subjectsMinutesPlannedDaily(
+                        subject.dailyTargetMinutes,
+                      ),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: isDark
                                 ? AppColors.textSecondaryDark
@@ -390,15 +398,15 @@ class _SubjectOverviewCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _OverviewStat(
-                  label: 'Progress',
-                  value: '$progressPercent%',
+                  label: l10n.subjectsProgressLabel,
+                  value: l10n.subjectsPercentValue(progressPercent),
                   color: accentColor,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _OverviewStat(
-                  label: 'Chapters Done',
+                  label: l10n.subjectsChaptersDone,
                   value: '$chaptersCompleted/$chaptersTotal',
                   color: AppColors.secondary,
                 ),
@@ -474,6 +482,7 @@ class _SubjectEmptyChapters extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -502,14 +511,14 @@ class _SubjectEmptyChapters extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No chapters yet',
+            l10n.subjectsNoChaptersTitle,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Break the subject into clear chapters so progress becomes easier to track.',
+            l10n.subjectsNoChaptersDescription,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: isDark
@@ -522,7 +531,7 @@ class _SubjectEmptyChapters extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: onPressed,
-              child: const Text('Add First Chapter'),
+              child: Text(l10n.subjectsAddFirstChapter),
             ),
           ),
         ],
@@ -548,11 +557,14 @@ class _ChapterTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final subtitle = isAnalyzing
-        ? 'Analyzing PDF…'
-        : (chapter.completed ? 'Completed' : 'In progress');
+        ? l10n.subjectsAnalyzingPdf
+        : (chapter.completed
+            ? l10n.subjectsChapterCompleted
+            : l10n.subjectsChapterInProgress);
 
     return Material(
       color: isDark ? AppColors.surfaceDark : Colors.white,
@@ -609,7 +621,7 @@ class _ChapterTile extends StatelessWidget {
               )
             else
               IconButton(
-                tooltip: 'AI study materials',
+                tooltip: l10n.subjectsAiStudyMaterialsTooltip,
                 onPressed: onOpenMaterials,
                 icon: const Icon(Icons.auto_awesome_outlined),
                 color: AppColors.primary,
@@ -639,6 +651,7 @@ class _SubjectAiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -673,14 +686,14 @@ class _SubjectAiCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'AI Study Materials',
+                      l10n.subjectsAiCardTitle,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Upload a PDF and let AI build a summary, flashcards, and quiz.',
+                      l10n.subjectsAiCardSubtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: isDark
                                 ? AppColors.textSecondaryDark
@@ -708,7 +721,11 @@ class _SubjectAiCard extends StatelessWidget {
                           ),
                         )
                       : const Icon(Icons.upload_file_rounded, size: 18),
-                  label: Text(isAnalyzing ? 'Analyzing…' : 'Upload PDF'),
+                  label: Text(
+                    isAnalyzing
+                        ? l10n.subjectsAnalyzing
+                        : l10n.subjectsUploadPdf,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -716,7 +733,7 @@ class _SubjectAiCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onView,
                   icon: const Icon(Icons.menu_book_rounded, size: 18),
-                  label: const Text('View'),
+                  label: Text(l10n.subjectsView),
                 ),
               ),
             ],
@@ -781,6 +798,7 @@ class _ChapterCreateSheetState extends State<_ChapterCreateSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fileName = _pdfPath?.split(RegExp(r'[\\/]+')).last;
@@ -801,7 +819,7 @@ class _ChapterCreateSheetState extends State<_ChapterCreateSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Add Chapter',
+                  l10n.subjectsAddChapter,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -809,12 +827,12 @@ class _ChapterCreateSheetState extends State<_ChapterCreateSheet> {
                 const SizedBox(height: 18),
                 TextFormField(
                   controller: _controller,
-                  decoration: const InputDecoration(
-                    labelText: 'Chapter title',
+                  decoration: InputDecoration(
+                    labelText: l10n.subjectsChapterTitleLabel,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'This field is required';
+                      return l10n.subjectsFieldRequired;
                     }
                     return null;
                   },
@@ -844,7 +862,7 @@ class _ChapterCreateSheetState extends State<_ChapterCreateSheet> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            fileName ?? 'Attach a PDF (optional) for AI analysis',
+                            fileName ?? l10n.subjectsAttachPdfHint,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodyMedium,
@@ -873,7 +891,7 @@ class _ChapterCreateSheetState extends State<_ChapterCreateSheet> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _submit,
-                    child: const Text('Add Chapter'),
+                    child: Text(l10n.subjectsAddChapter),
                   ),
                 ),
               ],
@@ -930,10 +948,11 @@ class _AnalysisOptionControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _label(context, 'Language'),
+        _label(context, l10n.subjectsLanguageLabel),
         const SizedBox(height: 8),
         _ChipRow(
           options: _AiAnalysisOptions.languages,
@@ -941,7 +960,7 @@ class _AnalysisOptionControls extends StatelessWidget {
           onSelected: onLanguage,
         ),
         const SizedBox(height: 16),
-        _label(context, 'Summary length'),
+        _label(context, l10n.subjectsSummaryLengthLabel),
         const SizedBox(height: 8),
         _ChipRow(
           options: _AiAnalysisOptions.lengths,
@@ -1029,6 +1048,7 @@ class _PdfAnalysisOptionsSheetState extends State<_PdfAnalysisOptionsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -1043,7 +1063,7 @@ class _PdfAnalysisOptionsSheetState extends State<_PdfAnalysisOptionsSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Analyze PDF',
+              l10n.subjectsAnalyzePdfTitle,
               style: Theme.of(context)
                   .textTheme
                   .headlineSmall
@@ -1087,7 +1107,7 @@ class _PdfAnalysisOptionsSheetState extends State<_PdfAnalysisOptionsSheet> {
                   ),
                 ),
                 icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-                label: const Text('Analyze with AI'),
+                label: Text(l10n.subjectsAnalyzeWithAi),
               ),
             ),
           ],
@@ -1132,6 +1152,7 @@ class _TextEditorSheetState extends State<_TextEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -1164,7 +1185,7 @@ class _TextEditorSheetState extends State<_TextEditorSheet> {
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'This field is required';
+                      return l10n.subjectsFieldRequired;
                     }
                     return null;
                   },
@@ -1226,6 +1247,7 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -1245,14 +1267,14 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Edit Subject',
+                  l10n.subjectsEditSubject,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Update the subject identity, color, icon, and daily target.',
+                  l10n.subjectsEditSubjectSubtitle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: isDark
                             ? AppColors.textSecondaryDark
@@ -1262,19 +1284,19 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                 const SizedBox(height: 20),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Subject Name',
+                  decoration: InputDecoration(
+                    labelText: l10n.subjectsSubjectNameLabel,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a subject name';
+                      return l10n.subjectsNameRequired;
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Color',
+                  l10n.subjectsColorLabel,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -1316,7 +1338,7 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Icon',
+                  l10n.subjectsIconLabel,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -1362,13 +1384,13 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Daily Target',
+                      l10n.subjectsDailyTarget,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
                     ),
                     Text(
-                      '${_dailyTargetMinutes.round()} min',
+                      l10n.subjectsMinutesValue(_dailyTargetMinutes.round()),
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w800,
@@ -1381,7 +1403,7 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                   min: 15,
                   max: 240,
                   divisions: 15,
-                  label: '${_dailyTargetMinutes.round()} min',
+                  label: l10n.subjectsMinutesValue(_dailyTargetMinutes.round()),
                   onChanged: (value) => setState(() => _dailyTargetMinutes = value),
                 ),
                 const SizedBox(height: 16),
@@ -1389,7 +1411,7 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _submit,
-                    child: const Text('Save Changes'),
+                    child: Text(l10n.subjectsSaveChanges),
                   ),
                 ),
               ],

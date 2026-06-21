@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/planned_item_model.dart';
@@ -75,6 +77,7 @@ class _PlannerViewState extends State<_PlannerView>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return BlocConsumer<PlannerCubit, PlannerState>(
       listener: (context, state) {
@@ -95,7 +98,7 @@ class _PlannerViewState extends State<_PlannerView>
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Daily Planner'),
+            title: Text(l10n.plannerTitle),
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(100),
               child: Column(
@@ -134,11 +137,11 @@ class _PlannerViewState extends State<_PlannerView>
                   unselectedLabelColor: isDark
                       ? AppColors.textSecondaryDark
                       : AppColors.textSecondaryLight,
-                  tabs: const [
-                    Tab(text: 'Tasks'),
-                    Tab(text: 'Revisions'),
-                    Tab(text: 'Lectures'),
-                    Tab(text: 'Exams'),
+                  tabs: [
+                    Tab(text: l10n.plannerTabTasks),
+                    Tab(text: l10n.plannerTabRevisions),
+                    Tab(text: l10n.plannerTabLectures),
+                    Tab(text: l10n.plannerTabExams),
                   ],
                 ),
               ),
@@ -151,22 +154,22 @@ class _PlannerViewState extends State<_PlannerView>
                           _PlannedItemsList(
                             items: state.tasks,
                             type: PlannedItemType.task,
-                            emptyMessage: 'No tasks for this day.',
+                            emptyMessage: l10n.plannerEmptyTasks,
                           ),
                           _PlannedItemsList(
                             items: state.revisions,
                             type: PlannedItemType.revision,
-                            emptyMessage: 'No revisions for this day.',
+                            emptyMessage: l10n.plannerEmptyRevisions,
                           ),
                           _PlannedItemsList(
                             items: state.lectures,
                             type: PlannedItemType.lecture,
-                            emptyMessage: 'No lectures for this day.',
+                            emptyMessage: l10n.plannerEmptyLectures,
                           ),
                           _PlannedItemsList(
                             items: state.exams,
                             type: PlannedItemType.exam,
-                            emptyMessage: 'No exams for this day.',
+                            emptyMessage: l10n.plannerEmptyExams,
                           ),
                         ],
                       ),
@@ -247,7 +250,9 @@ class _CalendarStrip extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      _weekdayLabel(date),
+                      DateFormat.E(Localizations.localeOf(context).toString())
+                          .format(date)
+                          .toUpperCase(),
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
@@ -278,26 +283,6 @@ class _CalendarStrip extends StatelessWidget {
           },
       ),
     );
-  }
-
-  String _weekdayLabel(DateTime date) {
-    switch (date.weekday) {
-      case DateTime.monday:
-        return 'MON';
-      case DateTime.tuesday:
-        return 'TUE';
-      case DateTime.wednesday:
-        return 'WED';
-      case DateTime.thursday:
-        return 'THU';
-      case DateTime.friday:
-        return 'FRI';
-      case DateTime.saturday:
-        return 'SAT';
-      case DateTime.sunday:
-        return 'SUN';
-    }
-    return '';
   }
 }
 

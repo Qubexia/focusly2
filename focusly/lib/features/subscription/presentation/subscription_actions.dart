@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:zakerly/l10n/app_localizations.dart';
 import '../../../core/services/premium_refresh_service.dart';
 import '../../auth/presentation/bloc/auth_bloc.dart';
 import '../../auth/presentation/bloc/auth_event_state.dart';
@@ -44,16 +45,17 @@ class SubscriptionActions {
               content: Text(
                 message?.isNotEmpty == true
                     ? message!
-                    : 'Subscription canceled.',
+                    : AppLocalizations.of(context).subscriptionCanceled,
               ),
             ),
           );
         } on DioException catch (e) {
           if (!context.mounted) return;
+          final l10n = AppLocalizations.of(context);
           final data = e.response?.data;
           final message = data is Map<String, dynamic>
-              ? (data['message'] as String?) ?? 'Could not cancel subscription.'
-              : 'Could not cancel subscription.';
+              ? (data['message'] as String?) ?? l10n.subscriptionCancelError
+              : l10n.subscriptionCancelError;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(message),
@@ -63,8 +65,10 @@ class SubscriptionActions {
         } catch (_) {
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not cancel subscription.'),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context).subscriptionCancelError,
+              ),
             ),
           );
         }

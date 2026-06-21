@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/premium/premium_status.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -23,8 +24,9 @@ class AiNotesHubPage extends StatelessWidget {
     );
 
     if (!isPremium) {
+      final l10n = AppLocalizations.of(context);
       return Scaffold(
-        appBar: AppBar(title: const Text('AI Notes')),
+        appBar: AppBar(title: Text(l10n.aiNotesTitle)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -33,15 +35,15 @@ class AiNotesHubPage extends StatelessWidget {
               children: [
                 const Icon(Icons.auto_awesome_rounded, size: 64, color: AppColors.premium),
                 const SizedBox(height: 16),
-                const Text(
-                  'AI Notes are a Premium feature.',
+                Text(
+                  l10n.aiPremiumFeature,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16),
+                  style: const TextStyle(fontSize: 16),
                 ),
                 const SizedBox(height: 24),
                 FilledButton(
                   onPressed: () => context.push('/premium'),
-                  child: const Text('Upgrade to Premium'),
+                  child: Text(l10n.aiUpgradeToPremium),
                 ),
               ],
             ),
@@ -64,24 +66,23 @@ class _AiNotesHubView extends StatelessWidget {
     BuildContext context,
     AiJobGroup group,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete study pack?'),
-        content: const Text(
-          'This will permanently remove the summary, flashcards, and quiz questions for this pack.',
-        ),
+        title: Text(l10n.aiDeletePackTitle),
+        content: Text(l10n.aiDeletePackMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.error,
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l10n.commonDelete),
           ),
         ],
       ),
@@ -112,6 +113,7 @@ class _AiNotesHubView extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        final l10n = AppLocalizations.of(context);
         final jobGroups = groupArtifactsByJob(state.artifacts);
         final dateFormat = DateFormat.MMMd().add_jm();
         final selectedSubject = state.subjects
@@ -121,7 +123,7 @@ class _AiNotesHubView extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('AI Notes'),
+            title: Text(l10n.aiNotesTitle),
           ),
           body: state.isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -153,7 +155,8 @@ class _AiNotesHubView extends StatelessWidget {
                         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
                         children: [
                           _HubHeroCard(
-                            subjectName: selectedSubject?.name ?? 'Your subject',
+                            subjectName:
+                                selectedSubject?.name ?? l10n.aiYourSubject,
                             packsCount: jobGroups.length,
                           ),
                           const SizedBox(height: 18),
@@ -162,14 +165,14 @@ class _AiNotesHubView extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Browse your study packs',
+                                  l10n.aiBrowsePacksTitle,
                                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                         fontWeight: FontWeight.w800,
                                       ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Choose a subject to review AI summaries, flashcards, and quiz questions generated from your materials.',
+                                  l10n.aiBrowsePacksSubtitle,
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodyMedium
@@ -179,7 +182,7 @@ class _AiNotesHubView extends StatelessWidget {
                                 DropdownButtonFormField<String>(
                                   initialValue: state.selectedSubjectId,
                                   decoration:
-                                      const InputDecoration(labelText: 'Subject'),
+                                      InputDecoration(labelText: l10n.aiSubjectLabel),
                                   items: state.subjects
                                       .map(
                                         (s) => DropdownMenuItem(
@@ -199,14 +202,14 @@ class _AiNotesHubView extends StatelessWidget {
                           ),
                           const SizedBox(height: 24),
                           Text(
-                            'Recent study packs',
+                            l10n.aiRecentPacksTitle,
                             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.w800,
                                 ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Open any pack to review the summary, flashcards, and practice questions. Swipe or tap delete to remove one.',
+                            l10n.aiRecentPacksSubtitle,
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
@@ -243,7 +246,7 @@ class _AiNotesHubView extends StatelessWidget {
                                   child: _PackListCard(
                                     title: group.createdAt != null
                                         ? dateFormat.format(group.createdAt!)
-                                        : 'Study pack',
+                                        : l10n.aiStudyPack,
                                     preview: group.preview,
                                     flashcardsCount: group.artifacts
                                         .where((artifact) => artifact.kind == 'flashcards')
@@ -286,6 +289,7 @@ class _EmptySubjects extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -294,14 +298,14 @@ class _EmptySubjects extends StatelessWidget {
           children: [
             const Icon(Icons.menu_book_outlined, size: 56),
             const SizedBox(height: 16),
-            const Text(
-              'Create a subject first, then generate AI notes for it.',
+            Text(
+              l10n.aiNoSubjectsMessage,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
             FilledButton(
               onPressed: onAddSubject,
-              child: const Text('Go to Subjects'),
+              child: Text(l10n.aiGoToSubjects),
             ),
           ],
         ),
@@ -321,6 +325,7 @@ class _HubHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -338,7 +343,7 @@ class _HubHeroCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'AI Notes Studio',
+            l10n.aiNotesStudio,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: Colors.white.withValues(alpha: 0.86),
                   fontWeight: FontWeight.w700,
@@ -346,7 +351,7 @@ class _HubHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Review and manage your AI study packs',
+            l10n.aiNotesStudioSubtitle,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -355,7 +360,7 @@ class _HubHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            'Subject: $subjectName',
+            l10n.aiSubjectName(subjectName),
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Colors.white.withValues(alpha: 0.88),
                 ),
@@ -367,7 +372,7 @@ class _HubHeroCard extends StatelessWidget {
             children: [
               _HeroBadge(
                 icon: Icons.auto_stories_rounded,
-                label: '$packsCount packs',
+                label: l10n.aiPacksCount(packsCount),
               ),
             ],
           ),
@@ -461,6 +466,7 @@ class _PackListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return InkWell(
       onTap: isDeleting ? null : onTap,
       borderRadius: BorderRadius.circular(26),
@@ -507,7 +513,7 @@ class _PackListCard extends StatelessWidget {
                   )
                 else
                   IconButton(
-                    tooltip: 'Delete study pack',
+                    tooltip: l10n.aiDeletePackTooltip,
                     onPressed: onDelete,
                     icon: const Icon(
                       Icons.delete_outline_rounded,
@@ -533,8 +539,8 @@ class _PackListCard extends StatelessWidget {
               spacing: 10,
               runSpacing: 10,
               children: [
-                _InfoPill(label: '$flashcardsCount cards'),
-                _InfoPill(label: '$questionsCount questions'),
+                _InfoPill(label: l10n.aiCardsCount(flashcardsCount)),
+                _InfoPill(label: l10n.aiQuestionsCount(questionsCount)),
               ],
             ),
           ],
@@ -573,20 +579,19 @@ class _HubEmptyPacks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _GlassCard(
+    final l10n = AppLocalizations.of(context);
+    return _GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.hourglass_empty_rounded, color: AppColors.primary),
-          SizedBox(height: 12),
+          const Icon(Icons.hourglass_empty_rounded, color: AppColors.primary),
+          const SizedBox(height: 12),
           Text(
-            'No AI notes yet',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            l10n.aiNoNotesYet,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
           ),
-          SizedBox(height: 8),
-          Text(
-            'Upload a PDF from a subject page to generate your first study pack.',
-          ),
+          const SizedBox(height: 8),
+          Text(l10n.aiNoNotesYetHint),
         ],
       ),
     );

@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/localization/app_l10n.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import 'auth_event_state.dart';
 
@@ -116,7 +116,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
       if (idToken == null) {
-        emit(const AuthError(message: 'Failed to get Google ID token'));
+        emit(AuthError(message: AppL10n.current.authGoogleTokenFailed));
         return;
       }
 
@@ -125,7 +125,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } on DioException catch (e) {
       emit(AuthError(message: _extractErrorMessage(e)));
     } catch (e) {
-      emit(AuthError(message: 'Google sign-in failed. Please try again.'));
+      emit(AuthError(message: AppL10n.current.authGoogleSignInFailed));
     }
   }
 
@@ -177,16 +177,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   String _extractErrorMessage(DioException e) {
     final data = e.response?.data;
     if (data is Map<String, dynamic>) {
-      return (data['message'] as String?) ?? 'Something went wrong';
+      return (data['message'] as String?) ?? AppL10n.current.commonError;
     }
     if (e.type == DioExceptionType.connectionError ||
         e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.sendTimeout) {
-      return 'Cannot reach the server at ${ApiEndpoints.baseUrl}. '
-          'Ensure the backend is running, phone and PC share the same Wi‑Fi, '
-          'and update lib/core/config/dev_api_config.dart with your PC IP.';
+      return AppL10n.current.authServerUnreachable;
     }
-    return 'Something went wrong. Please try again.';
+    return AppL10n.current.authGenericRetry;
   }
 }

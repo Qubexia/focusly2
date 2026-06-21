@@ -10,6 +10,7 @@ import '../../data/models/pomodoro_session_model.dart';
 import '../../data/models/pomodoro_today_model.dart';
 import '../../data/repositories/pomodoro_repository.dart';
 import '../../../../core/services/notification_service.dart';
+import '../../../../core/localization/app_l10n.dart';
 
 part 'pomodoro_state.dart';
 
@@ -82,7 +83,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: 'Failed to load focus data: $e',
+          errorMessage: AppL10n.current.pomodoroLoadFailed,
           feedbackMessage: null,
           feedbackType: PomodoroFeedbackType.error,
         ),
@@ -127,7 +128,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
           remainingSeconds: session.focusMinutes * 60,
           isRunning: true,
           feedbackType: PomodoroFeedbackType.success,
-          feedbackMessage: 'Focus session started.',
+          feedbackMessage: AppL10n.current.pomodoroSessionStarted,
         ),
       );
       await _refreshTodaySafely();
@@ -140,7 +141,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
           state.copyWith(
             isSaving: false,
             feedbackType: PomodoroFeedbackType.success,
-            feedbackMessage: 'An active focus session was restored.',
+            feedbackMessage: AppL10n.current.pomodoroSessionRestored,
           ),
         );
         _restartTickerIfNeeded();
@@ -158,7 +159,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
         state.copyWith(
           isSaving: false,
           feedbackType: PomodoroFeedbackType.error,
-          feedbackMessage: 'Failed to start session: $e',
+          feedbackMessage: AppL10n.current.pomodoroStartFailed,
         ),
       );
     }
@@ -177,7 +178,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
           activeSession: updated,
           isRunning: false,
           feedbackType: PomodoroFeedbackType.success,
-          feedbackMessage: 'Session paused.',
+          feedbackMessage: AppL10n.current.pomodoroSessionPaused,
         ),
       );
       await _refreshTodaySafely();
@@ -204,7 +205,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
           activeSession: updated,
           isRunning: true,
           feedbackType: PomodoroFeedbackType.success,
-          feedbackMessage: 'Session resumed.',
+          feedbackMessage: AppL10n.current.pomodoroSessionResumed,
         ),
       );
       await _refreshTodaySafely();
@@ -235,7 +236,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
           remainingSeconds: state.focusMinutes * 60,
           isRunning: false,
           feedbackType: PomodoroFeedbackType.success,
-          feedbackMessage: 'Session completed successfully.',
+          feedbackMessage: AppL10n.current.pomodoroSessionCompleted,
         ),
       );
       await _refreshTodaySafely();
@@ -265,7 +266,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
           remainingSeconds: state.focusMinutes * 60,
           isRunning: false,
           feedbackType: PomodoroFeedbackType.success,
-          feedbackMessage: 'Session stopped.',
+          feedbackMessage: AppL10n.current.pomodoroSessionStopped,
         ),
       );
       await _refreshTodaySafely();
@@ -356,8 +357,8 @@ class PomodoroCubit extends Cubit<PomodoroState> {
         );
         _stopTicker();
         _notificationService.showNotification(
-          title: 'Time is up!',
-          body: 'Great job! Take a well-deserved break.',
+          title: AppL10n.current.pomodoroTimeUpTitle,
+          body: AppL10n.current.pomodoroBreakOverBody,
         );
         return;
       }
@@ -376,9 +377,9 @@ class PomodoroCubit extends Cubit<PomodoroState> {
       final message = data['message'];
       if (message is String) return message;
       if (message is List && message.isNotEmpty) return message.first.toString();
-      return 'Something went wrong.';
+      return AppL10n.current.commonError;
     }
-    return 'Something went wrong.';
+    return AppL10n.current.commonError;
   }
 
   String? _extractCode(DioException e) {

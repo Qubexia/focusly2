@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:zakerly/core/localization/app_l10n.dart';
 import '../../../../core/services/premium_refresh_service.dart';
 import '../../data/models/ai_artifact_model.dart';
 import '../../data/repositories/ai_repository.dart';
@@ -38,7 +39,9 @@ class AiNotesCubit extends Cubit<AiNotesState> {
         await loadArtifacts(state.selectedSubjectId!);
       }
     } catch (_) {
-      emit(state.copyWith(isLoading: false, errorMessage: 'Failed to load subjects.'));
+      emit(state.copyWith(
+          isLoading: false,
+          errorMessage: AppL10n.current.aiLoadSubjectsFailed));
     }
   }
 
@@ -76,7 +79,7 @@ class AiNotesCubit extends Cubit<AiNotesState> {
         state.copyWith(
           deletingJobId: null,
           artifacts: updatedArtifacts,
-          feedbackMessage: 'Study pack deleted.',
+          feedbackMessage: AppL10n.current.aiStudyPackDeleted,
         ),
       );
     } on DioException catch (e) {
@@ -90,7 +93,7 @@ class AiNotesCubit extends Cubit<AiNotesState> {
       emit(
         state.copyWith(
           deletingJobId: null,
-          errorMessage: 'Failed to delete study pack.',
+          errorMessage: AppL10n.current.aiDeleteStudyPackFailed,
         ),
       );
     }
@@ -104,10 +107,10 @@ class AiNotesCubit extends Cubit<AiNotesState> {
     final data = e.response?.data;
     if (data is Map<String, dynamic>) {
       if (data['error'] == 'AI_RATE_LIMIT') {
-        return 'AI rate limit reached. Try again later.';
+        return AppL10n.current.aiRateLimitReached;
       }
-      return (data['message'] as String?) ?? 'Something went wrong.';
+      return (data['message'] as String?) ?? AppL10n.current.commonError;
     }
-    return 'Something went wrong.';
+    return AppL10n.current.commonError;
   }
 }

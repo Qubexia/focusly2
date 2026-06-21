@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../subjects/data/models/subject_model.dart';
 import '../../../subjects/data/repositories/subjects_repository.dart';
@@ -75,6 +76,7 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final l10n = AppLocalizations.of(context);
 
     return ConstrainedBox(
       constraints: BoxConstraints(
@@ -109,7 +111,7 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Add New Plan',
+                    l10n.plannerAddNewPlan,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -130,7 +132,7 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
               const SizedBox(height: 24),
               
               // Category Selection
-              const _SectionLabel(label: 'Category'),
+              _SectionLabel(label: l10n.plannerCategory),
               const SizedBox(height: 12),
               Row(
                 children: PlannedItemType.values.map((type) {
@@ -158,7 +160,7 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              _getTypeLabel(type),
+                              _getTypeLabel(l10n, type),
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
@@ -174,22 +176,23 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
               ),
               
               const SizedBox(height: 24),
-              const _SectionLabel(label: 'Details'),
+              _SectionLabel(label: l10n.plannerDetails),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  hintText: 'e.g., Mathematics Chapter 3',
+                decoration: InputDecoration(
+                  labelText: l10n.plannerTitleLabel,
+                  hintText: l10n.plannerTitleHint,
                 ),
-                validator: (val) => (val == null || val.isEmpty) ? 'Required' : null,
+                validator: (val) =>
+                    (val == null || val.isEmpty) ? l10n.plannerTitleRequired : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Notes (Optional)',
-                  hintText: 'Brief description...',
+                decoration: InputDecoration(
+                  labelText: l10n.plannerNotesLabel,
+                  hintText: l10n.plannerNotesHint,
                 ),
                 maxLines: 2,
               ),
@@ -201,10 +204,10 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _SectionLabel(label: 'Time'),
+                        _SectionLabel(label: l10n.plannerTime),
                         const SizedBox(height: 8),
                         _PickerButton(
-                          label: _selectedTime?.format(context) ?? 'Set Time',
+                          label: _selectedTime?.format(context) ?? l10n.plannerSetTime,
                           icon: Icons.access_time_rounded,
                           onTap: () async {
                             final time = await showTimePicker(
@@ -222,7 +225,7 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _SectionLabel(label: 'Subject'),
+                        _SectionLabel(label: l10n.plannerSubject),
                         const SizedBox(height: 8),
                         _isLoadingSubjects
                             ? const Center(child: LinearProgressIndicator())
@@ -231,9 +234,9 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
                                 decoration: const InputDecoration(
                                   contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                 ),
-                                hint: const Text('Select'),
+                                hint: Text(l10n.plannerSubjectSelect),
                                 items: [
-                                  const DropdownMenuItem(value: null, child: Text('General')),
+                                  DropdownMenuItem(value: null, child: Text(l10n.plannerSubjectGeneral)),
                                   ..._subjects.map((s) => DropdownMenuItem(
                                         value: s.id,
                                         child: Text(s.name, overflow: TextOverflow.ellipsis),
@@ -254,7 +257,7 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
                   onPressed: widget.isSaving ? null : _submit,
                   child: widget.isSaving
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Save Plan'),
+                      : Text(l10n.plannerSavePlan),
                 ),
               ),
             ],
@@ -287,8 +290,17 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
     }
   }
 
-  String _getTypeLabel(PlannedItemType type) {
-    return type.name[0].toUpperCase() + type.name.substring(1);
+  String _getTypeLabel(AppLocalizations l10n, PlannedItemType type) {
+    switch (type) {
+      case PlannedItemType.task:
+        return l10n.plannerTypeTask;
+      case PlannedItemType.revision:
+        return l10n.plannerTypeRevision;
+      case PlannedItemType.lecture:
+        return l10n.plannerTypeLecture;
+      case PlannedItemType.exam:
+        return l10n.plannerTypeExam;
+    }
   }
 }
 

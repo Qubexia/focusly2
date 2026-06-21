@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:zakerly/core/localization/app_l10n.dart';
 import '../../../../core/services/upload_service.dart';
 import '../../../ai/data/models/ai_artifact_model.dart';
 import '../../../ai/data/repositories/ai_repository.dart';
@@ -58,8 +59,8 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: 'Failed to load subject details: $e',
-          feedbackMessage: 'Failed to load subject details: $e',
+          errorMessage: '${AppL10n.current.subjectsDetailLoadFailed}: $e',
+          feedbackMessage: '${AppL10n.current.subjectsDetailLoadFailed}: $e',
           feedbackType: SubjectDetailFeedbackType.error,
         ),
       );
@@ -94,8 +95,8 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
           progress: _buildProgress(chapters),
           feedbackType: SubjectDetailFeedbackType.success,
           feedbackMessage: pdfPath != null
-              ? 'Chapter added. Analyzing the PDF…'
-              : 'Chapter added successfully.',
+              ? AppL10n.current.subjectsChapterAddedAnalyzing
+              : AppL10n.current.subjectsChapterAddedSuccess,
         ),
       );
 
@@ -128,7 +129,7 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
         state.copyWith(
           isSaving: false,
           feedbackType: SubjectDetailFeedbackType.error,
-          feedbackMessage: 'Failed to add chapter: $e',
+          feedbackMessage: '${AppL10n.current.subjectsChapterAddFailed}: $e',
         ),
       );
       return false;
@@ -172,7 +173,7 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
         state.copyWith(
           analyzingChapterIds: _withoutChapter(chapterId),
           feedbackType: SubjectDetailFeedbackType.success,
-          feedbackMessage: 'AI study materials are ready for this chapter.',
+          feedbackMessage: AppL10n.current.subjectsChapterMaterialsReady,
         ),
       );
     } on DioException catch (e) {
@@ -224,7 +225,7 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
         state.copyWith(
           isAnalyzingSubject: false,
           feedbackType: SubjectDetailFeedbackType.success,
-          feedbackMessage: 'AI study materials are ready for this subject.',
+          feedbackMessage: AppL10n.current.subjectsMaterialsReady,
         ),
       );
     } on DioException catch (e) {
@@ -270,10 +271,10 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
       final job = await _aiRepository.getJob(jobId);
       if (job.isCompleted) return;
       if (job.isFailed) {
-        throw Exception(job.failureReason ?? 'AI job failed.');
+        throw Exception(job.failureReason ?? AppL10n.current.subjectsAiJobFailed);
       }
     }
-    throw Exception('AI analysis timed out.');
+    throw Exception(AppL10n.current.subjectsAiAnalysisTimedOut);
   }
 
   Future<bool> renameChapter({
@@ -302,7 +303,7 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
           chapters: chapters,
           progress: _buildProgress(chapters),
           feedbackType: SubjectDetailFeedbackType.success,
-          feedbackMessage: 'Chapter updated successfully.',
+          feedbackMessage: AppL10n.current.subjectsChapterUpdateSuccess,
         ),
       );
 
@@ -323,7 +324,7 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
         state.copyWith(
           isSaving: false,
           feedbackType: SubjectDetailFeedbackType.error,
-          feedbackMessage: 'Failed to update chapter: $e',
+          feedbackMessage: '${AppL10n.current.subjectsChapterUpdateFailed}: $e',
         ),
       );
       return false;
@@ -375,7 +376,7 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
         state.copyWith(
           isSaving: false,
           feedbackType: SubjectDetailFeedbackType.error,
-          feedbackMessage: 'Failed to update chapter.',
+          feedbackMessage: AppL10n.current.subjectsChapterUpdateFailedShort,
         ),
       );
     }
@@ -405,7 +406,7 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
           isSaving: false,
           subject: updated,
           feedbackType: SubjectDetailFeedbackType.success,
-          feedbackMessage: 'Subject updated successfully.',
+          feedbackMessage: AppL10n.current.subjectsUpdateSuccess,
         ),
       );
       return true;
@@ -423,7 +424,7 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
         state.copyWith(
           isSaving: false,
           feedbackType: SubjectDetailFeedbackType.error,
-          feedbackMessage: 'Failed to update subject.',
+          feedbackMessage: AppL10n.current.subjectsUpdateFailed,
         ),
       );
       return false;
@@ -476,7 +477,7 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
       }
       return message;
     }
-    return 'Failed to analyze the PDF.';
+    return AppL10n.current.subjectsAnalyzePdfFailed;
   }
 
   String _extractMessage(DioException e) {
@@ -485,8 +486,8 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
       final message = data['message'];
       if (message is String) return message;
       if (message is List && message.isNotEmpty) return message.first.toString();
-      return 'Something went wrong.';
+      return AppL10n.current.commonError;
     }
-    return 'Something went wrong.';
+    return AppL10n.current.commonError;
   }
 }

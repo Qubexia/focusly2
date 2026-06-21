@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
+import '../../../../core/localization/locale_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
@@ -50,8 +52,66 @@ class _SettingsPageState extends State<SettingsPage> {
     await _profileDataSource.updateSettings(notifications: _prefs);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Notification preferences saved')),
+      SnackBar(content: Text(AppLocalizations.of(context).settingsNotificationsSaved)),
     );
+  }
+
+  Future<void> _showLanguagePicker() async {
+    final cubit = context.read<LocaleCubit>();
+    final l10n = AppLocalizations.of(context);
+    final current = cubit.state?.languageCode;
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: RadioGroup<String?>(
+          groupValue: current,
+          onChanged: (value) {
+            cubit.setLocale(value == null ? null : Locale(value));
+            Navigator.pop(ctx);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    l10n.settingsLanguageTile,
+                    style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                ),
+              ),
+              RadioListTile<String?>(
+                value: null,
+                title: Text(l10n.languageSystemDefault),
+              ),
+              RadioListTile<String?>(
+                value: 'en',
+                title: Text(l10n.languageEnglish),
+              ),
+              RadioListTile<String?>(
+                value: 'ar',
+                title: Text(l10n.languageArabic),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _languageLabel(AppLocalizations l10n, Locale? locale) {
+    switch (locale?.languageCode) {
+      case 'en':
+        return l10n.languageEnglish;
+      case 'ar':
+        return l10n.languageArabic;
+      default:
+        return l10n.languageSystemDefault;
+    }
   }
 
   Future<void> _toggleFocusMode(bool value) async {
@@ -65,19 +125,21 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _deleteAccount() async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete account?'),
-        content: const Text(
-          'This permanently removes your data. Type DELETE to confirm.',
-        ),
+        title: Text(l10n.settingsDeleteAccountConfirmTitle),
+        content: Text(l10n.settingsDeleteAccountConfirmBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.commonCancel),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l10n.commonDelete),
           ),
         ],
       ),
@@ -91,8 +153,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final locale = context.watch<LocaleCubit>().state;
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : BlocBuilder<AuthBloc, AuthState>(
@@ -101,34 +165,44 @@ class _SettingsPageState extends State<SettingsPage> {
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
                   children: [
-                    _SectionHeader(title: 'Account'),
+                    _SectionHeader(title: l10n.settingsAccountSection),
                     _SettingsTile(
                       icon: Icons.person_outline_rounded,
-                      title: 'Edit profile',
+                      title: l10n.settingsEditProfile,
                       onTap: () => showEditProfileSheet(context, user),
                     ),
                     _SettingsTile(
                       icon: Icons.workspace_premium_rounded,
-                      title: 'Premium',
-                      subtitle: user?.isPremium == true ? 'Active' : 'Upgrade',
+                      title: l10n.settingsPremium,
+                      subtitle: user?.isPremium == true
+                          ? l10n.settingsPremiumActive
+                          : l10n.settingsPremiumUpgrade,
                       onTap: () => context.push('/premium'),
                     ),
                     if (user?.isPremium == true)
                       _SettingsTile(
                         icon: Icons.cancel_outlined,
-                        title: 'Cancel subscription',
-                        subtitle: 'Stop renewal at period end',
+                        title: l10n.settingsCancelSubscription,
+                        subtitle: l10n.settingsCancelSubscriptionSubtitle,
                         onTap: () => SubscriptionActions.cancelFromContext(context),
                       ),
                     _SettingsTile(
                       icon: Icons.auto_awesome_rounded,
-                      title: 'AI Notes',
+                      title: l10n.settingsAiNotes,
                       onTap: () => context.push('/ai-notes'),
                     ),
                     const SizedBox(height: 20),
-                    _SectionHeader(title: 'Notifications'),
+                    _SectionHeader(title: l10n.settingsLanguageSection),
+                    _SettingsTile(
+                      icon: Icons.language_rounded,
+                      title: l10n.settingsLanguageTile,
+                      subtitle: _languageLabel(l10n, locale),
+                      onTap: _showLanguagePicker,
+                    ),
+                    const SizedBox(height: 20),
+                    _SectionHeader(title: l10n.settingsNotificationsSection),
                     SwitchListTile(
-                      title: const Text('Study reminders'),
+                      title: Text(l10n.settingsStudyReminders),
                       value: _prefs.reminders,
                       onChanged: (v) {
                         setState(() => _prefs = _prefs.copyWith(reminders: v));
@@ -136,7 +210,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       },
                     ),
                     SwitchListTile(
-                      title: const Text('Streak alerts'),
+                      title: Text(l10n.settingsStreakAlerts),
                       value: _prefs.streak,
                       onChanged: (v) {
                         setState(() => _prefs = _prefs.copyWith(streak: v));
@@ -144,7 +218,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       },
                     ),
                     SwitchListTile(
-                      title: const Text('Product updates'),
+                      title: Text(l10n.settingsProductUpdates),
                       value: _prefs.marketing,
                       onChanged: (v) {
                         setState(() => _prefs = _prefs.copyWith(marketing: v));
@@ -152,20 +226,22 @@ class _SettingsPageState extends State<SettingsPage> {
                       },
                     ),
                     const SizedBox(height: 12),
-                    _SectionHeader(title: 'Focus'),
+                    _SectionHeader(title: l10n.settingsFocusSection),
                     SwitchListTile(
-                      title: const Text('Focus mode'),
-                      subtitle: const Text('Reduce non-essential notifications'),
+                      title: Text(l10n.settingsFocusMode),
+                      subtitle: Text(l10n.settingsFocusModeSubtitle),
                       value: _focusMode,
                       onChanged: _toggleFocusMode,
                     ),
                     const SizedBox(height: 20),
-                    _SectionHeader(title: 'Active devices'),
+                    _SectionHeader(title: l10n.settingsActiveDevices),
                     ..._sessions.map(
                       (session) => ListTile(
                         title: Text(session.deviceLabel),
                         subtitle: Text(
-                          session.current ? 'This device' : 'Other device',
+                          session.current
+                              ? l10n.settingsThisDevice
+                              : l10n.settingsOtherDevice,
                         ),
                         trailing: session.current
                             ? null
@@ -176,16 +252,16 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _SectionHeader(title: 'Danger zone'),
+                    _SectionHeader(title: l10n.settingsDangerZone),
                     ListTile(
                       leading: const Icon(Icons.logout_rounded),
-                      title: const Text('Log out'),
+                      title: Text(l10n.settingsLogOut),
                       onTap: () =>
                           context.read<AuthBloc>().add(const AuthLogoutRequested()),
                     ),
                     ListTile(
                       leading: const Icon(Icons.delete_forever_rounded, color: AppColors.error),
-                      title: const Text('Delete account', style: TextStyle(color: AppColors.error)),
+                      title: Text(l10n.settingsDeleteAccount, style: const TextStyle(color: AppColors.error)),
                       onTap: _deleteAccount,
                     ),
                   ],

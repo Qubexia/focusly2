@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/premium/premium_status.dart';
 import '../../../../core/services/premium_refresh_service.dart';
@@ -75,12 +77,13 @@ class _HomeContent extends StatelessWidget {
                         final user = authState is AuthAuthenticated
                             ? authState.user
                             : null;
+                        final l10n = AppLocalizations.of(context);
                         final name = user?.name.isNotEmpty == true
                             ? user!.name
-                            : 'Student';
+                            : l10n.homeDefaultName;
                         return _HomeHeader(
-                          greeting: _getGreeting(),
-                          dateLabel: _formatToday(),
+                          greeting: _getGreeting(context),
+                          dateLabel: _formatToday(context),
                           name: name,
                           avatarUrl: user?.avatarUrl,
                           isDark: isDark,
@@ -133,24 +136,26 @@ class _HomeContent extends StatelessWidget {
                     ],
                     const SizedBox(height: 28),
                     _SectionHeader(
-                      title: 'Your Subjects',
-                      actionLabel: 'See all',
+                      title: AppLocalizations.of(context).homeSubjectsTitle,
+                      actionLabel: AppLocalizations.of(context).homeSeeAll,
                       onAction: () => context.push('/subjects'),
                     ).animate().fadeIn(delay: 440.ms, duration: 500.ms),
                     const SizedBox(height: 14),
                     if (homeState.errorMessage != null && subjects.isEmpty)
                       _HomeMessageCard(
-                        title: 'Could not load your dashboard',
+                        title: AppLocalizations.of(context)
+                            .homeDashboardLoadErrorTitle,
                         subtitle: homeState.errorMessage!,
                         icon: Icons.cloud_off_rounded,
                       )
                     else if (subjects.isEmpty && !homeState.isLoading)
                       _HomeMessageCard(
-                        title: 'No subjects yet',
-                        subtitle:
-                            'Create your first subject to make the home screen useful and alive.',
+                        title: AppLocalizations.of(context).homeNoSubjectsTitle,
+                        subtitle: AppLocalizations.of(context)
+                            .homeNoSubjectsSubtitle,
                         icon: Icons.auto_stories_outlined,
-                        actionLabel: 'Create Subject',
+                        actionLabel:
+                            AppLocalizations.of(context).homeCreateSubject,
                         onTap: () => context.push('/subjects'),
                       )
                     else
@@ -191,39 +196,20 @@ class _HomeContent extends StatelessWidget {
     return (total / subjects.length).round();
   }
 
-  static String _getGreeting() {
+  static String _getGreeting(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour < 12) return l10n.homeGreetingMorning;
+    if (hour < 17) return l10n.homeGreetingAfternoon;
+    return l10n.homeGreetingEvening;
   }
 
-  static String _formatToday() {
-    const weekdays = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
+  static String _formatToday(BuildContext context) {
+    final locale = Localizations.localeOf(context).toString();
     final now = DateTime.now();
-    return '${weekdays[now.weekday - 1]} · ${now.day} ${months[now.month - 1]}';
+    final weekday = DateFormat.EEEE(locale).format(now);
+    final dayMonth = DateFormat.MMMd(locale).format(now);
+    return '$weekday · $dayMonth';
   }
 }
 
@@ -285,6 +271,7 @@ class _HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final subduedText = isDark
         ? AppColors.textSecondaryDark
         : AppColors.textSecondaryLight;
@@ -307,7 +294,7 @@ class _HomeHeader extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Hey ${_firstName(name)} 👋',
+                l10n.homeGreetingName(_firstName(name, l10n.homeDefaultName)),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -341,9 +328,9 @@ class _HomeHeader extends StatelessWidget {
     );
   }
 
-  static String _firstName(String name) {
+  static String _firstName(String name, String fallback) {
     final trimmed = name.trim();
-    if (trimmed.isEmpty) return 'Student';
+    if (trimmed.isEmpty) return fallback;
     return trimmed.split(RegExp(r'\s+')).first;
   }
 }
@@ -408,6 +395,7 @@ class _OverviewHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -430,7 +418,7 @@ class _OverviewHero extends StatelessWidget {
               const Icon(Icons.insights_rounded, color: Colors.white, size: 18),
               const SizedBox(width: 8),
               Text(
-                'Study overview',
+                l10n.homeStudyOverview,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -451,9 +439,9 @@ class _OverviewHero extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Overall progress',
-                      style: TextStyle(
+                    Text(
+                      l10n.homeOverallProgress,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
@@ -462,10 +450,13 @@ class _OverviewHero extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       isLoading
-                          ? 'Pulling your subjects and targets…'
+                          ? l10n.homeOverviewLoading
                           : subjectsCount == 0
-                              ? 'Add subjects to start tracking progress.'
-                              : '$completedSubjects of $subjectsCount subjects completed',
+                              ? l10n.homeOverviewEmpty
+                              : l10n.homeSubjectsCompleted(
+                                  completedSubjects,
+                                  subjectsCount,
+                                ),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 13,
@@ -483,13 +474,13 @@ class _OverviewHero extends StatelessWidget {
               _HeroStat(
                 icon: Icons.schedule_rounded,
                 value: isLoading ? '—' : '${focusMinutes}m',
-                label: 'focused today',
+                label: l10n.homeFocusedToday,
               ),
               const SizedBox(width: 12),
               _HeroStat(
                 icon: Icons.check_circle_rounded,
                 value: isLoading ? '—' : '$sessionCount',
-                label: sessionCount == 1 ? 'session' : 'sessions',
+                label: l10n.homeSessionsLabel(sessionCount),
               ),
             ],
           ),
@@ -507,9 +498,9 @@ class _OverviewHero extends StatelessWidget {
                 ),
               ),
               icon: const Icon(Icons.play_arrow_rounded, size: 20),
-              label: const Text(
-                'Start Focus',
-                style: TextStyle(fontWeight: FontWeight.w800),
+              label: Text(
+                l10n.homeStartFocus,
+                style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
           ),
@@ -641,12 +632,13 @@ class _StatStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         _StatTile(
           icon: Icons.local_fire_department_rounded,
           value: '$streakDays',
-          label: streakDays == 1 ? 'Day streak' : 'Day streak',
+          label: l10n.homeDayStreak,
           color: AppColors.primary,
           onTap: onStreakTap,
         ),
@@ -654,14 +646,14 @@ class _StatStrip extends StatelessWidget {
         _StatTile(
           icon: Icons.flag_rounded,
           value: '${dailyTargetMinutes}m',
-          label: 'Daily target',
+          label: l10n.homeDailyTarget,
           color: AppColors.primaryLight,
         ),
         const SizedBox(width: 12),
         _StatTile(
           icon: Icons.menu_book_rounded,
           value: '$subjectsCount',
-          label: 'Subjects',
+          label: l10n.homeSubjectsStat,
           color: AppColors.primaryDark,
         ),
       ],
@@ -761,12 +753,15 @@ class _UpcomingTodaySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(
-          title: 'Upcoming today',
-          actionLabel: tasks.isNotEmpty ? 'Planner' : 'Schedule',
+          title: l10n.homeUpcomingToday,
+          actionLabel: tasks.isNotEmpty
+              ? l10n.homeNavPlanner
+              : l10n.homeNavSchedule,
           onAction: tasks.isNotEmpty ? onOpenPlanner : onOpenSchedule,
         ),
         const SizedBox(height: 12),
@@ -790,7 +785,7 @@ class _UpcomingTodaySection extends StatelessWidget {
               final task = tasks[index - schedules.length];
               return _UpcomingChip(
                 title: task.title,
-                subtitle: task.time ?? 'Today',
+                subtitle: task.time ?? l10n.homeToday,
                 icon: Icons.task_alt_rounded,
                 color: AppColors.primary,
                 onTap: onOpenPlanner,
@@ -886,26 +881,27 @@ class _QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionHeader(title: 'Quick Actions'),
+        _SectionHeader(title: l10n.homeQuickActions),
         const SizedBox(height: 14),
-        const Row(
+        Row(
           children: [
             Expanded(
               child: _QuickActionCard(
-                label: 'Start Focus',
-                subtitle: 'Pomodoro timer',
+                label: l10n.homeQuickFocusLabel,
+                subtitle: l10n.homeQuickFocusSubtitle,
                 icon: Icons.play_circle_rounded,
                 route: '/home?tab=2',
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: _QuickActionCard(
-                label: 'Add Task',
-                subtitle: 'Plan your day',
+                label: l10n.homeQuickAddTaskLabel,
+                subtitle: l10n.homeQuickAddTaskSubtitle,
                 icon: Icons.add_task_rounded,
                 route: '/planner',
               ),
@@ -915,10 +911,10 @@ class _QuickActions extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: _QuickActionCard(
-                label: 'Schedule',
-                subtitle: 'Study sessions',
+                label: l10n.homeQuickScheduleLabel,
+                subtitle: l10n.homeQuickScheduleSubtitle,
                 icon: Icons.calendar_month_rounded,
                 route: '/home?tab=1',
               ),
@@ -926,8 +922,8 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _QuickActionCard(
-                label: 'AI Notes',
-                subtitle: 'Smart summaries',
+                label: l10n.homeQuickAiNotesLabel,
+                subtitle: l10n.homeQuickAiNotesSubtitle,
                 icon: Icons.auto_awesome_rounded,
                 route: '/ai-notes',
                 requiresPremium: !isPremium,
@@ -1099,7 +1095,8 @@ class _SubjectPreviewCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    '· ${subject.dailyTargetMinutes}m target',
+                    AppLocalizations.of(context)
+                        .homeSubjectTargetMinutes(subject.dailyTargetMinutes),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -1135,6 +1132,7 @@ class _HomePremiumPromoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       width: double.infinity,
@@ -1186,7 +1184,7 @@ class _HomePremiumPromoCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(99),
                       ),
                       child: Text(
-                        'RECOMMENDED',
+                        l10n.homePremiumRecommended,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
@@ -1196,7 +1194,7 @@ class _HomePremiumPromoCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Upgrade to Zakerly Premium',
+                      l10n.homePremiumUpgradeTitle,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
@@ -1209,7 +1207,7 @@ class _HomePremiumPromoCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Unlock unlimited subjects, deep weekly & monthly analytics insights, and personalized study targets to build an unbreakable streak.',
+            l10n.homePremiumBody,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.white.withValues(alpha: 0.9),
                   height: 1.45,
@@ -1230,9 +1228,9 @@ class _HomePremiumPromoCard extends StatelessWidget {
                     ),
                   ),
                   icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-                  label: const Text(
-                    'View Subscriptions',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                  label: Text(
+                    l10n.homeViewSubscriptions,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
               ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:zakerly/l10n/app_localizations.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/premium_gate_sheet.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -49,15 +51,16 @@ class _SubjectsView extends StatelessWidget {
         context.read<SubjectsCubit>().clearFeedback();
       },
       builder: (context, state) {
+        final l10n = AppLocalizations.of(context);
         final authState = context.watch<AuthBloc>().state;
         final user = authState is AuthAuthenticated ? authState.user : null;
         final countLabel = user?.isPremium == true
-            ? '${state.subjects.length} active subjects'
-            : '${state.subjects.length}/3 free subjects';
+            ? l10n.subjectsActiveCount(state.subjects.length)
+            : l10n.subjectsFreeCount(state.subjects.length);
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Subjects'),
+            title: Text(l10n.subjectsTitle),
           ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: state.isSaving
@@ -66,7 +69,7 @@ class _SubjectsView extends StatelessWidget {
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             icon: const Icon(Icons.add_rounded),
-            label: const Text('New Subject'),
+            label: Text(l10n.subjectsNewSubject),
           ),
           body: Column(
             children: [
@@ -85,7 +88,7 @@ class _SubjectsView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Build your study map',
+                        l10n.subjectsHeroTitle,
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(
                               color: Colors.white,
@@ -94,7 +97,7 @@ class _SubjectsView extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Organize each subject with its own color, icon, and daily target.',
+                        l10n.subjectsHeroSubtitle,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.white.withValues(alpha: 0.86),
                         ),
@@ -137,6 +140,8 @@ class _SubjectsView extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, SubjectsState state) {
+    final l10n = AppLocalizations.of(context);
+
     if (state.isLoading && state.subjects.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -147,9 +152,9 @@ class _SubjectsView extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         children: [
           _SubjectsEmptyState(
-            title: 'Could not load subjects',
+            title: l10n.subjectsLoadErrorTitle,
             description: state.errorMessage!,
-            actionLabel: 'Try Again',
+            actionLabel: l10n.commonRetry,
             onPressed: () => context.read<SubjectsCubit>().loadSubjects(),
           ),
         ],
@@ -162,10 +167,9 @@ class _SubjectsView extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         children: [
           _SubjectsEmptyState(
-            title: 'No subjects yet',
-            description:
-                'Create your first subject to start tracking study progress and daily goals.',
-            actionLabel: 'Create Subject',
+            title: l10n.subjectsEmptyTitle,
+            description: l10n.subjectsEmptyDescription,
+            actionLabel: l10n.subjectsCreateSubject,
             onPressed: () => _openEditorSheet(context),
           ),
         ],
@@ -223,22 +227,23 @@ class _SubjectsView extends StatelessWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, SubjectModel subject) async {
+    final l10n = AppLocalizations.of(context);
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Archive subject?'),
+          title: Text(l10n.subjectsArchiveTitle),
           content: Text(
-            '“${subject.name}” will be removed from the active subjects list.',
+            l10n.subjectsArchiveMessage(subject.name),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: Text(l10n.commonCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Archive'),
+              child: Text(l10n.subjectsArchive),
             ),
           ],
         );
@@ -253,7 +258,7 @@ class _SubjectsView extends StatelessWidget {
   void _showPremiumGate(BuildContext context, String message) {
     showPremiumGateSheet(
       context,
-      title: 'Free plan limit reached',
+      title: AppLocalizations.of(context).subjectsFreeLimitTitle,
       message: message,
     );
   }
@@ -274,6 +279,7 @@ class _SubjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = _SubjectPalette.resolveColor(subject.color);
 
@@ -321,7 +327,9 @@ class _SubjectCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${subject.dailyTargetMinutes} min daily target',
+                            l10n.subjectsDailyTargetLabel(
+                              subject.dailyTargetMinutes,
+                            ),
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: isDark
@@ -340,9 +348,15 @@ class _SubjectCard extends StatelessWidget {
                           onDelete();
                         }
                       },
-                      itemBuilder: (context) => const [
-                        PopupMenuItem(value: 'edit', child: Text('Edit')),
-                        PopupMenuItem(value: 'delete', child: Text('Archive')),
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Text(l10n.commonEdit),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Text(l10n.subjectsArchive),
+                        ),
                       ],
                     ),
                   ],
@@ -352,13 +366,13 @@ class _SubjectCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Progress',
+                      l10n.subjectsProgressLabel,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
                     ),
                     Text(
-                      '${subject.progressPercent}%',
+                      l10n.subjectsPercentValue(subject.progressPercent),
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                             color: accentColor,
                             fontWeight: FontWeight.w800,
@@ -492,6 +506,7 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isEditing = widget.subject != null;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -512,14 +527,16 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  isEditing ? 'Edit Subject' : 'Create Subject',
+                  isEditing
+                      ? l10n.subjectsEditSubject
+                      : l10n.subjectsCreateSubject,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Choose a subject name, a distinct icon, and a realistic daily goal.',
+                  l10n.subjectsEditorSubtitle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: isDark
                         ? AppColors.textSecondaryDark
@@ -530,23 +547,23 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                 TextFormField(
                   controller: _nameController,
                   textInputAction: TextInputAction.done,
-                  decoration: const InputDecoration(
-                    labelText: 'Subject Name',
-                    hintText: 'Physics 101',
+                  decoration: InputDecoration(
+                    labelText: l10n.subjectsSubjectNameLabel,
+                    hintText: l10n.subjectsSubjectNameHint,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a subject name';
+                      return l10n.subjectsNameRequired;
                     }
                     if (value.trim().length < 2) {
-                      return 'Subject name is too short';
+                      return l10n.subjectsNameTooShort;
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Color',
+                  l10n.subjectsColorLabel,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -586,7 +603,7 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Icon',
+                  l10n.subjectsIconLabel,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -632,13 +649,13 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Daily Target',
+                      l10n.subjectsDailyTarget,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     Text(
-                      '${_dailyTargetMinutes.round()} min',
+                      l10n.subjectsMinutesValue(_dailyTargetMinutes.round()),
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w800,
@@ -651,7 +668,7 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                   min: 15,
                   max: 240,
                   divisions: 15,
-                  label: '${_dailyTargetMinutes.round()} min',
+                  label: l10n.subjectsMinutesValue(_dailyTargetMinutes.round()),
                   onChanged: (value) => setState(() => _dailyTargetMinutes = value),
                 ),
                 const SizedBox(height: 16),
@@ -659,7 +676,11 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _submit,
-                    child: Text(isEditing ? 'Save Changes' : 'Create Subject'),
+                    child: Text(
+                      isEditing
+                          ? l10n.subjectsSaveChanges
+                          : l10n.subjectsCreateSubject,
+                    ),
                   ),
                 ),
               ],

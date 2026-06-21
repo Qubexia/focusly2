@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../bloc/notifications_inbox_cubit.dart';
 import '../../data/models/notification_inbox_model.dart';
@@ -23,10 +24,11 @@ class _NotificationsInboxView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(l10n.notificationsTitle),
         actions: [
           BlocBuilder<NotificationsInboxCubit, NotificationsInboxState>(
             builder: (context, state) {
@@ -40,12 +42,12 @@ class _NotificationsInboxView extends StatelessWidget {
                       onPressed: () => context
                           .read<NotificationsInboxCubit>()
                           .markAllRead(),
-                      child: const Text('Mark all read'),
+                      child: Text(l10n.notificationsMarkAllRead),
                     ),
                   IconButton(
                     onPressed: () => _confirmDeleteAll(context),
                     icon: const Icon(Icons.delete_sweep_rounded),
-                    tooltip: 'Delete all shown',
+                    tooltip: l10n.notificationsDeleteAllShown,
                   ),
                 ],
               );
@@ -94,6 +96,7 @@ class _NotificationsInboxView extends StatelessWidget {
   }
 
   Widget _buildEmptyState(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -105,16 +108,16 @@ class _NotificationsInboxView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Your inbox is empty',
+            l10n.notificationsEmptyTitle,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: isDark ? Colors.white70 : Colors.black54,
                   fontWeight: FontWeight.bold,
                 ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'We will notify you about your study progress.',
-            style: TextStyle(color: Colors.grey),
+          Text(
+            l10n.notificationsEmptySubtitle,
+            style: const TextStyle(color: Colors.grey),
           ),
         ],
       ),
@@ -122,17 +125,18 @@ class _NotificationsInboxView extends StatelessWidget {
   }
 
   void _confirmDeleteAll(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete all notifications?'),
-        content: const Text(
-          'Each notification will be removed from your inbox.',
+        title: Text(l10n.notificationsDeleteAllTitle),
+        content: Text(
+          l10n.notificationsDeleteAllMessage,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           TextButton(
             onPressed: () async {
@@ -143,9 +147,9 @@ class _NotificationsInboxView extends StatelessWidget {
                 await cubit.deleteNotification(id);
               }
             },
-            child: const Text(
-              'Delete all',
-              style: TextStyle(color: AppColors.error),
+            child: Text(
+              l10n.notificationsDeleteAllConfirm,
+              style: const TextStyle(color: AppColors.error),
             ),
           ),
         ],

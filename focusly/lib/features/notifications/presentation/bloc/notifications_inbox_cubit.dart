@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/localization/app_l10n.dart';
 import '../../data/models/notification_inbox_model.dart';
 import '../../data/repositories/notifications_repository.dart';
 
@@ -27,7 +28,7 @@ class NotificationsInboxCubit extends Cubit<NotificationsInboxState> {
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: 'Failed to load notifications',
+          errorMessage: AppL10n.current.notificationsLoadFailed,
         ),
       );
     }

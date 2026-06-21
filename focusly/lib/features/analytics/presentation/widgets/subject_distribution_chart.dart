@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/analytics_subject_model.dart';
 
@@ -19,14 +20,15 @@ class SubjectDistributionChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     if (subjects.isEmpty) {
       return _card(
         isDark: isDark,
-        child: const Center(
+        child: Center(
           child: Padding(
-            padding: EdgeInsets.all(8),
-            child: Text('No subject data for this range.'),
+            padding: const EdgeInsets.all(8),
+            child: Text(l10n.analyticsNoSubjectData),
           ),
         ),
       );
@@ -46,7 +48,9 @@ class SubjectDistributionChart extends StatelessWidget {
               maxMinutes == 0 ? 0.0 : s.focusMinutes / maxMinutes;
           final h = s.focusMinutes ~/ 60;
           final m = s.focusMinutes % 60;
-          final timeLabel = h > 0 ? '${h}h ${m}m' : '${m}m';
+          final timeLabel = h > 0
+              ? l10n.analyticsDurationHoursMinutes(h, m)
+              : l10n.analyticsDurationMinutes(m);
 
           return Padding(
             padding: EdgeInsets.only(

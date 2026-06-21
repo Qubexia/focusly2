@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
@@ -16,29 +17,42 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<_OnboardingData> _pages = const [
+  static const List<_OnboardingData> _pages = [
     _OnboardingData(
       icon: Icons.menu_book_rounded,
       iconColor: AppColors.primary,
-      title: 'Organize Your\nStudy Life',
-      subtitle:
-          'Manage subjects, schedules, tasks, and exams all in one place. Stay on top of every deadline.',
     ),
     _OnboardingData(
       icon: Icons.timer_rounded,
       iconColor: AppColors.secondary,
-      title: 'Deep Focus\nSessions',
-      subtitle:
-          'Use the Pomodoro timer to build laser-sharp focus. Track your study hours and build streaks.',
     ),
     _OnboardingData(
       icon: Icons.auto_awesome_rounded,
       iconColor: AppColors.premium,
-      title: 'AI-Powered\nStudy Notes',
-      subtitle:
-          'Snap your lecture notes and let AI generate summaries, flashcards, and practice questions.',
     ),
   ];
+
+  String _titleFor(AppLocalizations l10n, int index) {
+    switch (index) {
+      case 0:
+        return l10n.onboardingSlide1Title;
+      case 1:
+        return l10n.onboardingSlide2Title;
+      default:
+        return l10n.onboardingSlide3Title;
+    }
+  }
+
+  String _subtitleFor(AppLocalizations l10n, int index) {
+    switch (index) {
+      case 0:
+        return l10n.onboardingSlide1Subtitle;
+      case 1:
+        return l10n.onboardingSlide2Subtitle;
+      default:
+        return l10n.onboardingSlide3Subtitle;
+    }
+  }
 
   void _nextPage() {
     if (_currentPage < _pages.length - 1) {
@@ -65,6 +79,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -79,7 +94,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 child: TextButton(
                   onPressed: _completeOnboarding,
                   child: Text(
-                    'Skip',
+                    l10n.commonSkip,
                     style: TextStyle(
                       color: isDark
                           ? AppColors.textSecondaryDark
@@ -103,6 +118,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   final page = _pages[index];
                   return _OnboardingSlide(
                     data: page,
+                    title: _titleFor(l10n, index),
+                    subtitle: _subtitleFor(l10n, index),
                     isDark: isDark,
                   );
                 },
@@ -154,8 +171,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       ),
                       child: Text(
                         _currentPage == _pages.length - 1
-                            ? 'Get Started'
-                            : 'Continue',
+                            ? l10n.onboardingGetStarted
+                            : l10n.commonNext,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -177,23 +194,26 @@ class _OnboardingPageState extends State<OnboardingPage> {
 class _OnboardingData {
   final IconData icon;
   final Color iconColor;
-  final String title;
-  final String subtitle;
 
   const _OnboardingData({
     required this.icon,
     required this.iconColor,
-    required this.title,
-    required this.subtitle,
   });
 }
 
 // ─── Individual slide ───
 class _OnboardingSlide extends StatelessWidget {
   final _OnboardingData data;
+  final String title;
+  final String subtitle;
   final bool isDark;
 
-  const _OnboardingSlide({required this.data, required this.isDark});
+  const _OnboardingSlide({
+    required this.data,
+    required this.title,
+    required this.subtitle,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -239,7 +259,7 @@ class _OnboardingSlide extends StatelessWidget {
 
           // Title
           Text(
-            data.title,
+            title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
@@ -254,7 +274,7 @@ class _OnboardingSlide extends StatelessWidget {
 
           // Subtitle
           Text(
-            data.subtitle,
+            subtitle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: isDark

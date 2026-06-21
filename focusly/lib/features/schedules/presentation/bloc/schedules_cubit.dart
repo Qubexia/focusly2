@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dio/dio.dart';
+import 'package:zakerly/core/localization/app_l10n.dart';
 import '../../data/datasources/schedules_remote_datasource.dart';
 import 'schedules_state.dart';
 import '../../../../core/services/notification_service.dart';
@@ -31,7 +32,7 @@ class SchedulesCubit extends Cubit<SchedulesState> {
     } catch (e) {
       emit(state.copyWith(
         isLoading: false,
-        errorMessage: 'Failed to load schedules: ${e.toString()}',
+        errorMessage: AppL10n.current.schedulesLoadFailed,
       ));
     }
   }
@@ -61,7 +62,7 @@ class SchedulesCubit extends Cubit<SchedulesState> {
       emit(state.copyWith(
         isSaving: false,
         feedbackType: SchedulesFeedbackType.success,
-        feedbackMessage: 'Schedule created successfully!',
+        feedbackMessage: AppL10n.current.schedulesCreateSuccess,
       ));
 
       await loadSchedules();
@@ -75,7 +76,7 @@ class SchedulesCubit extends Cubit<SchedulesState> {
       emit(state.copyWith(
         isSaving: false,
         feedbackType: SchedulesFeedbackType.error,
-        feedbackMessage: 'Failed to create schedule: ${e.toString()}',
+        feedbackMessage: AppL10n.current.schedulesCreateFailed,
       ));
     }
   }
@@ -86,14 +87,14 @@ class SchedulesCubit extends Cubit<SchedulesState> {
       await _notificationService.cancel(id.hashCode);
       emit(state.copyWith(
         feedbackType: SchedulesFeedbackType.success,
-        feedbackMessage: 'Schedule deleted.',
+        feedbackMessage: AppL10n.current.schedulesDeleteSuccess,
       ));
       await loadSchedules();
       return true;
     } catch (e) {
       emit(state.copyWith(
         feedbackType: SchedulesFeedbackType.error,
-        feedbackMessage: 'Failed to delete schedule.',
+        feedbackMessage: AppL10n.current.schedulesDeleteFailed,
       ));
       return false;
     }
@@ -127,7 +128,7 @@ class SchedulesCubit extends Cubit<SchedulesState> {
       }
     }
 
-    return 'Failed to create schedule. Please check the selected data.';
+    return AppL10n.current.schedulesCreateInvalidData;
   }
 
   Future<void> _syncNotifications(List<StudyScheduleModel> schedules) async {
@@ -148,8 +149,9 @@ class SchedulesCubit extends Cubit<SchedulesState> {
         if (scheduledDate.isAfter(DateTime.now())) {
           await _notificationService.scheduleNotification(
             id: schedule.id.hashCode,
-            title: 'Study Reminder: ${schedule.title}',
-            body: 'Your study session starts in ${schedule.reminderMinutesBefore} minutes.',
+            title: AppL10n.current.schedulesReminderNotificationTitle(schedule.title),
+            body: AppL10n.current
+                .schedulesReminderNotificationBody(schedule.reminderMinutesBefore),
             scheduledDate: scheduledDate,
           );
         }

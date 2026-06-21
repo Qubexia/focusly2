@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/data/models/user_model.dart';
@@ -28,6 +29,7 @@ Future<void> showEditProfileSheet(BuildContext context, UserModel? user) async {
     backgroundColor: Colors.transparent,
     builder: (sheetContext) {
       final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+      final l10n = AppLocalizations.of(sheetContext);
 
       return StatefulBuilder(
         builder: (context, setModalState) {
@@ -60,14 +62,14 @@ Future<void> showEditProfileSheet(BuildContext context, UserModel? user) async {
                   SnackBar(
                     content: Text(
                       isPermanentlyDenied
-                          ? 'Photo access is blocked. Please enable it from app settings.'
-                          : 'Photo access is required to choose an avatar.',
+                          ? l10n.profilePhotoAccessBlocked
+                          : l10n.profilePhotoAccessRequired,
                     ),
                     backgroundColor: AppColors.error,
                     behavior: SnackBarBehavior.floating,
                     action: isPermanentlyDenied
                         ? SnackBarAction(
-                            label: 'Settings',
+                            label: l10n.profileSettings,
                             onPressed: openAppSettings,
                           )
                         : null,
@@ -98,8 +100,8 @@ Future<void> showEditProfileSheet(BuildContext context, UserModel? user) async {
                 ScaffoldMessenger.of(sheetContext)
                   ..hideCurrentSnackBar()
                   ..showSnackBar(
-                    const SnackBar(
-                      content: Text('Could not open your photo library right now.'),
+                    SnackBar(
+                      content: Text(l10n.profilePhotoLibraryError),
                       backgroundColor: AppColors.error,
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -119,8 +121,8 @@ Future<void> showEditProfileSheet(BuildContext context, UserModel? user) async {
                 ScaffoldMessenger.of(sheetContext)
                   ..hideCurrentSnackBar()
                   ..showSnackBar(
-                    const SnackBar(
-                      content: Text('Password reset link sent to your email.'),
+                    SnackBar(
+                      content: Text(l10n.profilePasswordResetSent),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -130,8 +132,8 @@ Future<void> showEditProfileSheet(BuildContext context, UserModel? user) async {
                 ScaffoldMessenger.of(sheetContext)
                   ..hideCurrentSnackBar()
                   ..showSnackBar(
-                    const SnackBar(
-                      content: Text('Could not send reset link right now.'),
+                    SnackBar(
+                      content: Text(l10n.profilePasswordResetError),
                       backgroundColor: AppColors.error,
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -201,14 +203,14 @@ Future<void> showEditProfileSheet(BuildContext context, UserModel? user) async {
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          'Edit Profile',
+                          l10n.profileEditProfile,
                           style: Theme.of(sheetContext).textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.w800,
                               ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Update your profile image, name, and security access.',
+                          l10n.profileEditProfileSubtitle,
                           style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
                                 color: isDark
                                     ? AppColors.textSecondaryDark
@@ -235,7 +237,7 @@ Future<void> showEditProfileSheet(BuildContext context, UserModel? user) async {
                               OutlinedButton.icon(
                                 onPressed: pickAvatar,
                                 icon: const Icon(Icons.photo_library_outlined),
-                                label: const Text('Change Photo'),
+                                label: Text(l10n.profileChangePhoto),
                               ),
                             ],
                           ),
@@ -244,14 +246,14 @@ Future<void> showEditProfileSheet(BuildContext context, UserModel? user) async {
                         TextFormField(
                           controller: nameController,
                           textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(
-                            labelText: 'Display name',
-                            hintText: 'Enter your full name',
+                          decoration: InputDecoration(
+                            labelText: l10n.profileDisplayName,
+                            hintText: l10n.profileDisplayNameHint,
                           ),
                           validator: (value) {
                             final trimmed = value?.trim() ?? '';
-                            if (trimmed.isEmpty) return 'Name is required';
-                            if (trimmed.length < 2) return 'Name is too short';
+                            if (trimmed.isEmpty) return l10n.profileNameRequired;
+                            if (trimmed.length < 2) return l10n.profileNameTooShort;
                             return null;
                           },
                         ),
@@ -259,9 +261,9 @@ Future<void> showEditProfileSheet(BuildContext context, UserModel? user) async {
                         TextFormField(
                           controller: emailController,
                           enabled: false,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            helperText: 'Email change is not available yet.',
+                          decoration: InputDecoration(
+                            labelText: l10n.profileEmail,
+                            helperText: l10n.profileEmailChangeUnavailable,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -276,7 +278,7 @@ Future<void> showEditProfileSheet(BuildContext context, UserModel? user) async {
                                     child: CircularProgressIndicator(strokeWidth: 2),
                                   )
                                 : const Icon(Icons.lock_reset_rounded),
-                            label: const Text('Send Password Reset Link'),
+                            label: Text(l10n.profileSendPasswordReset),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -293,7 +295,7 @@ Future<void> showEditProfileSheet(BuildContext context, UserModel? user) async {
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Text('Save Changes'),
+                                : Text(l10n.profileSaveChanges),
                           ),
                         ),
                       ],

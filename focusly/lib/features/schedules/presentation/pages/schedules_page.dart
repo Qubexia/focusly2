@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/schedule_model.dart';
@@ -112,15 +113,16 @@ class _SchedulesViewState extends State<_SchedulesView> {
     return showDialog<bool>(
       context: context,
       builder: (dialogContext) {
+        final l10n = AppLocalizations.of(dialogContext);
         return AlertDialog(
-          title: const Text('Delete schedule?'),
+          title: Text(l10n.schedulesDeleteDialogTitle),
           content: Text(
-            '“${schedule.title}” will be removed from your study schedule.',
+            l10n.schedulesDeleteDialogMessage(schedule.title),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: Text(l10n.commonCancel),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
@@ -128,7 +130,7 @@ class _SchedulesViewState extends State<_SchedulesView> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Delete'),
+              child: Text(l10n.commonDelete),
             ),
           ],
         );
@@ -139,6 +141,7 @@ class _SchedulesViewState extends State<_SchedulesView> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return BlocConsumer<SchedulesCubit, SchedulesState>(
       listener: (context, state) {
@@ -159,7 +162,7 @@ class _SchedulesViewState extends State<_SchedulesView> {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Study Schedule'),
+            title: Text(l10n.schedulesTitle),
             actions: [
               IconButton(
                 onPressed: () => context.read<SchedulesCubit>().loadSchedules(),
@@ -315,6 +318,7 @@ class _SchedulesViewState extends State<_SchedulesView> {
 
   Widget _buildScheduleList(
       BuildContext context, SchedulesState state, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -336,7 +340,7 @@ class _SchedulesViewState extends State<_SchedulesView> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No study sessions scheduled for today.',
+              l10n.schedulesEmptyMessage,
               style: TextStyle(
                 color: isDark
                     ? AppColors.textSecondaryDark
@@ -346,7 +350,7 @@ class _SchedulesViewState extends State<_SchedulesView> {
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => _showAddScheduleSheet(context, state),
-              child: const Text('Add your first session'),
+              child: Text(l10n.schedulesEmptyAddFirst),
             ),
           ],
         ),
@@ -386,6 +390,7 @@ class _ScheduleTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return Dismissible(
       key: ValueKey(schedule.id),
@@ -399,18 +404,18 @@ class _ScheduleTile extends StatelessWidget {
           color: AppColors.error.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.delete_outline_rounded,
               color: AppColors.error,
               size: 26,
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
-              'Delete',
-              style: TextStyle(
+              l10n.commonDelete,
+              style: const TextStyle(
                 color: AppColors.error,
                 fontWeight: FontWeight.w700,
               ),
@@ -479,23 +484,23 @@ class _ScheduleTile extends StatelessWidget {
                     ),
                   ),
                 PopupMenuButton<String>(
-                  tooltip: 'Schedule actions',
+                  tooltip: l10n.schedulesActionsTooltip,
                   onSelected: (value) async {
                     if (value == 'delete') {
                       await onDelete();
                     }
                   },
-                  itemBuilder: (context) => const [
+                  itemBuilder: (context) => [
                     PopupMenuItem<String>(
                       value: 'delete',
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.delete_outline_rounded,
                             color: AppColors.error,
                           ),
-                          SizedBox(width: 8),
-                          Text('Delete'),
+                          const SizedBox(width: 8),
+                          Text(l10n.commonDelete),
                         ],
                       ),
                     ),

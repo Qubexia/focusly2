@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/analytics_performance_model.dart';
@@ -12,6 +13,7 @@ class PerformanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final score = performance.completionScore;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -32,7 +34,7 @@ class PerformanceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Performance',
+            l10n.analyticsPerformance,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
@@ -53,7 +55,7 @@ class PerformanceCard extends StatelessWidget {
                       valueColor: const AlwaysStoppedAnimation(AppColors.secondary),
                     ),
                     Text(
-                      '${(score * 100).round()}%',
+                      l10n.analyticsPercent((score * 100).round()),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
@@ -66,17 +68,17 @@ class PerformanceCard extends StatelessWidget {
                 child: Column(
                   children: [
                     _MetricRow(
-                      label: 'Tasks done',
+                      label: l10n.analyticsTasksDone,
                       value: '${performance.totalTasksCompleted}',
                     ),
                     const SizedBox(height: 8),
                     _MetricRow(
-                      label: 'Sessions',
+                      label: l10n.analyticsSessions,
                       value: '${performance.totalSessions}',
                     ),
                     const SizedBox(height: 8),
                     _MetricRow(
-                      label: 'Focus min',
+                      label: l10n.analyticsFocusMin,
                       value: '${performance.totalFocusMinutes}',
                     ),
                   ],

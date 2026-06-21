@@ -7,6 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_logo.dart';
@@ -129,7 +130,7 @@ class _SplashPageState extends State<SplashPage> {
 
                       // Tagline
                       Text(
-                        'Study smarter. Stay focused.',
+                        AppLocalizations.of(context).splashTagline,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,

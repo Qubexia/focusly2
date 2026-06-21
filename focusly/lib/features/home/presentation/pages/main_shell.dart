@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -100,6 +101,7 @@ class _FloatingBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       margin: EdgeInsets.fromLTRB(
@@ -137,32 +139,32 @@ class _FloatingBottomNavBar extends StatelessWidget {
               children: [
                 _NavBarItem(
                   icon: Icons.dashboard_rounded,
-                  label: 'Home',
+                  label: l10n.homeNavHome,
                   isSelected: selectedIndex == 0,
                   onTap: () => onItemTapped(0),
                 ),
                 _NavBarItem(
                   icon: Icons.calendar_month_rounded,
-                  label: 'Schedule',
+                  label: l10n.homeNavSchedule,
                   isSelected: selectedIndex == 1,
                   onTap: () => onItemTapped(1),
                 ),
                 _NavBarItem(
                   icon: Icons.timer_rounded,
-                  label: 'Focus',
+                  label: l10n.homeNavFocus,
                   isSelected: selectedIndex == 2,
                   onTap: () => onItemTapped(2),
                   isCenter: true,
                 ),
                 _NavBarItem(
                   icon: Icons.bar_chart_rounded,
-                  label: 'Stats',
+                  label: l10n.homeNavStats,
                   isSelected: selectedIndex == 3,
                   onTap: () => onItemTapped(3),
                 ),
                 _NavBarItem(
                   icon: Icons.person_rounded,
-                  label: 'Profile',
+                  label: l10n.homeNavProfile,
                   isSelected: selectedIndex == 4,
                   onTap: () => onItemTapped(4),
                 ),

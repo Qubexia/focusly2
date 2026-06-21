@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:zakerly/core/localization/app_l10n.dart';
 import '../../data/repositories/streaks_repository.dart';
 import 'streak_state.dart';
 
@@ -32,7 +33,7 @@ class StreakCubit extends Cubit<StreakState> {
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: 'Failed to load streak.',
+          errorMessage: AppL10n.current.streaksLoadFailed,
         ),
       );
     }
@@ -41,8 +42,8 @@ class StreakCubit extends Cubit<StreakState> {
   String _extractMessage(DioException e) {
     final data = e.response?.data;
     if (data is Map<String, dynamic>) {
-      return (data['message'] as String?) ?? 'Something went wrong.';
+      return (data['message'] as String?) ?? AppL10n.current.commonError;
     }
-    return 'Something went wrong.';
+    return AppL10n.current.commonError;
   }
 }

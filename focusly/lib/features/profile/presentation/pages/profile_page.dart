@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/data/models/user_model.dart';
@@ -20,6 +21,7 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
@@ -40,12 +42,12 @@ class ProfilePage extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Profile'),
+            title: Text(l10n.profileTitle),
             actions: [
               IconButton(
                 onPressed: () => context.push('/profile/settings'),
                 icon: const Icon(Icons.settings_outlined),
-                tooltip: 'Settings',
+                tooltip: l10n.profileSettings,
               ),
             ],
           ),
@@ -58,16 +60,15 @@ class ProfilePage extends StatelessWidget {
                   _ProfileHeroCard(user: user),
                   const SizedBox(height: 20),
                   _SectionTitle(
-                    title: 'Overview',
-                    subtitle:
-                        'A quick snapshot of your account and study pace.',
+                    title: l10n.profileOverviewTitle,
+                    subtitle: l10n.profileOverviewSubtitle,
                   ),
                   const SizedBox(height: 14),
                   _InfoListCard(
                     children: [
                       _InfoTile(
                         icon: Icons.workspace_premium_rounded,
-                        title: 'Total Points',
+                        title: l10n.profileTotalPoints,
                         value: '${user?.totalPoints ?? 0}',
                         color: AppColors.premium,
                       ),
@@ -76,23 +77,24 @@ class ProfilePage extends StatelessWidget {
                           final streakDays = streakState.current;
                           return _InfoTile(
                             icon: Icons.local_fire_department_rounded,
-                            title: 'Current Streak',
-                            value:
-                                '$streakDays day${streakDays == 1 ? '' : 's'}',
+                            title: l10n.profileCurrentStreak,
+                            value: l10n.profileStreakDays(streakDays),
                             color: AppColors.primary,
                           );
                         },
                       ),
-                      const _InfoTile(
+                      _InfoTile(
                         icon: Icons.timer_outlined,
-                        title: 'Focus Sessions',
+                        title: l10n.profileFocusSessions,
                         value: '24',
                         color: AppColors.primary,
                       ),
                       _InfoTile(
                         icon: Icons.verified_rounded,
-                        title: 'Plan Status',
-                        value: user?.isPremium == true ? 'Premium' : 'Free',
+                        title: l10n.profilePlanStatus,
+                        value: user?.isPremium == true
+                            ? l10n.profilePremium
+                            : l10n.profileFree,
                         color: user?.isPremium == true
                             ? AppColors.premium
                             : AppColors.secondary,
@@ -100,56 +102,55 @@ class ProfilePage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  const _SectionTitle(
-                    title: 'Account',
-                    subtitle:
-                        'Email, verification, subscription, and sign out.',
+                  _SectionTitle(
+                    title: l10n.profileAccountTitle,
+                    subtitle: l10n.profileAccountSubtitle,
                   ),
                   const SizedBox(height: 14),
                   _InfoListCard(
                     children: [
                       _InfoTile(
                         icon: Icons.alternate_email_rounded,
-                        title: 'Email Address',
-                        value: user?.email ?? 'No email available',
+                        title: l10n.profileEmailAddress,
+                        value: user?.email ?? l10n.profileNoEmail,
                       ),
                       _VerificationTile(
                         verified: user?.emailVerified ?? false,
                       ),
                       _InfoTile(
                         icon: Icons.star_outline_rounded,
-                        title: 'Current Plan',
-                        value: _planLabel(user),
+                        title: l10n.profileCurrentPlan,
+                        value: _planLabel(context, user),
                       ),
                       _InfoActionTile(
                         icon: Icons.checklist_rounded,
-                        title: 'Daily Planner',
-                        subtitle: 'Tasks, revisions, lectures, and exams.',
+                        title: l10n.profileDailyPlanner,
+                        subtitle: l10n.profileDailyPlannerSubtitle,
                         onTap: () => context.push('/planner'),
                       ),
                       _InfoActionTile(
                         icon: Icons.auto_awesome_rounded,
-                        title: 'AI Notes',
-                        subtitle: 'Generate summaries and flashcards.',
+                        title: l10n.profileAiNotes,
+                        subtitle: l10n.profileAiNotesSubtitle,
                         onTap: () => context.push('/ai-notes'),
                       ),
                       _InfoActionTile(
                         icon: Icons.workspace_premium_rounded,
-                        title: 'Premium',
-                        subtitle: _planLabel(user),
+                        title: l10n.profilePremium,
+                        subtitle: _planLabel(context, user),
                         onTap: () => context.push('/premium'),
                       ),
                       if (user?.isPremium == true)
                         _InfoActionTile(
                           icon: Icons.cancel_outlined,
-                          title: 'Cancel subscription',
-                          subtitle: 'Stop renewal at the end of the billing period',
+                          title: l10n.profileCancelSubscription,
+                          subtitle: l10n.profileCancelSubscriptionSubtitle,
                           onTap: () => SubscriptionActions.cancelFromContext(context),
                         ),
                       _InfoActionTile(
                         icon: Icons.settings_outlined,
-                        title: 'Settings',
-                        subtitle: 'Manage account actions and preferences.',
+                        title: l10n.profileSettings,
+                        subtitle: l10n.profileSettingsSubtitle,
                         onTap: () => context.push('/profile/settings'),
                       ),
                     ],
@@ -189,13 +190,13 @@ class ProfilePage extends StatelessWidget {
                               ),
                             ),
                             title: Text(
-                              'Log Out',
+                              l10n.profileLogout,
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                             subtitle: Text(
-                              'Sign out from this device.',
+                              l10n.profileLogoutSubtitle,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isDark
                                     ? AppColors.textSecondaryDark
@@ -218,28 +219,28 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  static String _planLabel(UserModel? user) {
-    if (user == null) return 'Free plan';
-    return user.isPremium ? 'Premium plan' : 'Free plan';
+  static String _planLabel(BuildContext context, UserModel? user) {
+    final l10n = AppLocalizations.of(context);
+    if (user == null) return l10n.profileFreePlan;
+    return user.isPremium ? l10n.profilePremiumPlan : l10n.profileFreePlan;
   }
 
   static Future<void> _confirmLogout(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Log out?'),
-          content: const Text(
-            'You will need to sign in again to access your study dashboard.',
-          ),
+          title: Text(l10n.profileLogoutTitle),
+          content: Text(l10n.profileLogoutMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: Text(l10n.commonCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Log Out'),
+              child: Text(l10n.profileLogout),
             ),
           ],
         );
@@ -261,7 +262,10 @@ class _ProfileHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final name = user?.name.isNotEmpty == true ? user!.name : 'Zakerly Student';
+    final l10n = AppLocalizations.of(context);
+    final name = user?.name.isNotEmpty == true
+        ? user!.name
+        : l10n.profileDefaultName;
     final email = user?.email ?? 'student@Zakerly.app';
 
     return Container(
@@ -320,21 +324,23 @@ class _ProfileHeroCard extends StatelessWidget {
                 icon: user?.isPremium == true
                     ? Icons.workspace_premium_rounded
                     : Icons.eco_outlined,
-                label: user?.isPremium == true ? 'Premium' : 'Free',
+                label: user?.isPremium == true
+                    ? l10n.profilePremium
+                    : l10n.profileFree,
               ),
               _HeroBadge(
                 icon: (user?.emailVerified ?? false)
                     ? Icons.verified_rounded
                     : Icons.mark_email_unread_outlined,
                 label: (user?.emailVerified ?? false)
-                    ? 'Verified'
-                    : 'Unverified',
+                    ? l10n.profileVerified
+                    : l10n.profileUnverified,
               ),
             ],
           ),
           const SizedBox(height: 24),
           Text(
-            'Your account is ready for focused sessions, structured planning, and long-term progress tracking.',
+            l10n.profileHeroDescription,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: Colors.white.withValues(alpha: 0.9),
             ),
@@ -354,7 +360,7 @@ class _ProfileHeroCard extends StatelessWidget {
                     minimumSize: const Size.fromHeight(54),
                   ),
                   icon: const Icon(Icons.draw_rounded),
-                  label: const Text('Edit Profile'),
+                  label: Text(l10n.profileEditProfile),
                 ),
               ),
             ],
@@ -507,21 +513,25 @@ class _VerificationTileState extends State<_VerificationTile> {
 
   Future<void> _resend() async {
     if (_sending) return;
+    final l10n = AppLocalizations.of(context);
     setState(() => _sending = true);
     try {
       await _authRepository.resendVerificationEmail();
       if (!mounted) return;
       _showSnack(
-        'Verification email sent. Check your inbox.',
+        l10n.profileVerificationEmailSent,
         AppColors.secondary,
       );
     } on DioException catch (e) {
       if (!mounted) return;
-      _showSnack(_errorMessage(e), AppColors.error);
+      _showSnack(
+        _errorMessage(e, l10n.profileVerificationEmailError),
+        AppColors.error,
+      );
     } catch (_) {
       if (!mounted) return;
       _showSnack(
-        'Could not send the email. Please try again.',
+        l10n.profileVerificationEmailError,
         AppColors.error,
       );
     } finally {
@@ -541,17 +551,18 @@ class _VerificationTileState extends State<_VerificationTile> {
       );
   }
 
-  String _errorMessage(DioException e) {
+  String _errorMessage(DioException e, String fallback) {
     final data = e.response?.data;
     if (data is Map<String, dynamic>) {
-      return (data['message'] as String?) ?? 'Could not send the email.';
+      return (data['message'] as String?) ?? fallback;
     }
-    return 'Could not send the email. Please try again.';
+    return fallback;
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     final verified = widget.verified;
     final tileColor = verified ? AppColors.secondary : Colors.orange;
 
@@ -570,13 +581,13 @@ class _VerificationTileState extends State<_VerificationTile> {
         ),
       ),
       title: Text(
-        'Verification',
+        l10n.profileVerification,
         style: Theme.of(
           context,
         ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
       ),
       subtitle: Text(
-        verified ? 'Verified' : 'Pending — verify to secure your account.',
+        verified ? l10n.profileVerified : l10n.profileVerificationPending,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: isDark
               ? AppColors.textSecondaryDark
@@ -593,7 +604,7 @@ class _VerificationTileState extends State<_VerificationTile> {
                 )
               : TextButton(
                   onPressed: _resend,
-                  child: const Text('Resend'),
+                  child: Text(l10n.profileResend),
                 ),
     );
   }
