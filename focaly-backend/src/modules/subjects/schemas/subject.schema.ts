@@ -20,6 +20,14 @@ export class Subject {
   @Prop({ type: Number, default: 0 })
   dailyTargetMinutes!: number;
 
+  // Whether the target above is interpreted per day or per week.
+  @Prop({ type: String, enum: ['daily', 'weekly'], default: 'daily' })
+  goalType!: 'daily' | 'weekly';
+
+  // Days of week the goal applies to (0=Sun..6=Sat). Empty = every day.
+  @Prop({ type: [Number], default: [] })
+  goalDays!: number[];
+
   @Prop({ type: Number, default: 0, min: 0, max: 100 })
   progressPercent!: number;
 

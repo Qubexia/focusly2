@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
 import {
+  PomodoroBreakMode,
   PomodoroSession,
   PomodoroSessionDocument,
   PomodoroStatus,
@@ -13,6 +14,8 @@ export interface CreatePomodoroInput {
   subjectId?: string | null;
   focusMinutes: number;
   breakMinutes: number;
+  sessionMinutes: number;
+  breakMode: PomodoroBreakMode;
   status: PomodoroStatus;
   startedAt: Date;
   lastTickAt: Date;

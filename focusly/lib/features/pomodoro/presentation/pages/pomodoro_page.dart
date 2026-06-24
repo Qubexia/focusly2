@@ -3,12 +3,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:zakerly/l10n/app_localizations.dart';
 
+import '../../../../core/services/schedule_focus_bus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../subjects/data/models/subject_model.dart';
 import '../../data/models/pomodoro_session_model.dart';
 import '../cubit/pomodoro_cubit.dart';
+import '../cubit/pomodoro_schedule.dart';
 
 const _breakColor = Color(0xFF00C896);
 
@@ -24,13 +27,60 @@ class PomodoroPage extends StatelessWidget {
   }
 }
 
-class _PomodoroView extends StatelessWidget {
+class _PomodoroView extends StatefulWidget {
   const _PomodoroView();
+
+  @override
+  State<_PomodoroView> createState() => _PomodoroViewState();
+}
+
+class _PomodoroViewState extends State<_PomodoroView>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    ScheduleFocusBus.instance.launch.addListener(_onLaunchRequested);
+    // Apply a launch request that was queued before this tab existed.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onLaunchRequested());
+  }
+
+  @override
+  void dispose() {
+    ScheduleFocusBus.instance.launch.removeListener(_onLaunchRequested);
+    WidgetsBinding.instance.removeObserver(this);
+    // Never leave the screen pinned awake once we leave the timer.
+    WakelockPlus.disable();
+    super.dispose();
+  }
+
+  /// Keeps the screen awake while the timer is running so a session is not cut
+  /// short by the device locking, and releases it as soon as it pauses/stops.
+  void _syncWakelock(bool keepAwake) {
+    WakelockPlus.toggle(enable: keepAwake);
+  }
+
+  void _onLaunchRequested() {
+    final request = ScheduleFocusBus.instance.launch.value;
+    if (request == null || !mounted) return;
+    context.read<PomodoroCubit>().applyScheduleLaunch(request);
+    ScheduleFocusBus.instance.consumeLaunch();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
+    // The OS suspends our 1s timer while backgrounded; resync the countdown
+    // against the wall clock the moment we return to the foreground.
+    if (lifecycleState == AppLifecycleState.resumed && mounted) {
+      context.read<PomodoroCubit>().refreshTick();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PomodoroCubit, PomodoroState>(
       listener: (context, state) {
+        _syncWakelock(state.isRunning);
         if (state.feedbackType == PomodoroFeedbackType.none ||
             state.feedbackMessage == null) {
           return;
@@ -84,10 +134,14 @@ class _PomodoroView extends StatelessWidget {
                     isDark: isDark,
                     onSubjectChanged:
                         context.read<PomodoroCubit>().selectSubject,
+                    onSessionChanged:
+                        context.read<PomodoroCubit>().updateSessionMinutes,
                     onFocusChanged:
                         context.read<PomodoroCubit>().updateFocusMinutes,
                     onBreakChanged:
                         context.read<PomodoroCubit>().updateBreakMinutes,
+                    onBreakModeChanged:
+                        context.read<PomodoroCubit>().updateBreakMode,
                   ),
                   const SizedBox(height: 20),
                   _TodayStatsRow(
@@ -195,9 +249,7 @@ class _TimerSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final totalSeconds = state.timerPhase == PomodoroTimerPhase.breakTime
-        ? state.breakMinutes * 60
-        : state.focusMinutes * 60;
+    final totalSeconds = state.phaseTotalSeconds;
 
     final progress = totalSeconds > 0
         ? (1.0 - (state.remainingSeconds / totalSeconds)).clamp(0.0, 1.0)
@@ -319,6 +371,22 @@ class _TimerSection extends StatelessWidget {
             ),
           ],
         ),
+        if (state.activeSession != null) ...[
+          const SizedBox(height: 14),
+          Text(
+            l10n.pomodoroSessionProgress(
+              state.sessionElapsedSeconds ~/ 60,
+              state.sessionMinutes,
+            ),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -687,16 +755,20 @@ class _SessionSetupCard extends StatelessWidget {
     required this.accentColor,
     required this.isDark,
     required this.onSubjectChanged,
+    required this.onSessionChanged,
     required this.onFocusChanged,
     required this.onBreakChanged,
+    required this.onBreakModeChanged,
   });
 
   final PomodoroState state;
   final Color accentColor;
   final bool isDark;
   final ValueChanged<String?> onSubjectChanged;
+  final ValueChanged<double> onSessionChanged;
   final ValueChanged<double> onFocusChanged;
   final ValueChanged<double> onBreakChanged;
+  final ValueChanged<String> onBreakModeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -773,40 +845,182 @@ class _SessionSetupCard extends StatelessWidget {
             onChanged: onSubjectChanged,
           ),
           const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: _TimeStepper(
-                  label: l10n.pomodoroFocus,
-                  icon: Icons.timer_outlined,
-                  value: state.focusMinutes,
-                  min: 15,
-                  max: 90,
-                  step: 5,
-                  locked: locked,
-                  accentColor: AppColors.primary,
-                  isDark: isDark,
-                  onChanged: (v) => onFocusChanged(v.toDouble()),
-                ),
+          _BreakModeToggle(
+            mode: state.breakMode,
+            locked: locked,
+            accentColor: accentColor,
+            isDark: isDark,
+            onChanged: onBreakModeChanged,
+          ),
+          const SizedBox(height: 16),
+          _TimeStepper(
+            label: l10n.pomodoroSessionLength,
+            icon: Icons.hourglass_bottom_rounded,
+            value: state.sessionMinutes,
+            min: 30,
+            max: 240,
+            step: 15,
+            locked: locked,
+            accentColor: accentColor,
+            isDark: isDark,
+            onChanged: (v) => onSessionChanged(v.toDouble()),
+          ),
+          const SizedBox(height: 12),
+          if (state.breakMode == pomodoroBreakModeMiddle) ...[
+            _TimeStepper(
+              label: l10n.pomodoroBreak,
+              icon: Icons.coffee_outlined,
+              value: state.breakMinutes,
+              min: 5,
+              max: 30,
+              step: 5,
+              locked: locked,
+              accentColor: _breakColor,
+              isDark: isDark,
+              onChanged: (v) => onBreakChanged(v.toDouble()),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.pomodoroBreakModeMiddleHint,
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _TimeStepper(
-                  label: l10n.pomodoroBreak,
-                  icon: Icons.coffee_outlined,
-                  value: state.breakMinutes,
-                  min: 5,
-                  max: 30,
-                  step: 5,
-                  locked: locked,
-                  accentColor: _breakColor,
-                  isDark: isDark,
-                  onChanged: (v) => onBreakChanged(v.toDouble()),
+            ),
+          ] else
+            Row(
+              children: [
+                Expanded(
+                  child: _TimeStepper(
+                    label: l10n.pomodoroFocus,
+                    icon: Icons.timer_outlined,
+                    value: state.focusMinutes,
+                    min: 15,
+                    max: 90,
+                    step: 5,
+                    locked: locked,
+                    accentColor: AppColors.primary,
+                    isDark: isDark,
+                    onChanged: (v) => onFocusChanged(v.toDouble()),
+                  ),
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _TimeStepper(
+                    label: l10n.pomodoroBreak,
+                    icon: Icons.coffee_outlined,
+                    value: state.breakMinutes,
+                    min: 5,
+                    max: 30,
+                    step: 5,
+                    locked: locked,
+                    accentColor: _breakColor,
+                    isDark: isDark,
+                    onChanged: (v) => onBreakChanged(v.toDouble()),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BreakModeToggle extends StatelessWidget {
+  const _BreakModeToggle({
+    required this.mode,
+    required this.locked,
+    required this.accentColor,
+    required this.isDark,
+    required this.onChanged,
+  });
+
+  final String mode;
+  final bool locked;
+  final Color accentColor;
+  final bool isDark;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.pomodoroBreakModeLabel,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            ),
+          ),
+          child: Row(
+            children: [
+              _segment(
+                context,
+                label: l10n.pomodoroBreakModeCycles,
+                value: pomodoroBreakModeCycles,
+              ),
+              _segment(
+                context,
+                label: l10n.pomodoroBreakModeMiddle,
+                value: pomodoroBreakModeMiddle,
               ),
             ],
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _segment(
+    BuildContext context, {
+    required String label,
+    required String value,
+  }) {
+    final selected = mode == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: locked || selected ? null : () => onChanged(value),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? accentColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: selected
+                  ? Colors.white
+                  : (isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight),
+            ),
+          ),
+        ),
       ),
     );
   }

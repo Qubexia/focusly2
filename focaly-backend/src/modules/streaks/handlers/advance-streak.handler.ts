@@ -1,12 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { EventBus } from '@nestjs/cqrs';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 
 import { PomodoroCompletedEvent } from '../../../shared/events/pomodoro-completed.event';
-import { RewardUnlockedEvent } from '../../../shared/events/reward-unlocked.event';
-import { EventBus } from '@nestjs/cqrs';
+import { RewardCode, RewardUnlockedEvent } from '../../../shared/events/reward-unlocked.event';
+import { StudyDayCompletedEvent } from '../../../shared/events/study-day-completed.event';
 import { UsersRepository } from '../../users/users.repository';
 import { StreaksRepository } from '../streaks.repository';
 
@@ -14,7 +15,7 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const MILESTONES = [3, 7, 30, 100] as const;
-const MILESTONE_MAP: Record<number, string> = {
+const MILESTONE_MAP: Record<number, RewardCode> = {
   3: 'STREAK_3',
   7: 'STREAK_7',
   30: 'STREAK_30',
@@ -22,8 +23,10 @@ const MILESTONE_MAP: Record<number, string> = {
 };
 
 @Injectable()
-@EventsHandler(PomodoroCompletedEvent)
-export class AdvanceStreakHandler implements IEventHandler<PomodoroCompletedEvent> {
+@EventsHandler(PomodoroCompletedEvent, StudyDayCompletedEvent)
+export class AdvanceStreakHandler implements IEventHandler<
+  PomodoroCompletedEvent | StudyDayCompletedEvent
+> {
   private readonly logger = new Logger(AdvanceStreakHandler.name);
 
   constructor(
@@ -32,8 +35,15 @@ export class AdvanceStreakHandler implements IEventHandler<PomodoroCompletedEven
     private readonly eventBus: EventBus,
   ) {}
 
-  async handle(event: PomodoroCompletedEvent): Promise<void> {
-    if (event.focusMinutes < 10 || event.completedCycles < 1) return;
+  async handle(event: PomodoroCompletedEvent | StudyDayCompletedEvent): Promise<void> {
+    // A pomodoro only counts if it was a real study chunk; a completed study
+    // schedule occurrence always counts.
+    if (
+      event instanceof PomodoroCompletedEvent &&
+      (event.focusMinutes < 10 || event.completedCycles < 1)
+    ) {
+      return;
+    }
 
     const user = await this.usersRepository.findActiveById(event.userId);
     if (!user) return;
@@ -74,7 +84,7 @@ export class AdvanceStreakHandler implements IEventHandler<PomodoroCompletedEven
     if (rewardCode && updatedStreak) {
       this.logger.log(`Reward ${rewardCode} unlocked for user ${event.userId}`);
       this.eventBus.publish(
-        new RewardUnlockedEvent(event.userId, rewardCode as any, pointsGained, new Date()),
+        new RewardUnlockedEvent(event.userId, rewardCode, pointsGained, new Date()),
       );
     }
   }
@@ -82,7 +92,7 @@ export class AdvanceStreakHandler implements IEventHandler<PomodoroCompletedEven
   private checkMilestone(
     current: number,
     existingRewards: Array<{ code: string; awardedAt: Date }> | undefined,
-  ): string | null {
+  ): RewardCode | null {
     const existingCodes = new Set((existingRewards || []).map((r) => r.code));
     for (const ms of MILESTONES) {
       if (current === ms && !existingCodes.has(MILESTONE_MAP[ms]!)) {

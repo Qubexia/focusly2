@@ -24,8 +24,15 @@ class SchedulesCubit extends Cubit<SchedulesState> {
 
     try {
       final schedules = await _dataSource.getSchedules(from: start, to: end);
+      Set<String> completedKeys = state.completedKeys;
+      try {
+        completedKeys = await _dataSource.getCompletions(from: start, to: end);
+      } catch (_) {
+        // Keep schedules usable even if completion markers fail to load.
+      }
       emit(state.copyWith(
         schedules: schedules,
+        completedKeys: completedKeys,
         isLoading: false,
       ));
       _syncNotifications(schedules);
@@ -35,6 +42,30 @@ class SchedulesCubit extends Cubit<SchedulesState> {
         errorMessage: AppL10n.current.schedulesLoadFailed,
       ));
     }
+  }
+
+  /// Records a completed occurrence locally (already persisted on the backend by
+  /// the focus session) so the row's checkmark appears immediately.
+  void markScheduleCompletedLocally(String scheduleId, String date) {
+    final key = '$scheduleId|$date';
+    if (state.completedKeys.contains(key)) return;
+    emit(state.copyWith(
+      completedKeys: {...state.completedKeys, key},
+    ));
+  }
+
+  static String completionKey(String scheduleId, DateTime date) {
+    final y = date.year.toString().padLeft(4, '0');
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '$scheduleId|$y-$m-$d';
+  }
+
+  static String formatDate(DateTime date) {
+    final y = date.year.toString().padLeft(4, '0');
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
   }
 
   Future<void> createSchedule({
@@ -77,6 +108,51 @@ class SchedulesCubit extends Cubit<SchedulesState> {
         isSaving: false,
         feedbackType: SchedulesFeedbackType.error,
         feedbackMessage: AppL10n.current.schedulesCreateFailed,
+      ));
+    }
+  }
+
+  Future<void> updateSchedule({
+    required String id,
+    required String subjectId,
+    required String title,
+    required DateTime startAt,
+    DateTime? endAt,
+    required List<int> daysOfWeek,
+    int reminderMinutesBefore = 15,
+    bool reminderEnabled = true,
+  }) async {
+    emit(state.copyWith(isSaving: true));
+
+    try {
+      await _dataSource.updateSchedule(
+        id: id,
+        title: title,
+        startAt: startAt,
+        endAt: endAt,
+        daysOfWeek: daysOfWeek,
+        reminderMinutesBefore: reminderMinutesBefore,
+        reminderEnabled: reminderEnabled,
+      );
+
+      emit(state.copyWith(
+        isSaving: false,
+        feedbackType: SchedulesFeedbackType.success,
+        feedbackMessage: AppL10n.current.schedulesEditSuccess,
+      ));
+
+      await loadSchedules();
+    } on DioException catch (e) {
+      emit(state.copyWith(
+        isSaving: false,
+        feedbackType: SchedulesFeedbackType.error,
+        feedbackMessage: _extractErrorMessage(e),
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        isSaving: false,
+        feedbackType: SchedulesFeedbackType.error,
+        feedbackMessage: AppL10n.current.schedulesUpdateFailed,
       ));
     }
   }

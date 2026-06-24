@@ -4,6 +4,8 @@ class SubjectModel {
   final String? color;
   final String? icon;
   final int dailyTargetMinutes;
+  final String goalType; // 'daily' | 'weekly'
+  final List<int> goalDays; // 0=Sun..6=Sat; empty = every day
   final int progressPercent;
   final bool isArchived;
 
@@ -13,6 +15,8 @@ class SubjectModel {
     this.color,
     this.icon,
     required this.dailyTargetMinutes,
+    this.goalType = 'daily',
+    this.goalDays = const [],
     required this.progressPercent,
     required this.isArchived,
   });
@@ -24,9 +28,18 @@ class SubjectModel {
       color: _nullableString(json['color']),
       icon: _nullableString(json['icon']),
       dailyTargetMinutes: _asInt(json['dailyTargetMinutes'], fallback: 0),
+      goalType: (json['goalType'] ?? 'daily') as String,
+      goalDays: _asIntList(json['goalDays']),
       progressPercent: _asInt(json['progressPercent'], fallback: 0),
       isArchived: (json['isArchived'] ?? false) as bool,
     );
+  }
+
+  static List<int> _asIntList(dynamic value) {
+    if (value is List) {
+      return value.map((e) => _asInt(e, fallback: 0)).toList();
+    }
+    return const [];
   }
 
   static String _stringifyId(dynamic value) {

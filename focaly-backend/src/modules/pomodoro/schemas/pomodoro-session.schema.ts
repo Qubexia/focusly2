@@ -5,6 +5,8 @@ export type PomodoroSessionDocument = HydratedDocument<PomodoroSession>;
 
 export type PomodoroStatus = 'active' | 'paused' | 'completed' | 'aborted';
 
+export type PomodoroBreakMode = 'cycles' | 'middle';
+
 @Schema({ timestamps: true, collection: 'pomodoro_sessions' })
 export class PomodoroSession {
   @Prop({ type: SchemaTypes.ObjectId, required: true, index: true })
@@ -24,6 +26,16 @@ export class PomodoroSession {
 
   @Prop({ type: Number, default: 5, min: 0, max: 60 })
   breakMinutes!: number;
+
+  // Total planned session length. The session repeats focus/break cycles until
+  // this many minutes have elapsed.
+  @Prop({ type: Number, default: 120, min: 1, max: 480 })
+  sessionMinutes!: number;
+
+  // How breaks are laid out: 'cycles' repeats focus/break until the session
+  // ends; 'middle' places a single break in the middle of the study time.
+  @Prop({ type: String, enum: ['cycles', 'middle'], default: 'cycles' })
+  breakMode!: PomodoroBreakMode;
 
   @Prop({ type: Number, default: 0 })
   completedCycles!: number;

@@ -900,6 +900,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pomodoroBreak => 'استراحة';
 
   @override
+  String get pomodoroBreakModeLabel => 'نمط الاستراحة';
+
+  @override
+  String get pomodoroBreakModeCycles => 'جلسات متكررة';
+
+  @override
+  String get pomodoroBreakModeMiddle => 'استراحة في المنتصف';
+
+  @override
+  String get pomodoroBreakModeMiddleHint =>
+      'استراحة واحدة في منتصف الجلسة، وباقي الوقت يُقسَّم إلى فترتي مذاكرة.';
+
+  @override
   String pomodoroMinutesShort(int minutes) {
     return '$minutes د';
   }
@@ -923,6 +936,32 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pomodoroSessionSetup => 'إعداد الجلسة';
+
+  @override
+  String get pomodoroSessionLength => 'مدة الجلسة';
+
+  @override
+  String pomodoroSessionProgress(int done, int total) {
+    return '$done/$total د';
+  }
+
+  @override
+  String get pomodoroBreakStartTitle => 'وقت الراحة';
+
+  @override
+  String get pomodoroBreakStartBody => 'خد نفسك وارجع بتركيز أعلى.';
+
+  @override
+  String get pomodoroFocusStartTitle => 'نرجع نذاكر';
+
+  @override
+  String get pomodoroFocusStartBody => 'خلصت الراحة، يلا نكمّل مذاكرة.';
+
+  @override
+  String get pomodoroSessionDoneTitle => 'خلصت الجلسة!';
+
+  @override
+  String get pomodoroSessionDoneBody => 'أنهيت جلسة التركيز كاملة. أحسنت!';
 
   @override
   String get pomodoroLocked => 'مقفل';
@@ -1189,6 +1228,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get schedulesCreateBlockTitle => 'إنشاء فترة مذاكرة';
 
   @override
+  String get schedulesEditBlockTitle => 'تعديل فترة المذاكرة';
+
+  @override
   String get schedulesSubjectLabel => 'المادة';
 
   @override
@@ -1379,6 +1421,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get subjectsDailyTarget => 'الهدف اليومي';
 
   @override
+  String get subjectsGoalTypeLabel => 'نوع الهدف';
+
+  @override
+  String get subjectsGoalDaily => 'يومي';
+
+  @override
+  String get subjectsGoalWeekly => 'أسبوعي';
+
+  @override
+  String get subjectsGoalTarget => 'الهدف';
+
+  @override
+  String get subjectsGoalDaysLabel => 'أيام الهدف (اختياري)';
+
+  @override
+  String get subjectsGoalDaysHint => 'اتركها فارغة لاحتساب كل الأيام.';
+
+  @override
   String subjectsDailyTargetLabel(int minutes) {
     return 'هدف يومي $minutes دقيقة';
   }
@@ -1534,17 +1594,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get subscriptionFeaturePriorityReminders => 'تذكيرات ذات أولوية';
 
   @override
-  String get subscriptionChoosePaymentMethod => 'اختر طريقة الدفع';
+  String get subscriptionChoosePaymentMethod => 'ادفع بالبطاقة';
 
   @override
-  String get subscriptionPayPaymobMonthly => 'ادفع عبر Paymob — شهري (ج.م)';
+  String get subscriptionPayPaymobMonthly => 'ادفع بالبطاقة — شهري (ج.م)';
 
   @override
-  String get subscriptionPayPaymobYearly => 'ادفع عبر Paymob — سنوي (ج.م)';
+  String get subscriptionPayPaymobYearly => 'ادفع بالبطاقة — سنوي (ج.م)';
 
   @override
-  String get subscriptionPaymobNote =>
-      'بطاقات ومحافظ وطرق دفع محلية عبر Paymob. يستخدم نافذة دفع Paymob الأصلية داخل التطبيق.';
+  String get subscriptionPaymobNote => 'أدخل بيانات بطاقتك لإتمام الدفع بأمان.';
 
   @override
   String get subscriptionPayStripe => 'بطاقة دولية (Stripe)';
@@ -1710,6 +1769,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get schedulesCreateFailed => 'تعذّر إنشاء الجدول.';
+
+  @override
+  String get schedulesEditSuccess => 'تم تحديث الجدول بنجاح!';
+
+  @override
+  String get schedulesUpdateFailed => 'تعذّر تحديث الجدول.';
 
   @override
   String get schedulesCreateInvalidData =>

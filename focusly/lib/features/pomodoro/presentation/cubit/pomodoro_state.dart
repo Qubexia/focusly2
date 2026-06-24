@@ -17,7 +17,11 @@ class PomodoroState extends Equatable {
     this.selectedSubjectId,
     this.focusMinutes = 25,
     this.breakMinutes = 5,
+    this.sessionMinutes = 120,
+    this.breakMode = pomodoroBreakModeCycles,
     this.remainingSeconds = 1500,
+    this.phaseTotalSeconds = 1500,
+    this.sessionElapsedSeconds = 0,
     this.timerPhase = PomodoroTimerPhase.idle,
     this.errorMessage,
     this.feedbackType = PomodoroFeedbackType.none,
@@ -33,7 +37,11 @@ class PomodoroState extends Equatable {
   final String? selectedSubjectId;
   final int focusMinutes;
   final int breakMinutes;
+  final int sessionMinutes;
+  final String breakMode;
   final int remainingSeconds;
+  final int phaseTotalSeconds;
+  final int sessionElapsedSeconds;
   final PomodoroTimerPhase timerPhase;
   final String? errorMessage;
   final PomodoroFeedbackType feedbackType;
@@ -50,7 +58,11 @@ class PomodoroState extends Equatable {
     Object? selectedSubjectId = _selectedSubjectSentinel,
     int? focusMinutes,
     int? breakMinutes,
+    int? sessionMinutes,
+    String? breakMode,
     int? remainingSeconds,
+    int? phaseTotalSeconds,
+    int? sessionElapsedSeconds,
     PomodoroTimerPhase? timerPhase,
     String? errorMessage,
     PomodoroFeedbackType? feedbackType,
@@ -74,7 +86,11 @@ class PomodoroState extends Equatable {
           : selectedSubjectId as String?,
       focusMinutes: focusMinutes ?? this.focusMinutes,
       breakMinutes: breakMinutes ?? this.breakMinutes,
+      sessionMinutes: sessionMinutes ?? this.sessionMinutes,
+      breakMode: breakMode ?? this.breakMode,
       remainingSeconds: remainingSeconds ?? this.remainingSeconds,
+      phaseTotalSeconds: phaseTotalSeconds ?? this.phaseTotalSeconds,
+      sessionElapsedSeconds: sessionElapsedSeconds ?? this.sessionElapsedSeconds,
       timerPhase: timerPhase ?? this.timerPhase,
       errorMessage: errorMessage,
       feedbackType: clearFeedback
@@ -95,7 +111,11 @@ class PomodoroState extends Equatable {
         selectedSubjectId,
         focusMinutes,
         breakMinutes,
+        sessionMinutes,
+        breakMode,
         remainingSeconds,
+        phaseTotalSeconds,
+        sessionElapsedSeconds,
         timerPhase,
         errorMessage,
         feedbackType,

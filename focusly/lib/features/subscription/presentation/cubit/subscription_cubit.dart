@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:paymob/paymob.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -69,15 +70,31 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         return;
       }
 
-      final result = await Paymob.pay(
-        publicKey: publicKey,
-        clientSecret: clientSecret,
-        appName: 'Zakerly',
-        buttonBackgroundColor: AppColors.premium,
-        buttonTextColor: Colors.white,
-        saveCardDefault: false,
-        showSaveCard: true,
-      );
+      final PaymobPaymentResult result;
+      try {
+        result = await Paymob.pay(
+          publicKey: publicKey,
+          clientSecret: clientSecret,
+          appName: 'Zakerly',
+          buttonBackgroundColor: AppColors.premium,
+          buttonTextColor: Colors.white,
+          saveCardDefault: false,
+          showSaveCard: true,
+        );
+      } on PlatformException catch (e) {
+        // Native payment sheet failed to open / crashed: surface a clean error
+        // instead of letting the exception bubble up and tear down the app.
+        emit(
+          state.copyWith(
+            isPurchasing: false,
+            feedbackType: SubscriptionFeedbackType.error,
+            feedbackMessage: (e.message?.trim().isNotEmpty == true)
+                ? e.message!.trim()
+                : AppL10n.current.subscriptionPaymentFailed,
+          ),
+        );
+        return;
+      }
 
       final status = result.status;
       final isSuccess = result.isSuccessful;

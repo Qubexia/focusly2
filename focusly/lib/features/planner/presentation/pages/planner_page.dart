@@ -137,6 +137,15 @@ class _PlannerViewState extends State<_PlannerView>
                   unselectedLabelColor: isDark
                       ? AppColors.textSecondaryDark
                       : AppColors.textSecondaryLight,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+                  labelStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                   tabs: [
                     Tab(text: l10n.plannerTabTasks),
                     Tab(text: l10n.plannerTabRevisions),

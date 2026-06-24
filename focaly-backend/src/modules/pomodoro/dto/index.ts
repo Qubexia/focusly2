@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsIn, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class StartPomodoroDto {
   @ApiPropertyOptional({ example: 'subject-id' })
@@ -20,6 +20,18 @@ export class StartPomodoroDto {
   @Min(0)
   @Max(60)
   breakMinutes?: number;
+
+  @ApiPropertyOptional({ example: 120 })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(480)
+  sessionMinutes?: number;
+
+  @ApiPropertyOptional({ example: 'cycles', enum: ['cycles', 'middle'] })
+  @IsOptional()
+  @IsIn(['cycles', 'middle'])
+  breakMode?: 'cycles' | 'middle';
 }
 
 export class CompletePomodoroDto {

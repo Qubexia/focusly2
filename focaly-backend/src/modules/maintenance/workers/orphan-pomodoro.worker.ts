@@ -3,7 +3,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Cron } from '@nestjs/schedule';
 import { Model } from 'mongoose';
 
-import { PomodoroSession, PomodoroSessionDocument } from '../../pomodoro/schemas/pomodoro-session.schema';
+import { computeFocusStats } from '../../pomodoro/pomodoro.util';
+import {
+  PomodoroSession,
+  PomodoroSessionDocument,
+} from '../../pomodoro/schemas/pomodoro-session.schema';
 
 @Injectable()
 export class OrphanPomodoroWorker {
@@ -21,12 +25,15 @@ export class OrphanPomodoroWorker {
       .find({ status: 'active', lastTickAt: { $lt: cutoff } })
       .exec();
 
+    const maxElapsedMs = 4 * 3600_000;
     for (const session of orphans) {
       const elapsedMs = Date.now() - session.startedAt.getTime();
-      const ratio = session.focusMinutes / (session.focusMinutes + session.breakMinutes);
-      const maxElapsedMs = 4 * 3600_000;
-      const actualElapsedMs = Math.min(elapsedMs, maxElapsedMs);
-      const totalFocusMinutes = Math.round((actualElapsedMs / 1000 / 60) * ratio);
+      const { totalFocusMinutes, completedCycles } = computeFocusStats({
+        focusMinutes: session.focusMinutes,
+        breakMinutes: session.breakMinutes,
+        sessionMinutes: session.sessionMinutes,
+        elapsedMs: Math.min(elapsedMs, maxElapsedMs),
+      });
 
       await this.pomodoroModel
         .updateOne(
@@ -36,6 +43,7 @@ export class OrphanPomodoroWorker {
               status: 'aborted',
               endedAt: new Date(session.startedAt.getTime() + maxElapsedMs),
               totalFocusMinutes,
+              completedCycles,
             },
           },
         )

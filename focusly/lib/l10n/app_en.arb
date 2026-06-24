@@ -404,6 +404,10 @@
   "pomodoroGeneral": "General",
   "pomodoroFocus": "Focus",
   "pomodoroBreak": "Break",
+  "pomodoroBreakModeLabel": "Break style",
+  "pomodoroBreakModeCycles": "Repeating cycles",
+  "pomodoroBreakModeMiddle": "Break in the middle",
+  "pomodoroBreakModeMiddleHint": "One break in the middle of the session; the rest is split into two study blocks.",
   "pomodoroMinutesShort": "{minutes}m",
   "@pomodoroMinutesShort": {
     "placeholders": {
@@ -425,6 +429,24 @@
   "pomodoroResume": "Resume",
   "pomodoroPause": "Pause",
   "pomodoroSessionSetup": "Session Setup",
+  "pomodoroSessionLength": "Session",
+  "pomodoroSessionProgress": "{done}/{total} min",
+  "@pomodoroSessionProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "pomodoroBreakStartTitle": "Break time",
+  "pomodoroBreakStartBody": "Step away and recharge.",
+  "pomodoroFocusStartTitle": "Back to focus",
+  "pomodoroFocusStartBody": "Break's over — keep studying.",
+  "pomodoroSessionDoneTitle": "Session complete!",
+  "pomodoroSessionDoneBody": "You finished your full focus session.",
   "pomodoroLocked": "Locked",
   "pomodoroSubject": "Subject",
   "pomodoroFocusTime": "Focus Time",
@@ -540,6 +562,7 @@
     }
   },
   "schedulesCreateBlockTitle": "Create Study Block",
+  "schedulesEditBlockTitle": "Edit Study Block",
   "schedulesSubjectLabel": "Subject",
   "schedulesSelectSubjectHint": "Select Subject",
   "schedulesFieldRequired": "Required",
@@ -639,6 +662,12 @@
   "subjectsColorLabel": "Color",
   "subjectsIconLabel": "Icon",
   "subjectsDailyTarget": "Daily Target",
+  "subjectsGoalTypeLabel": "Goal type",
+  "subjectsGoalDaily": "Daily",
+  "subjectsGoalWeekly": "Weekly",
+  "subjectsGoalTarget": "Target",
+  "subjectsGoalDaysLabel": "Goal days (optional)",
+  "subjectsGoalDaysHint": "Leave empty to count every day.",
   "subjectsDailyTargetLabel": "{minutes} min daily target",
   "@subjectsDailyTargetLabel": {
     "placeholders": {
@@ -720,10 +749,10 @@
   "subscriptionFeatureFullAnalytics": "Full analytics",
   "subscriptionFeatureAiNotes": "AI study notes",
   "subscriptionFeaturePriorityReminders": "Priority reminders",
-  "subscriptionChoosePaymentMethod": "Choose payment method",
-  "subscriptionPayPaymobMonthly": "Pay with Paymob — Monthly (EGP)",
-  "subscriptionPayPaymobYearly": "Pay with Paymob — Yearly (EGP)",
-  "subscriptionPaymobNote": "Cards, wallets, and local methods via Paymob. Uses the native Paymob payment sheet inside the app.",
+  "subscriptionChoosePaymentMethod": "Pay with card",
+  "subscriptionPayPaymobMonthly": "Pay with card — Monthly (EGP)",
+  "subscriptionPayPaymobYearly": "Pay with card — Yearly (EGP)",
+  "subscriptionPaymobNote": "Enter your card details to complete the payment securely.",
   "subscriptionPayStripe": "International card (Stripe)",
   "subscriptionPremiumActiveTitle": "Premium active",
   "subscriptionPremiumCanceling": "Premium (canceling)",
@@ -808,6 +837,8 @@
   "schedulesLoadFailed": "Failed to load schedules.",
   "schedulesCreateSuccess": "Schedule created successfully!",
   "schedulesCreateFailed": "Failed to create schedule.",
+  "schedulesEditSuccess": "Schedule updated successfully!",
+  "schedulesUpdateFailed": "Failed to update schedule.",
   "schedulesCreateInvalidData": "Failed to create schedule. Please check the selected data.",
   "schedulesDeleteSuccess": "Schedule deleted.",
   "schedulesDeleteFailed": "Failed to delete schedule.",

@@ -14,7 +14,7 @@ import { ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser, CurrentUserPayload } from '../../common/decorators/current-user.decorator';
 
-import { CreateScheduleDto, UpdateScheduleDto } from './dto';
+import { CompleteScheduleDto, CreateScheduleDto, UpdateScheduleDto } from './dto';
 import { StudySchedulesService } from './study-schedules.service';
 
 @ApiTags('Schedules')
@@ -49,9 +49,27 @@ export class StudySchedulesController {
     return this.service.findAll(user.id, from, to);
   }
 
+  @Get('schedules/completions')
+  async completions(
+    @CurrentUser() user: CurrentUserPayload,
+    @Query('from') from: string,
+    @Query('to') to: string,
+  ) {
+    return this.service.listCompletions(user.id, from, to);
+  }
+
   @Get('schedules/:id')
   async findOne(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     return this.service.findOne(user.id, id);
+  }
+
+  @Post('schedules/:id/complete')
+  async complete(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+    @Body() dto: CompleteScheduleDto,
+  ) {
+    return this.service.complete(user.id, id, dto.date);
   }
 
   @Patch('schedules/:id')
