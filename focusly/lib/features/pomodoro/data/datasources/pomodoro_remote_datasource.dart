@@ -12,6 +12,8 @@ class PomodoroRemoteDataSource {
     String? subjectId,
     required int focusMinutes,
     required int breakMinutes,
+    required int sessionMinutes,
+    String breakMode = 'cycles',
   }) async {
     final response = await _dio.post(
       ApiEndpoints.pomodoroStart,
@@ -19,6 +21,8 @@ class PomodoroRemoteDataSource {
         if (subjectId != null) 'subjectId': subjectId,
         'focusMinutes': focusMinutes,
         'breakMinutes': breakMinutes,
+        'sessionMinutes': sessionMinutes,
+        'breakMode': breakMode,
       },
     );
 

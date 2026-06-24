@@ -69,7 +69,15 @@ class HomeCubit extends Cubit<HomeState> {
           isLoading: false,
           subjects: subjects,
           pomodoroToday: pomodoroToday,
-          todaySchedules: schedules.where((s) => s.isActive).toList(),
+          // "Upcoming today" must drop sessions whose time has already passed:
+          // keep an item only while its end time-of-day is still ahead of now.
+          todaySchedules: schedules.where((s) {
+            if (!s.isActive) return false;
+            final end = s.endAt ?? s.startAt;
+            final endToday =
+                DateTime(now.year, now.month, now.day, end.hour, end.minute);
+            return endToday.isAfter(now);
+          }).toList(),
           todayTasks: upcomingTasks.take(8).toList(),
         ),
       );

@@ -224,7 +224,7 @@ class _PaywallViewState extends State<_PaywallView> {
                           foregroundColor: Colors.white,
                           minimumSize: const Size.fromHeight(52),
                         ),
-                        icon: const Icon(Icons.payments_rounded),
+                        icon: const Icon(Icons.credit_card_rounded),
                         label: Text(l10n.subscriptionPayPaymobMonthly),
                       ),
                       const SizedBox(height: 10),
@@ -244,19 +244,6 @@ class _PaywallViewState extends State<_PaywallView> {
                       Text(
                         l10n.subscriptionPaymobNote,
                         style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 16),
-                      OutlinedButton.icon(
-                        onPressed: state.isPurchasing
-                            ? null
-                            : () => context
-                                  .read<SubscriptionCubit>()
-                                  .payWithStripe(),
-                        icon: const Icon(Icons.credit_card_rounded),
-                        label: Text(l10n.subscriptionPayStripe),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                        ),
                       ),
                     ],
                     if (isPremium) ...[

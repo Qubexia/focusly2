@@ -10,7 +10,12 @@ import { ERROR_CODES } from '../../common/dto/api-response';
 import { PomodoroCompletedEvent } from '../../shared/events/pomodoro-completed.event';
 
 import { PomodoroRepository } from './pomodoro.repository';
-import { PomodoroSessionDocument, PomodoroStatus } from './schemas/pomodoro-session.schema';
+import { computeFocusStats } from './pomodoro.util';
+import {
+  PomodoroBreakMode,
+  PomodoroSessionDocument,
+  PomodoroStatus,
+} from './schemas/pomodoro-session.schema';
 
 @Injectable()
 export class PomodoroService {
@@ -24,6 +29,8 @@ export class PomodoroService {
     subjectId: string | undefined,
     focusMinutes: number,
     breakMinutes: number,
+    sessionMinutes: number,
+    breakMode: PomodoroBreakMode = 'cycles',
   ) {
     const active = await this.repository.findActiveByUser(userId);
     if (active) {
@@ -39,6 +46,8 @@ export class PomodoroService {
       subjectId: subjectId ?? null,
       focusMinutes,
       breakMinutes,
+      sessionMinutes,
+      breakMode,
       status: 'active',
       startedAt: now,
       lastTickAt: now,
@@ -62,12 +71,18 @@ export class PomodoroService {
       });
     }
 
-    const cycles = session.completedCycles + 1;
-    const totalFocusMinutes = cycles * session.focusMinutes;
+    const now = new Date();
+    const { totalFocusMinutes, completedCycles } = computeFocusStats({
+      focusMinutes: session.focusMinutes,
+      breakMinutes: session.breakMinutes,
+      sessionMinutes: session.sessionMinutes,
+      breakMode: session.breakMode,
+      elapsedMs: now.getTime() - session.startedAt.getTime(),
+    });
     const updated = await this.repository.updateStatus(sessionId, 'completed', {
-      endedAt: new Date(),
+      endedAt: now,
       totalFocusMinutes,
-      completedCycles: cycles,
+      completedCycles,
     });
 
     this.eventBus.publish(
@@ -75,9 +90,9 @@ export class PomodoroService {
         userId,
         sessionId,
         session.subjectId,
-        new Date(),
+        now,
         session.focusMinutes,
-        cycles,
+        completedCycles,
         totalFocusMinutes,
       ),
     );
@@ -95,15 +110,18 @@ export class PomodoroService {
     }
 
     const now = new Date();
-    const elapsedMs = now.getTime() - session.startedAt.getTime();
-    const ratio = session.focusMinutes / (session.focusMinutes + session.breakMinutes);
-    const maxElapsedMs = 4 * 60 * 60 * 1000;
-    const actualElapsedMs = Math.min(elapsedMs, maxElapsedMs);
-    const totalFocusMinutes = Math.round((actualElapsedMs / 1000 / 60) * ratio);
+    const { totalFocusMinutes, completedCycles } = computeFocusStats({
+      focusMinutes: session.focusMinutes,
+      breakMinutes: session.breakMinutes,
+      sessionMinutes: session.sessionMinutes,
+      breakMode: session.breakMode,
+      elapsedMs: now.getTime() - session.startedAt.getTime(),
+    });
 
     return this.repository.updateStatus(sessionId, 'aborted', {
       endedAt: now,
       totalFocusMinutes,
+      completedCycles,
     });
   }
 

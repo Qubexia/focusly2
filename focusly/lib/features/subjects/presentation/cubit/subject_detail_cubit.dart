@@ -387,6 +387,8 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
     String? color,
     String? icon,
     required int dailyTargetMinutes,
+    String? goalType,
+    List<int>? goalDays,
   }) async {
     final subject = state.subject;
     if (subject == null) return false;
@@ -399,6 +401,8 @@ class SubjectDetailCubit extends Cubit<SubjectDetailState> {
         color: color,
         icon: icon,
         dailyTargetMinutes: dailyTargetMinutes,
+        goalType: goalType,
+        goalDays: goalDays,
       );
 
       emit(

@@ -4,6 +4,7 @@ import 'package:zakerly/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../subjects/data/models/subject_model.dart';
 import '../../../subjects/data/repositories/subjects_repository.dart';
+import '../../data/models/schedule_model.dart';
 
 class CreateScheduleSheet extends StatefulWidget {
   const CreateScheduleSheet({
@@ -11,10 +12,16 @@ class CreateScheduleSheet extends StatefulWidget {
     required this.selectedDate,
     required this.onSave,
     this.isSaving = false,
+    this.initialSchedule,
   });
 
   final DateTime selectedDate;
   final bool isSaving;
+
+  /// When provided, the sheet opens in edit mode and pre-fills its fields from
+  /// this schedule. The [onSave] callback should then perform an update.
+  final StudyScheduleModel? initialSchedule;
+
   final Function({
     required String subjectId,
     required String title,
@@ -34,19 +41,52 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
   final _titleController = TextEditingController();
 
   String? _selectedSubjectId;
+  late DateTime _selectedDate;
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
   TimeOfDay _endTime = const TimeOfDay(hour: 10, minute: 0);
-  final List<int> _selectedDays = [1, 2, 3, 4, 5]; // Mon-Fri by default
+  List<int> _selectedDays = [1, 2, 3, 4, 5]; // Mon-Fri by default
   bool _reminderEnabled = true;
   int _reminderOffset = 15;
 
   List<SubjectModel> _subjects = [];
   bool _isLoadingSubjects = true;
 
+  bool get _isEdit => widget.initialSchedule != null;
+
+  static const _allowedReminderOffsets = {0, 5, 15, 30};
+
   @override
   void initState() {
     super.initState();
+    _selectedDate = _dateOnly(_selectedDate);
+    _prefillFromInitial();
     _loadSubjects();
+  }
+
+  void _prefillFromInitial() {
+    final initial = widget.initialSchedule;
+    if (initial == null) return;
+    _titleController.text = initial.title;
+    _selectedSubjectId = initial.subjectId.isEmpty ? null : initial.subjectId;
+    _selectedDate = _dateOnly(initial.startAt);
+    _startTime =
+        TimeOfDay(hour: initial.startAt.hour, minute: initial.startAt.minute);
+    final end = initial.endAt;
+    if (end != null) {
+      _endTime = TimeOfDay(hour: end.hour, minute: end.minute);
+    }
+    if (initial.daysOfWeek.isNotEmpty) {
+      // Stored days use API weekdays (Sun=0..Sat=6); the picker uses Dart
+      // weekdays (Mon=1..Sun=7).
+      _selectedDays =
+          initial.daysOfWeek.map((d) => d == 0 ? 7 : d).toSet().toList()..sort();
+    }
+    _reminderEnabled = initial.reminderEnabled;
+    _reminderOffset = _allowedReminderOffsets.contains(
+      initial.reminderMinutesBefore,
+    )
+        ? initial.reminderMinutesBefore
+        : 15;
   }
 
   Future<void> _loadSubjects() async {
@@ -57,7 +97,9 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
         setState(() {
           _subjects = subjects;
           _isLoadingSubjects = false;
-          if (subjects.isNotEmpty) {
+          final hasSelection =
+              subjects.any((s) => s.id == _selectedSubjectId);
+          if (!hasSelection && subjects.isNotEmpty) {
             _selectedSubjectId = subjects.first.id;
           }
         });
@@ -103,11 +145,11 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
 
   bool _isPastStartTime(TimeOfDay time) {
     final now = DateTime.now();
-    if (!_isSameDay(widget.selectedDate, now)) {
+    if (!_isSameDay(_selectedDate, now)) {
       return false;
     }
 
-    final selectedDateTime = _combineDateAndTime(widget.selectedDate, time);
+    final selectedDateTime = _combineDateAndTime(_selectedDate, time);
     return selectedDateTime.isBefore(now);
   }
 
@@ -159,7 +201,9 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      l10n.schedulesCreateBlockTitle,
+                      _isEdit
+                          ? l10n.schedulesEditBlockTitle
+                          : l10n.schedulesCreateBlockTitle,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
@@ -218,9 +262,10 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                 const SizedBox(height: 24),
                 _SectionLabel(label: l10n.schedulesSelectedDayLabel),
                 const SizedBox(height: 12),
-                _InfoChip(
+                _PickerButton(
                   icon: Icons.event_rounded,
-                  label: _formatDate(context, widget.selectedDate),
+                  label: _formatDate(context, _selectedDate),
+                  onTap: _pickDate,
                 ),
                 const SizedBox(height: 24),
                 _SectionLabel(label: l10n.schedulesTimeRangeLabel),
@@ -247,8 +292,8 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
 
                           setState(() {
                             _startTime = time;
-                            if (!_combineDateAndTime(widget.selectedDate, _endTime)
-                                .isAfter(_combineDateAndTime(widget.selectedDate, _startTime))) {
+                            if (!_combineDateAndTime(_selectedDate, _endTime)
+                                .isAfter(_combineDateAndTime(_selectedDate, _startTime))) {
                               _endTime = TimeOfDay(
                                 hour: (time.hour + 1) % 24,
                                 minute: time.minute,
@@ -271,11 +316,11 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                           );
                           if (time == null) return;
                           final selectedEnd = _combineDateAndTime(
-                            widget.selectedDate,
+                            _selectedDate,
                             time,
                           );
                           final selectedStart = _combineDateAndTime(
-                            widget.selectedDate,
+                            _selectedDate,
                             _startTime,
                           );
 
@@ -349,7 +394,9 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                             width: 20,
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: Colors.white))
-                        : Text(l10n.schedulesCreateButton),
+                        : Text(_isEdit
+                            ? l10n.commonSave
+                            : l10n.schedulesCreateButton),
                   ),
                 ),
               ],
@@ -360,12 +407,25 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
     );
   }
 
+  Future<void> _pickDate() async {
+    final today = _dateOnly(DateTime.now());
+    final initial = _selectedDate.isBefore(today) ? today : _selectedDate;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: today,
+      lastDate: DateTime(2030, 12, 31),
+    );
+    if (picked == null) return;
+    setState(() => _selectedDate = _dateOnly(picked));
+  }
+
   void _submit() {
     if (!_formKey.currentState!.validate() || _selectedSubjectId == null) return;
 
     final l10n = AppLocalizations.of(context);
     final today = _dateOnly(DateTime.now());
-    final selectedDay = _dateOnly(widget.selectedDate);
+    final selectedDay = _dateOnly(_selectedDate);
 
     if (selectedDay.isBefore(today)) {
       _showValidationMessage(l10n.schedulesPastDayError);
@@ -482,40 +542,6 @@ class _SectionLabel extends StatelessWidget {
             ? AppColors.textTertiaryDark
             : AppColors.textTertiaryLight,
         letterSpacing: 1.0,
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: AppColors.primary),
-          const SizedBox(width: 10),
-          Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-          ),
-        ],
       ),
     );
   }

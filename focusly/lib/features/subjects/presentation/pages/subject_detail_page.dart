@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -316,6 +317,8 @@ class _SubjectDetailView extends StatelessWidget {
           color: draft.colorHex,
           icon: draft.iconKey,
           dailyTargetMinutes: draft.dailyTargetMinutes,
+          goalType: draft.goalType,
+          goalDays: draft.goalDays,
         );
   }
 }
@@ -1226,6 +1229,8 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
   late double _dailyTargetMinutes;
   late String _selectedColorHex;
   late String _selectedIconKey;
+  late String _goalType;
+  late List<int> _goalDays;
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -1237,6 +1242,18 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
         widget.subject.color ?? _SubjectPalette.options.first.hex;
     _selectedIconKey =
         widget.subject.icon ?? _SubjectIconCatalog.options.first.key;
+    _goalType = widget.subject.goalType == 'weekly' ? 'weekly' : 'daily';
+    _goalDays = List<int>.from(widget.subject.goalDays);
+  }
+
+  void _toggleGoalDay(int day) {
+    setState(() {
+      if (_goalDays.contains(day)) {
+        _goalDays.remove(day);
+      } else {
+        _goalDays.add(day);
+      }
+    });
   }
 
   @override
@@ -1380,11 +1397,26 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                   }).toList(),
                 ),
                 const SizedBox(height: 20),
+                Text(
+                  l10n.subjectsGoalTypeLabel,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 10),
+                _GoalTypeToggle(
+                  goalType: _goalType,
+                  isDark: isDark,
+                  onChanged: (value) => setState(() => _goalType = value),
+                ),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      l10n.subjectsDailyTarget,
+                      _goalType == 'weekly'
+                          ? l10n.subjectsGoalTarget
+                          : l10n.subjectsDailyTarget,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
@@ -1405,6 +1437,28 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                   divisions: 15,
                   label: l10n.subjectsMinutesValue(_dailyTargetMinutes.round()),
                   onChanged: (value) => setState(() => _dailyTargetMinutes = value),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.subjectsGoalDaysLabel,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 10),
+                _GoalDaysPicker(
+                  selectedDays: _goalDays,
+                  isDark: isDark,
+                  onToggle: _toggleGoalDay,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.subjectsGoalDaysHint,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -1430,6 +1484,8 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
         colorHex: _selectedColorHex,
         iconKey: _selectedIconKey,
         dailyTargetMinutes: _dailyTargetMinutes.round(),
+        goalType: _goalType,
+        goalDays: (_goalDays.toList()..sort()),
       ),
     );
   }
@@ -1441,12 +1497,143 @@ class _SubjectDraft {
     required this.colorHex,
     required this.iconKey,
     required this.dailyTargetMinutes,
+    required this.goalType,
+    required this.goalDays,
   });
 
   final String name;
   final String colorHex;
   final String iconKey;
   final int dailyTargetMinutes;
+  final String goalType; // 'daily' | 'weekly'
+  final List<int> goalDays;
+}
+
+class _GoalTypeToggle extends StatelessWidget {
+  const _GoalTypeToggle({
+    required this.goalType,
+    required this.isDark,
+    required this.onChanged,
+  });
+
+  final String goalType;
+  final bool isDark;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        ),
+      ),
+      child: Row(
+        children: [
+          _segment(l10n.subjectsGoalDaily, 'daily'),
+          _segment(l10n.subjectsGoalWeekly, 'weekly'),
+        ],
+      ),
+    );
+  }
+
+  Widget _segment(String label, String value) {
+    final selected = goalType == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: selected ? null : () => onChanged(value),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: selected
+                  ? Colors.white
+                  : (isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GoalDaysPicker extends StatelessWidget {
+  const _GoalDaysPicker({
+    required this.selectedDays,
+    required this.isDark,
+    required this.onToggle,
+  });
+
+  final List<int> selectedDays; // 0=Sun..6=Sat
+  final bool isDark;
+  final ValueChanged<int> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context).toString();
+    final narrowWeekday = DateFormat('EEEEE', locale);
+    // 2024-01-07 is a Sunday; offsetting by index yields Sun..Sat (0..6).
+    final labels = List.generate(
+      7,
+      (index) => narrowWeekday.format(DateTime(2024, 1, 7 + index)),
+    );
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(7, (index) {
+        final isSelected = selectedDays.contains(index);
+        return GestureDetector(
+          onTap: () => onToggle(index),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppColors.primary
+                  : (isDark ? AppColors.surfaceDark : Colors.white),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected
+                    ? AppColors.primary
+                    : (isDark ? AppColors.borderDark : AppColors.borderLight),
+              ),
+            ),
+            child: Center(
+              child: Text(
+                labels[index],
+                style: TextStyle(
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
 }
 
 class _SubjectColorOption {

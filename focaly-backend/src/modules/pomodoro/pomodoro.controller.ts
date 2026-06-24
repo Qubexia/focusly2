@@ -18,6 +18,8 @@ export class PomodoroController {
       dto.subjectId,
       dto.focusMinutes ?? 25,
       dto.breakMinutes ?? 5,
+      dto.sessionMinutes ?? 120,
+      dto.breakMode ?? 'cycles',
     );
   }
 

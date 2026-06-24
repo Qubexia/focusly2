@@ -12,11 +12,15 @@ class PomodoroRepository {
     String? subjectId,
     required int focusMinutes,
     required int breakMinutes,
+    required int sessionMinutes,
+    String breakMode = 'cycles',
   }) {
     return _remoteDataSource.startSession(
       subjectId: subjectId,
       focusMinutes: focusMinutes,
       breakMinutes: breakMinutes,
+      sessionMinutes: sessionMinutes,
+      breakMode: breakMode,
     );
   }
 

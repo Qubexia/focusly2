@@ -19,7 +19,13 @@ class HomeState extends Equatable {
 
   int get todayFocusMinutes => pomodoroToday?.totalFocusMinutes ?? 0;
 
-  int get todaySessionCount => pomodoroToday?.sessions.length ?? 0;
+  // Only count finished sessions — canceled/aborted (and still-running) ones
+  // must not inflate the daily sessions tally.
+  int get todaySessionCount =>
+      pomodoroToday?.sessions
+          .where((s) => s.status == 'completed')
+          .length ??
+      0;
 
   HomeState copyWith({
     List<SubjectModel>? subjects,

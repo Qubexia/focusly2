@@ -7,6 +7,7 @@ class SchedulesState extends Equatable {
   const SchedulesState({
     required this.focusedDay,
     this.schedules = const [],
+    this.completedKeys = const {},
     this.isLoading = false,
     this.isSaving = false,
     this.errorMessage,
@@ -16,6 +17,9 @@ class SchedulesState extends Equatable {
 
   final DateTime focusedDay;
   final List<StudyScheduleModel> schedules;
+
+  /// Completed occurrences as `scheduleId|YYYY-MM-DD` keys.
+  final Set<String> completedKeys;
   final bool isLoading;
   final bool isSaving;
   final String? errorMessage;
@@ -25,6 +29,7 @@ class SchedulesState extends Equatable {
   SchedulesState copyWith({
     DateTime? focusedDay,
     List<StudyScheduleModel>? schedules,
+    Set<String>? completedKeys,
     bool? isLoading,
     bool? isSaving,
     String? errorMessage,
@@ -36,6 +41,7 @@ class SchedulesState extends Equatable {
     return SchedulesState(
       focusedDay: focusedDay ?? this.focusedDay,
       schedules: schedules ?? this.schedules,
+      completedKeys: completedKeys ?? this.completedKeys,
       isLoading: isLoading ?? this.isLoading,
       isSaving: isSaving ?? this.isSaving,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
@@ -50,6 +56,7 @@ class SchedulesState extends Equatable {
   List<Object?> get props => [
         focusedDay,
         schedules,
+        completedKeys,
         isLoading,
         isSaving,
         errorMessage,

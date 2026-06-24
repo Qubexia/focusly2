@@ -5,6 +5,8 @@ class PomodoroSessionModel {
   final DateTime? endedAt;
   final int focusMinutes;
   final int breakMinutes;
+  final int sessionMinutes;
+  final String breakMode;
   final int completedCycles;
   final int totalFocusMinutes;
   final String status;
@@ -17,6 +19,8 @@ class PomodoroSessionModel {
     this.endedAt,
     required this.focusMinutes,
     required this.breakMinutes,
+    required this.sessionMinutes,
+    this.breakMode = 'cycles',
     required this.completedCycles,
     required this.totalFocusMinutes,
     required this.status,
@@ -31,6 +35,8 @@ class PomodoroSessionModel {
       endedAt: _parseDate(json['endedAt']),
       focusMinutes: _asInt(json['focusMinutes'], fallback: 25),
       breakMinutes: _asInt(json['breakMinutes'], fallback: 5),
+      sessionMinutes: _asInt(json['sessionMinutes'], fallback: 120),
+      breakMode: (json['breakMode'] ?? 'cycles') as String,
       completedCycles: _asInt(json['completedCycles'], fallback: 0),
       totalFocusMinutes: _asInt(json['totalFocusMinutes'], fallback: 0),
       status: (json['status'] ?? 'active') as String,

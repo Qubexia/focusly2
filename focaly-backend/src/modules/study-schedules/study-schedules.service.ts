@@ -3,9 +3,15 @@ import { EventBus } from '@nestjs/cqrs';
 
 import { ERROR_CODES } from '../../common/dto/api-response';
 import { ScheduleChangedEvent } from '../../shared/events/schedule-changed.event';
+import { StudyDayCompletedEvent } from '../../shared/events/study-day-completed.event';
 
 import { CreateScheduleDto, UpdateScheduleDto } from './dto';
 import { StudySchedulesRepository } from './study-schedules.repository';
+
+export interface ScheduleCompletionView {
+  scheduleId: string;
+  date: string;
+}
 
 @Injectable()
 export class StudySchedulesService {
@@ -66,6 +72,26 @@ export class StudySchedulesService {
   async remove(userId: string, id: string): Promise<void> {
     await this.findOne(userId, id);
     await this.repository.deleteById(id);
+    await this.repository.deleteCompletionsBySchedule(id);
     this.eventBus.publish(new ScheduleChangedEvent(userId, id, 'deleted'));
+  }
+
+  async complete(userId: string, id: string, date: string): Promise<ScheduleCompletionView> {
+    // Ownership check (throws NotFound if the schedule isn't the user's).
+    await this.findOne(userId, id);
+    await this.repository.upsertCompletion(userId, id, date);
+    // Completing a study session counts toward the daily streak (idempotent per
+    // day on the handler side, so it is safe even if a pomodoro also fired).
+    this.eventBus.publish(new StudyDayCompletedEvent(userId, id, date, new Date()));
+    return { scheduleId: id, date };
+  }
+
+  async listCompletions(
+    userId: string,
+    from: string,
+    to: string,
+  ): Promise<ScheduleCompletionView[]> {
+    const completions = await this.repository.findCompletionsByUserInRange(userId, from, to);
+    return completions.map((c) => ({ scheduleId: String(c.scheduleId), date: c.date }));
   }
 }

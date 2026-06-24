@@ -1,5 +1,15 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class UpdateSubjectDto {
   @ApiPropertyOptional({ example: 'Physics 101' })
@@ -23,6 +33,19 @@ export class UpdateSubjectDto {
   @Min(0)
   @Max(1440)
   dailyTargetMinutes?: number;
+
+  @ApiPropertyOptional({ example: 'daily', enum: ['daily', 'weekly'] })
+  @IsOptional()
+  @IsIn(['daily', 'weekly'])
+  goalType?: 'daily' | 'weekly';
+
+  @ApiPropertyOptional({ example: [0, 1, 2], description: 'Days of week 0=Sun..6=Sat' })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  @Min(0, { each: true })
+  @Max(6, { each: true })
+  goalDays?: number[];
 
   @ApiPropertyOptional({ example: false })
   @IsOptional()

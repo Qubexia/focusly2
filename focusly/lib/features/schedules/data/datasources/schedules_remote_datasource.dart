@@ -86,4 +86,44 @@ class SchedulesRemoteDataSource {
   Future<void> deleteSchedule(String id) async {
     await _dio.delete(ApiEndpoints.scheduleById(id));
   }
+
+  /// Marks a single occurrence (by local 'YYYY-MM-DD' date) of a schedule done.
+  Future<void> completeSchedule({
+    required String id,
+    required String date,
+  }) async {
+    await _dio.post(
+      ApiEndpoints.scheduleComplete(id),
+      data: {'date': date},
+    );
+  }
+
+  /// Returns completed occurrences in a date range as `scheduleId|date` keys.
+  Future<Set<String>> getCompletions({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final response = await _dio.get(
+      ApiEndpoints.schedulesCompletions,
+      queryParameters: {
+        'from': _formatDate(from),
+        'to': _formatDate(to),
+      },
+    );
+
+    final data = response.data as List<dynamic>? ?? const [];
+    return data
+        .map((item) {
+          final map = item as Map<String, dynamic>;
+          return '${map['scheduleId']}|${map['date']}';
+        })
+        .toSet();
+  }
+
+  static String _formatDate(DateTime date) {
+    final y = date.year.toString().padLeft(4, '0');
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
+  }
 }

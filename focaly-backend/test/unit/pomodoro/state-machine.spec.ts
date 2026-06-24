@@ -17,6 +17,7 @@ describe('Pomodoro state machine', () => {
       status: string;
       focusMinutes: number;
       breakMinutes: number;
+      sessionMinutes: number;
       completedCycles: number;
       totalFocusMinutes: number;
       startedAt: Date;
@@ -29,6 +30,7 @@ describe('Pomodoro state machine', () => {
     status: 'active',
     focusMinutes: 25,
     breakMinutes: 5,
+    sessionMinutes: 120,
     completedCycles: 0,
     totalFocusMinutes: 0,
     startedAt: new Date(),
@@ -55,17 +57,22 @@ describe('Pomodoro state machine', () => {
       repo.findActiveByUser.mockResolvedValue(null);
       repo.create.mockResolvedValue(mockSession() as never);
 
-      const result = await service.start('user-1', 'subject-1', 25, 5);
+      const result = await service.start('user-1', 'subject-1', 25, 5, 120);
       expect(result).toBeDefined();
       expect(repo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: 'user-1', status: 'active', focusMinutes: 25 }),
+        expect.objectContaining({
+          userId: 'user-1',
+          status: 'active',
+          focusMinutes: 25,
+          sessionMinutes: 120,
+        }),
       );
     });
 
     it('rejects with POMODORO_ALREADY_ACTIVE when session exists', async () => {
       repo.findActiveByUser.mockResolvedValue(mockSession() as never);
 
-      await expect(service.start('user-1', 'subject-1', 25, 5)).rejects.toBeInstanceOf(
+      await expect(service.start('user-1', 'subject-1', 25, 5, 120)).rejects.toBeInstanceOf(
         ConflictException,
       );
     });
@@ -108,11 +115,14 @@ describe('Pomodoro state machine', () => {
   });
 
   describe('complete', () => {
-    it('completes an active session and emits event', async () => {
+    it('completes an active session and credits the studied time', async () => {
+      // One full focus block (25 min) elapsed within a focus/break cycle.
       const session = mockSession({
         status: 'active',
         focusMinutes: 25,
+        breakMinutes: 5,
         completedCycles: 0,
+        startedAt: new Date(Date.now() - 25 * 60_000),
       });
       repo.findById.mockResolvedValue(session as never);
       repo.updateStatus.mockResolvedValue({

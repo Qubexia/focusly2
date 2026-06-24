@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:zakerly/l10n/app_localizations.dart';
 
+import '../../../../core/services/schedule_focus_bus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/schedule_model.dart';
 import '../bloc/schedules_cubit.dart';
@@ -33,6 +35,48 @@ class _SchedulesViewState extends State<_SchedulesView> {
 
   static final DateTime _calendarLastDay = DateTime.utc(2030, 12, 31);
 
+  @override
+  void initState() {
+    super.initState();
+    ScheduleFocusBus.instance.completed.addListener(_onScheduleCompleted);
+  }
+
+  @override
+  void dispose() {
+    ScheduleFocusBus.instance.completed.removeListener(_onScheduleCompleted);
+    super.dispose();
+  }
+
+  void _onScheduleCompleted() {
+    final completion = ScheduleFocusBus.instance.completed.value;
+    if (completion == null || !mounted) return;
+    context
+        .read<SchedulesCubit>()
+        .markScheduleCompletedLocally(completion.scheduleId, completion.date);
+  }
+
+  int _sessionMinutesFor(StudyScheduleModel schedule) {
+    final end = schedule.endAt;
+    if (end == null) return 120;
+    final minutes = end.difference(schedule.startAt).inMinutes.abs();
+    if (minutes <= 0) return 120;
+    return minutes.clamp(30, 240);
+  }
+
+  void _openFocusForSchedule(BuildContext context, StudyScheduleModel schedule) {
+    ScheduleFocusBus.instance.requestLaunch(
+      ScheduleFocusLaunch(
+        scheduleId: schedule.id,
+        subjectId: schedule.subjectId.isEmpty ? null : schedule.subjectId,
+        title: schedule.title,
+        sessionMinutes: _sessionMinutesFor(schedule),
+        date: SchedulesCubit.formatDate(_clampDay(context.read<SchedulesCubit>().state.focusedDay)),
+      ),
+    );
+    // Switch to the Focus (Pomodoro) tab.
+    context.go('/home?tab=2');
+  }
+
   void _showAddScheduleSheet(BuildContext context, SchedulesState state) {
     final selectedDate = _clampDay(state.focusedDay);
 
@@ -53,6 +97,44 @@ class _SchedulesViewState extends State<_SchedulesView> {
           endAt,
         }) async {
           await context.read<SchedulesCubit>().createSchedule(
+                subjectId: subjectId,
+                title: title,
+                startAt: startAt,
+                endAt: endAt,
+                daysOfWeek: daysOfWeek,
+                reminderEnabled: reminderEnabled,
+                reminderMinutesBefore: reminderMinutesBefore,
+              );
+          if (context.mounted) Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  void _showEditScheduleSheet(
+    BuildContext context,
+    SchedulesState state,
+    StudyScheduleModel schedule,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => CreateScheduleSheet(
+        selectedDate: _clampDay(state.focusedDay),
+        initialSchedule: schedule,
+        isSaving: state.isSaving,
+        onSave: ({
+          required daysOfWeek,
+          required reminderEnabled,
+          required reminderMinutesBefore,
+          required startAt,
+          required subjectId,
+          required title,
+          endAt,
+        }) async {
+          await context.read<SchedulesCubit>().updateSchedule(
+                id: schedule.id,
                 subjectId: subjectId,
                 title: title,
                 startAt: startAt,
@@ -362,8 +444,14 @@ class _SchedulesViewState extends State<_SchedulesView> {
       itemCount: daySchedules.length,
       itemBuilder: (context, index) {
         final schedule = daySchedules[index];
+        final isCompleted = state.completedKeys.contains(
+          SchedulesCubit.completionKey(schedule.id, state.focusedDay),
+        );
         return _ScheduleTile(
           schedule: schedule,
+          isCompleted: isCompleted,
+          onTap: () => _openFocusForSchedule(context, schedule),
+          onEdit: () => _showEditScheduleSheet(context, state, schedule),
           onDelete: () async {
             final shouldDelete = await _confirmDeleteSchedule(context, schedule);
             if (shouldDelete != true || !context.mounted) {
@@ -381,10 +469,16 @@ class _SchedulesViewState extends State<_SchedulesView> {
 class _ScheduleTile extends StatelessWidget {
   const _ScheduleTile({
     required this.schedule,
+    required this.isCompleted,
+    required this.onTap,
+    required this.onEdit,
     required this.onDelete,
   });
 
   final StudyScheduleModel schedule;
+  final bool isCompleted;
+  final VoidCallback onTap;
+  final VoidCallback onEdit;
   final Future<bool> Function() onDelete;
 
   @override
@@ -423,29 +517,37 @@ class _ScheduleTile extends StatelessWidget {
           ],
         ),
       ),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.borderLight,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(
-                Icons.book_rounded,
-                color: AppColors.primary,
-              ),
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isCompleted
+                  ? AppColors.secondary.withValues(alpha: 0.6)
+                  : isDark
+                      ? AppColors.borderDark
+                      : AppColors.borderLight,
             ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: (isCompleted ? AppColors.secondary : AppColors.primary)
+                      .withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  isCompleted ? Icons.check_circle_rounded : Icons.book_rounded,
+                  color: isCompleted ? AppColors.secondary : AppColors.primary,
+                ),
+              ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -486,11 +588,26 @@ class _ScheduleTile extends StatelessWidget {
                 PopupMenuButton<String>(
                   tooltip: l10n.schedulesActionsTooltip,
                   onSelected: (value) async {
-                    if (value == 'delete') {
+                    if (value == 'edit') {
+                      onEdit();
+                    } else if (value == 'delete') {
                       await onDelete();
                     }
                   },
                   itemBuilder: (context) => [
+                    PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.edit_outlined,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(l10n.commonEdit),
+                        ],
+                      ),
+                    ),
                     PopupMenuItem<String>(
                       value: 'delete',
                       child: Row(
@@ -518,6 +635,7 @@ class _ScheduleTile extends StatelessWidget {
               ],
             ),
           ],
+          ),
         ),
       ),
     );

@@ -885,6 +885,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pomodoroBreak => 'Break';
 
   @override
+  String get pomodoroBreakModeLabel => 'Break style';
+
+  @override
+  String get pomodoroBreakModeCycles => 'Repeating cycles';
+
+  @override
+  String get pomodoroBreakModeMiddle => 'Break in the middle';
+
+  @override
+  String get pomodoroBreakModeMiddleHint =>
+      'One break in the middle of the session; the rest is split into two study blocks.';
+
+  @override
   String pomodoroMinutesShort(int minutes) {
     return '${minutes}m';
   }
@@ -908,6 +921,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pomodoroSessionSetup => 'Session Setup';
+
+  @override
+  String get pomodoroSessionLength => 'Session';
+
+  @override
+  String pomodoroSessionProgress(int done, int total) {
+    return '$done/$total min';
+  }
+
+  @override
+  String get pomodoroBreakStartTitle => 'Break time';
+
+  @override
+  String get pomodoroBreakStartBody => 'Step away and recharge.';
+
+  @override
+  String get pomodoroFocusStartTitle => 'Back to focus';
+
+  @override
+  String get pomodoroFocusStartBody => 'Break\'s over — keep studying.';
+
+  @override
+  String get pomodoroSessionDoneTitle => 'Session complete!';
+
+  @override
+  String get pomodoroSessionDoneBody => 'You finished your full focus session.';
 
   @override
   String get pomodoroLocked => 'Locked';
@@ -1174,6 +1213,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get schedulesCreateBlockTitle => 'Create Study Block';
 
   @override
+  String get schedulesEditBlockTitle => 'Edit Study Block';
+
+  @override
   String get schedulesSubjectLabel => 'Subject';
 
   @override
@@ -1346,6 +1388,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subjectsDailyTarget => 'Daily Target';
 
   @override
+  String get subjectsGoalTypeLabel => 'Goal type';
+
+  @override
+  String get subjectsGoalDaily => 'Daily';
+
+  @override
+  String get subjectsGoalWeekly => 'Weekly';
+
+  @override
+  String get subjectsGoalTarget => 'Target';
+
+  @override
+  String get subjectsGoalDaysLabel => 'Goal days (optional)';
+
+  @override
+  String get subjectsGoalDaysHint => 'Leave empty to count every day.';
+
+  @override
   String subjectsDailyTargetLabel(int minutes) {
     return '$minutes min daily target';
   }
@@ -1500,17 +1560,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subscriptionFeaturePriorityReminders => 'Priority reminders';
 
   @override
-  String get subscriptionChoosePaymentMethod => 'Choose payment method';
+  String get subscriptionChoosePaymentMethod => 'Pay with card';
 
   @override
-  String get subscriptionPayPaymobMonthly => 'Pay with Paymob — Monthly (EGP)';
+  String get subscriptionPayPaymobMonthly => 'Pay with card — Monthly (EGP)';
 
   @override
-  String get subscriptionPayPaymobYearly => 'Pay with Paymob — Yearly (EGP)';
+  String get subscriptionPayPaymobYearly => 'Pay with card — Yearly (EGP)';
 
   @override
   String get subscriptionPaymobNote =>
-      'Cards, wallets, and local methods via Paymob. Uses the native Paymob payment sheet inside the app.';
+      'Enter your card details to complete the payment securely.';
 
   @override
   String get subscriptionPayStripe => 'International card (Stripe)';
@@ -1675,6 +1735,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get schedulesCreateFailed => 'Failed to create schedule.';
+
+  @override
+  String get schedulesEditSuccess => 'Schedule updated successfully!';
+
+  @override
+  String get schedulesUpdateFailed => 'Failed to update schedule.';
 
   @override
   String get schedulesCreateInvalidData =>

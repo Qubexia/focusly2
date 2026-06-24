@@ -32,4 +32,14 @@ module.exports = {
     ],
     'prettier/prettier': 'error',
   },
+  overrides: [
+    {
+      // Jest mocks reference methods unbound by design (e.g. expect(mock.fn)),
+      // which trips the type-aware unbound-method rule with false positives.
+      files: ['**/*.spec.ts', '**/*.e2e-spec.ts'],
+      rules: {
+        '@typescript-eslint/unbound-method': 'off',
+      },
+    },
+  ],
 };

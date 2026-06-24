@@ -64,6 +64,8 @@ export class SubjectsService {
         ...(dto.color !== undefined && { color: dto.color }),
         ...(dto.icon !== undefined && { icon: dto.icon }),
         ...(dto.dailyTargetMinutes !== undefined && { dailyTargetMinutes: dto.dailyTargetMinutes }),
+        ...(dto.goalType !== undefined && { goalType: dto.goalType }),
+        ...(dto.goalDays !== undefined && { goalDays: dto.goalDays }),
         ...(dto.isArchived !== undefined && { isArchived: dto.isArchived }),
       },
     });

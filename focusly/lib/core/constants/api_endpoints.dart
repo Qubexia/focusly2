@@ -131,7 +131,9 @@ class ApiEndpoints {
   // Schedules
   static const String schedules = '/v1/schedules';
   static const String schedulesCalendar = '/v1/schedules/calendar';
+  static const String schedulesCompletions = '/v1/schedules/completions';
   static String scheduleById(String id) => '$schedules/$id';
+  static String scheduleComplete(String id) => '$schedules/$id/complete';
 
   // Analytics
   static const String analytics = '/v1/analytics';

@@ -55,6 +55,7 @@ dependencies:
   url_launcher: ^6.3.1
   app_links: ^6.4.0
   paymob: ^1.2.0
+  wakelock_plus: ^1.2.8
 
 dev_dependencies:
   flutter_test:

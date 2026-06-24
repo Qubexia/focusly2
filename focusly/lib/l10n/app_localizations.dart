@@ -1688,6 +1688,30 @@ abstract class AppLocalizations {
   /// **'Break'**
   String get pomodoroBreak;
 
+  /// No description provided for @pomodoroBreakModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Break style'**
+  String get pomodoroBreakModeLabel;
+
+  /// No description provided for @pomodoroBreakModeCycles.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeating cycles'**
+  String get pomodoroBreakModeCycles;
+
+  /// No description provided for @pomodoroBreakModeMiddle.
+  ///
+  /// In en, this message translates to:
+  /// **'Break in the middle'**
+  String get pomodoroBreakModeMiddle;
+
+  /// No description provided for @pomodoroBreakModeMiddleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One break in the middle of the session; the rest is split into two study blocks.'**
+  String get pomodoroBreakModeMiddleHint;
+
   /// No description provided for @pomodoroMinutesShort.
   ///
   /// In en, this message translates to:
@@ -1729,6 +1753,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Session Setup'**
   String get pomodoroSessionSetup;
+
+  /// No description provided for @pomodoroSessionLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Session'**
+  String get pomodoroSessionLength;
+
+  /// No description provided for @pomodoroSessionProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done}/{total} min'**
+  String pomodoroSessionProgress(int done, int total);
+
+  /// No description provided for @pomodoroBreakStartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Break time'**
+  String get pomodoroBreakStartTitle;
+
+  /// No description provided for @pomodoroBreakStartBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Step away and recharge.'**
+  String get pomodoroBreakStartBody;
+
+  /// No description provided for @pomodoroFocusStartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to focus'**
+  String get pomodoroFocusStartTitle;
+
+  /// No description provided for @pomodoroFocusStartBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Break\'s over — keep studying.'**
+  String get pomodoroFocusStartBody;
+
+  /// No description provided for @pomodoroSessionDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Session complete!'**
+  String get pomodoroSessionDoneTitle;
+
+  /// No description provided for @pomodoroSessionDoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You finished your full focus session.'**
+  String get pomodoroSessionDoneBody;
 
   /// No description provided for @pomodoroLocked.
   ///
@@ -2192,6 +2264,12 @@ abstract class AppLocalizations {
   /// **'Create Study Block'**
   String get schedulesCreateBlockTitle;
 
+  /// No description provided for @schedulesEditBlockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Study Block'**
+  String get schedulesEditBlockTitle;
+
   /// No description provided for @schedulesSubjectLabel.
   ///
   /// In en, this message translates to:
@@ -2449,6 +2527,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Daily Target'**
   String get subjectsDailyTarget;
+
+  /// No description provided for @subjectsGoalTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal type'**
+  String get subjectsGoalTypeLabel;
+
+  /// No description provided for @subjectsGoalDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get subjectsGoalDaily;
+
+  /// No description provided for @subjectsGoalWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get subjectsGoalWeekly;
+
+  /// No description provided for @subjectsGoalTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target'**
+  String get subjectsGoalTarget;
+
+  /// No description provided for @subjectsGoalDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal days (optional)'**
+  String get subjectsGoalDaysLabel;
+
+  /// No description provided for @subjectsGoalDaysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave empty to count every day.'**
+  String get subjectsGoalDaysHint;
 
   /// No description provided for @subjectsDailyTargetLabel.
   ///
@@ -2729,25 +2843,25 @@ abstract class AppLocalizations {
   /// No description provided for @subscriptionChoosePaymentMethod.
   ///
   /// In en, this message translates to:
-  /// **'Choose payment method'**
+  /// **'Pay with card'**
   String get subscriptionChoosePaymentMethod;
 
   /// No description provided for @subscriptionPayPaymobMonthly.
   ///
   /// In en, this message translates to:
-  /// **'Pay with Paymob — Monthly (EGP)'**
+  /// **'Pay with card — Monthly (EGP)'**
   String get subscriptionPayPaymobMonthly;
 
   /// No description provided for @subscriptionPayPaymobYearly.
   ///
   /// In en, this message translates to:
-  /// **'Pay with Paymob — Yearly (EGP)'**
+  /// **'Pay with card — Yearly (EGP)'**
   String get subscriptionPayPaymobYearly;
 
   /// No description provided for @subscriptionPaymobNote.
   ///
   /// In en, this message translates to:
-  /// **'Cards, wallets, and local methods via Paymob. Uses the native Paymob payment sheet inside the app.'**
+  /// **'Enter your card details to complete the payment securely.'**
   String get subscriptionPaymobNote;
 
   /// No description provided for @subscriptionPayStripe.
@@ -3043,6 +3157,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to create schedule.'**
   String get schedulesCreateFailed;
+
+  /// No description provided for @schedulesEditSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule updated successfully!'**
+  String get schedulesEditSuccess;
+
+  /// No description provided for @schedulesUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update schedule.'**
+  String get schedulesUpdateFailed;
 
   /// No description provided for @schedulesCreateInvalidData.
   ///
