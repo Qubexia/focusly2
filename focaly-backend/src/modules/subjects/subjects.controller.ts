@@ -30,7 +30,7 @@ export class SubjectsController {
 
   @Post()
   async create(@CurrentUser() user: CurrentUserPayload, @Body() dto: CreateSubjectDto) {
-    return this.subjectsService.create(user.id, user.plan, dto);
+    return this.subjectsService.create(user.id, dto);
   }
 
   @Get()
@@ -52,7 +52,7 @@ export class SubjectsController {
     @Param('id') id: string,
     @Body() dto: UpdateSubjectDto,
   ) {
-    return this.subjectsService.update(user.id, user.plan, id, dto);
+    return this.subjectsService.update(user.id, id, dto);
   }
 
   @Delete(':id')

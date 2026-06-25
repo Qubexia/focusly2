@@ -25,25 +25,27 @@ security:
   - bearerAccess: []
 
 tags:
-  - { name: Auth,           description: Registration, login, sessions, password reset (US1) }
-  - { name: Users,          description: Profile, settings, FCM tokens, account deletion (US1) }
-  - { name: Subjects,       description: Subjects + chapters; free-plan cap (US2) }
-  - { name: Schedules,      description: Recurring weekly study schedules (US3) }
-  - { name: Pomodoro,       description: Pomodoro sessions (US3) }
-  - { name: Streaks,        description: Streak read API (US4) }
-  - { name: Tasks,          description: Tasks (US5) }
-  - { name: Revisions,      description: Revisions (US5) }
-  - { name: Lectures,       description: Lectures (US5) }
-  - { name: Exams,          description: Exams (US5) }
-  - { name: Notifications,  description: Inbox + preferences (US6) }
-  - { name: Subscription,   description: Premium billing across Stripe/Google Play/App Store (US7) }
-  - { name: AI,             description: 'AI notes assistant (US8) — Premium' }
-  - { name: Analytics,      description: 'Study analytics (US9) — Premium for ranges, free for current week' }
-  - { name: Uploads,        description: Presigned upload authorization (US8 support) }
-  - { name: Health,         description: Liveness and readiness probes }
+  - { name: Auth, description: Registration, login, sessions, password reset (US1) }
+  - { name: Users, description: Profile, settings, FCM tokens, account deletion (US1) }
+  - { name: Subjects, description: Subjects + chapters; free-plan cap (US2) }
+  - { name: Schedules, description: Recurring weekly study schedules (US3) }
+  - { name: Pomodoro, description: Pomodoro sessions (US3) }
+  - { name: Streaks, description: Streak read API (US4) }
+  - { name: Tasks, description: Tasks (US5) }
+  - { name: Revisions, description: Revisions (US5) }
+  - { name: Lectures, description: Lectures (US5) }
+  - { name: Exams, description: Exams (US5) }
+  - { name: Notifications, description: Inbox + preferences (US6) }
+  - { name: Subscription, description: Premium billing across Stripe/Google Play/App Store (US7) }
+  - { name: AI, description: 'AI notes assistant (US8) — Premium' }
+  - {
+      name: Analytics,
+      description: 'Study analytics (US9) — Premium for ranges, free for current week',
+    }
+  - { name: Uploads, description: Presigned upload authorization (US8 support) }
+  - { name: Health, description: Liveness and readiness probes }
 
 paths:
-
   # ──────────────────────────────── Auth ────────────────────────────────
   /auth/register:
     post:
@@ -52,7 +54,12 @@ paths:
       summary: Register a new user (email + password)
       requestBody: { $ref: '#/components/requestBodies/RegisterBody' }
       responses:
-        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } } }
+        '201':
+          {
+            description: Created,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } },
+          }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/Unprocessable' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -64,7 +71,12 @@ paths:
       summary: Sign in with email + password
       requestBody: { $ref: '#/components/requestBodies/LoginBody' }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } },
+          }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
@@ -75,7 +87,12 @@ paths:
       summary: Sign in with a Google id_token
       requestBody: { $ref: '#/components/requestBodies/GoogleLoginBody' }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } },
+          }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
   /auth/refresh:
@@ -85,7 +102,11 @@ paths:
       summary: Rotate access + refresh credential pair (15-min access, 30-day refresh)
       requestBody: { $ref: '#/components/requestBodies/RefreshBody' }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/TokenPair' } } } }
+        '200':
+          {
+            description: OK,
+            content: { application/json: { schema: { $ref: '#/components/schemas/TokenPair' } } },
+          }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
   /auth/logout:
@@ -135,7 +156,11 @@ paths:
       responses:
         '200':
           description: OK
-          content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AuthSession' } } } }
+          content:
+            {
+              application/json:
+                { schema: { type: array, items: { $ref: '#/components/schemas/AuthSession' } } },
+            }
 
   /auth/sessions/{id}:
     delete:
@@ -152,13 +177,21 @@ paths:
       tags: [Users]
       summary: Get current user profile, plan, settings
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
+        '200':
+          {
+            description: OK,
+            content: { application/json: { schema: { $ref: '#/components/schemas/User' } } },
+          }
     patch:
       tags: [Users]
       summary: Update profile (name, locale, timezone, avatar URL)
       requestBody: { $ref: '#/components/requestBodies/UpdateUserBody' }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
+        '200':
+          {
+            description: OK,
+            content: { application/json: { schema: { $ref: '#/components/schemas/User' } } },
+          }
     delete:
       tags: [Users]
       summary: Soft-delete the account; hard-purge within 30 days (FR-009, SC-012)
@@ -170,7 +203,12 @@ paths:
       summary: Update notification preferences and focusMode
       requestBody: { $ref: '#/components/requestBodies/UpdateSettingsBody' }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/UserSettings' } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/UserSettings' } } },
+          }
 
   /users/me/avatar:
     post:
@@ -185,7 +223,18 @@ paths:
               properties:
                 file: { type: string, format: binary }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { avatarUrl: { type: string, format: uri } } } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  {
+                    schema:
+                      { type: object, properties: { avatarUrl: { type: string, format: uri } } },
+                  },
+              },
+          }
 
   /users/me/fcm-token:
     post:
@@ -202,19 +251,25 @@ paths:
       parameters:
         - { in: query, name: includeArchived, schema: { type: boolean, default: false } }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Subject' } } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  { schema: { type: array, items: { $ref: '#/components/schemas/Subject' } } },
+              },
+          }
     post:
       tags: [Subjects]
-      summary: Create a subject (free-plan cap = 3 active; FR-012)
+      summary: Create a subject (unlimited; all features free)
       requestBody: { $ref: '#/components/requestBodies/CreateSubjectBody' }
       responses:
-        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Subject' } } } }
-        '403':
-          description: Subject limit reached (free plan)
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorResponse' }
-              example: { code: SUBJECT_LIMIT_REACHED, message: 'Free plan allows up to 3 active subjects. Upgrade to premium for unlimited subjects.' }
+        '201':
+          {
+            description: Created,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Subject' } } },
+          }
 
   /subjects/{id}:
     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
@@ -222,18 +277,25 @@ paths:
       tags: [Subjects]
       summary: Read a subject
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Subject' } } } }
+        '200':
+          {
+            description: OK,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Subject' } } },
+          }
         '404': { $ref: '#/components/responses/NotFound' }
     patch:
       tags: [Subjects]
-      summary: Update a subject (un-archive counts against free-plan cap)
+      summary: Update a subject
       requestBody: { $ref: '#/components/requestBodies/UpdateSubjectBody' }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Subject' } } } }
-        '403': { $ref: '#/components/responses/SubjectLimit' }
+        '200':
+          {
+            description: OK,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Subject' } } },
+          }
     delete:
       tags: [Subjects]
-      summary: Soft-archive a subject (frees a free-plan slot)
+      summary: Soft-archive a subject
       responses: { '204': { description: No Content } }
 
   /subjects/{id}/chapters:
@@ -243,18 +305,26 @@ paths:
       summary: Add a chapter
       requestBody: { $ref: '#/components/requestBodies/CreateChapterBody' }
       responses:
-        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Chapter' } } } }
+        '201':
+          {
+            description: Created,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Chapter' } } },
+          }
 
   /subjects/{id}/chapters/{chId}:
     parameters:
-      - { in: path, name: id,   required: true, schema: { type: string } }
+      - { in: path, name: id, required: true, schema: { type: string } }
       - { in: path, name: chId, required: true, schema: { type: string } }
     patch:
       tags: [Subjects]
       summary: Update a chapter (toggling `completed` recomputes Subject.progressPercent)
       requestBody: { $ref: '#/components/requestBodies/UpdateChapterBody' }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Chapter' } } } }
+        '200':
+          {
+            description: OK,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Chapter' } } },
+          }
 
   /subjects/{id}/progress:
     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
@@ -262,7 +332,26 @@ paths:
       tags: [Subjects]
       summary: Subject progress summary
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { progressPercent: { type: number }, chaptersTotal: { type: integer }, chaptersCompleted: { type: integer } } } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  {
+                    schema:
+                      {
+                        type: object,
+                        properties:
+                          {
+                            progressPercent: { type: number },
+                            chaptersTotal: { type: integer },
+                            chaptersCompleted: { type: integer },
+                          },
+                      },
+                  },
+              },
+          }
 
   # ───────────────────────────── Schedules ─────────────────────────────
   /subjects/{id}/schedules:
@@ -272,7 +361,12 @@ paths:
       summary: Create a recurring weekly study schedule for this subject
       requestBody: { $ref: '#/components/requestBodies/CreateScheduleBody' }
       responses:
-        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/StudySchedule' } } } }
+        '201':
+          {
+            description: Created,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/StudySchedule' } } },
+          }
 
   /schedules:
     get:
@@ -280,9 +374,19 @@ paths:
       summary: List my schedules in a range
       parameters:
         - { in: query, name: from, required: true, schema: { type: string, format: date-time } }
-        - { in: query, name: to,   required: true, schema: { type: string, format: date-time } }
+        - { in: query, name: to, required: true, schema: { type: string, format: date-time } }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/StudySchedule' } } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  {
+                    schema: { type: array, items: { $ref: '#/components/schemas/StudySchedule' } },
+                  },
+              },
+          }
 
   /schedules/{id}:
     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
@@ -291,7 +395,12 @@ paths:
       summary: Update a schedule (cancels and reschedules pending reminders — FR-027)
       requestBody: { $ref: '#/components/requestBodies/UpdateScheduleBody' }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/StudySchedule' } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/StudySchedule' } } },
+          }
     delete:
       tags: [Schedules]
       summary: Delete a schedule (cancels pending reminders — FR-027)
@@ -301,9 +410,20 @@ paths:
     get:
       tags: [Schedules]
       summary: Week-view calendar
-      parameters: [{ in: query, name: range, schema: { type: string, enum: [week, month], default: week } }]
+      parameters:
+        [{ in: query, name: range, schema: { type: string, enum: [week, month], default: week } }]
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/StudySchedule' } } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  {
+                    schema: { type: array, items: { $ref: '#/components/schemas/StudySchedule' } },
+                  },
+              },
+          }
 
   # ───────────────────────────── Pomodoro ──────────────────────────────
   /pomodoro/start:
@@ -312,14 +432,90 @@ paths:
       summary: Start a pomodoro
       requestBody: { $ref: '#/components/requestBodies/StartPomodoroBody' }
       responses:
-        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/PomodoroSession' } } } }
+        '201':
+          {
+            description: Created,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/PomodoroSession' } } },
+          }
         '409':
           description: There is already an active session
-          content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }, example: { code: POMODORO_ALREADY_ACTIVE, message: 'Complete or abort the active session first.' } } }
+          content:
+            {
+              application/json:
+                {
+                  schema: { $ref: '#/components/schemas/ErrorResponse' },
+                  example:
+                    {
+                      code: POMODORO_ALREADY_ACTIVE,
+                      message: 'Complete or abort the active session first.',
+                    },
+                },
+            }
 
-  /pomodoro/{id}/pause:    { post: { tags: [Pomodoro], summary: Pause an active session, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PomodoroSession' } } } } } } }
-  /pomodoro/{id}/resume:   { post: { tags: [Pomodoro], summary: Resume a paused session, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PomodoroSession' } } } } } } }
-  /pomodoro/{id}/abort:    { post: { tags: [Pomodoro], summary: Abort the session, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PomodoroSession' } } } } } } }
+  /pomodoro/{id}/pause:
+    {
+      post:
+        {
+          tags: [Pomodoro],
+          summary: Pause an active session,
+          parameters: [{ in: path, name: id, required: true, schema: { type: string } }],
+          responses:
+            {
+              '200':
+                {
+                  description: OK,
+                  content:
+                    {
+                      application/json:
+                        { schema: { $ref: '#/components/schemas/PomodoroSession' } },
+                    },
+                },
+            },
+        },
+    }
+  /pomodoro/{id}/resume:
+    {
+      post:
+        {
+          tags: [Pomodoro],
+          summary: Resume a paused session,
+          parameters: [{ in: path, name: id, required: true, schema: { type: string } }],
+          responses:
+            {
+              '200':
+                {
+                  description: OK,
+                  content:
+                    {
+                      application/json:
+                        { schema: { $ref: '#/components/schemas/PomodoroSession' } },
+                    },
+                },
+            },
+        },
+    }
+  /pomodoro/{id}/abort:
+    {
+      post:
+        {
+          tags: [Pomodoro],
+          summary: Abort the session,
+          parameters: [{ in: path, name: id, required: true, schema: { type: string } }],
+          responses:
+            {
+              '200':
+                {
+                  description: OK,
+                  content:
+                    {
+                      application/json:
+                        { schema: { $ref: '#/components/schemas/PomodoroSession' } },
+                    },
+                },
+            },
+        },
+    }
 
   /pomodoro/{id}/complete:
     post:
@@ -330,28 +526,62 @@ paths:
         required: true
         content:
           application/json:
-            schema: { type: object, required: [cycles], properties: { cycles: { type: integer, minimum: 1 } } }
+            schema:
+              {
+                type: object,
+                required: [cycles],
+                properties: { cycles: { type: integer, minimum: 1 } },
+              }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PomodoroSession' } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/PomodoroSession' } } },
+          }
 
   /pomodoro/today:
     get:
       tags: [Pomodoro]
       summary: Today's total focus minutes (user's timezone)
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { totalFocusMinutes: { type: integer }, sessions: { type: integer } } } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  {
+                    schema:
+                      {
+                        type: object,
+                        properties:
+                          { totalFocusMinutes: { type: integer }, sessions: { type: integer } },
+                      },
+                  },
+              },
+          }
 
   /pomodoro/history:
     get:
       tags: [Pomodoro]
       summary: Paginated session history
       parameters:
-        - { in: query, name: from,   required: true, schema: { type: string, format: date-time } }
-        - { in: query, name: to,     required: true, schema: { type: string, format: date-time } }
+        - { in: query, name: from, required: true, schema: { type: string, format: date-time } }
+        - { in: query, name: to, required: true, schema: { type: string, format: date-time } }
         - { in: query, name: cursor, schema: { type: string } }
-        - { in: query, name: limit,  schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - {
+            in: query,
+            name: limit,
+            schema: { type: integer, minimum: 1, maximum: 100, default: 20 },
+          }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PomodoroPage' } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/PomodoroPage' } } },
+          }
 
   # ────────────────────────────── Streaks ──────────────────────────────
   /streaks/me:
@@ -359,22 +589,26 @@ paths:
       tags: [Streaks]
       summary: My current and longest streak, points, unlocked rewards
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Streak' } } } }
+        '200':
+          {
+            description: OK,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Streak' } } },
+          }
 
   # ──────────────────────────── Planned items ───────────────────────────
   # The four tags below share the same shape (kind discriminator).
   # We document one canonical path family per kind for OpenAPI clarity.
-  /tasks:        { $ref: '#/components/pathItems/PlannedItemCollection' }
-  /tasks/{id}:   { $ref: '#/components/pathItems/PlannedItemResource' }
+  /tasks: { $ref: '#/components/pathItems/PlannedItemCollection' }
+  /tasks/{id}: { $ref: '#/components/pathItems/PlannedItemResource' }
   /tasks/{id}/complete: { $ref: '#/components/pathItems/PlannedItemComplete' }
-  /revisions:    { $ref: '#/components/pathItems/PlannedItemCollection' }
+  /revisions: { $ref: '#/components/pathItems/PlannedItemCollection' }
   /revisions/{id}: { $ref: '#/components/pathItems/PlannedItemResource' }
   /revisions/{id}/complete: { $ref: '#/components/pathItems/PlannedItemComplete' }
-  /lectures:     { $ref: '#/components/pathItems/PlannedItemCollection' }
+  /lectures: { $ref: '#/components/pathItems/PlannedItemCollection' }
   /lectures/{id}: { $ref: '#/components/pathItems/PlannedItemResource' }
   /lectures/{id}/complete: { $ref: '#/components/pathItems/PlannedItemComplete' }
-  /exams:        { $ref: '#/components/pathItems/PlannedItemCollection' }
-  /exams/{id}:   { $ref: '#/components/pathItems/PlannedItemResource' }
+  /exams: { $ref: '#/components/pathItems/PlannedItemCollection' }
+  /exams/{id}: { $ref: '#/components/pathItems/PlannedItemResource' }
   /exams/{id}/complete: { $ref: '#/components/pathItems/PlannedItemComplete' }
 
   # ──────────────────────────── Notifications ──────────────────────────
@@ -384,48 +618,109 @@ paths:
       summary: Inbox listing
       parameters:
         - { in: query, name: unreadOnly, schema: { type: boolean, default: false } }
-        - { in: query, name: cursor,     schema: { type: string } }
-        - { in: query, name: limit,      schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { in: query, name: cursor, schema: { type: string } }
+        - {
+            in: query,
+            name: limit,
+            schema: { type: integer, minimum: 1, maximum: 100, default: 20 },
+          }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/NotificationPage' } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/NotificationPage' } } },
+          }
 
   /notifications/{id}/read:
     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
-    patch: { tags: [Notifications], summary: Mark one entry read, responses: { '204': { description: No Content } } }
+    patch:
+      {
+        tags: [Notifications],
+        summary: Mark one entry read,
+        responses: { '204': { description: No Content } },
+      }
 
   /notifications/read-all:
-    post: { tags: [Notifications], summary: Mark all entries read, responses: { '204': { description: No Content } } }
+    post:
+      {
+        tags: [Notifications],
+        summary: Mark all entries read,
+        responses: { '204': { description: No Content } },
+      }
 
   /notifications/{id}:
     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
-    delete: { tags: [Notifications], summary: Delete an inbox entry, responses: { '204': { description: No Content } } }
+    delete:
+      {
+        tags: [Notifications],
+        summary: Delete an inbox entry,
+        responses: { '204': { description: No Content } },
+      }
 
   /notifications/preferences:
     get:
       tags: [Notifications]
       summary: Read per-category preferences
-      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/NotificationPrefs' } } } } }
+      responses:
+        {
+          '200':
+            {
+              description: OK,
+              content:
+                {
+                  application/json: { schema: { $ref: '#/components/schemas/NotificationPrefs' } },
+                },
+            },
+        }
     patch:
       tags: [Notifications]
       summary: Update per-category preferences (FR-029)
       requestBody:
         required: true
-        content: { application/json: { schema: { $ref: '#/components/schemas/NotificationPrefs' } } }
-      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/NotificationPrefs' } } } } }
+        content:
+          { application/json: { schema: { $ref: '#/components/schemas/NotificationPrefs' } } }
+      responses:
+        {
+          '200':
+            {
+              description: OK,
+              content:
+                {
+                  application/json: { schema: { $ref: '#/components/schemas/NotificationPrefs' } },
+                },
+            },
+        }
 
   # ──────────────────────────── Subscription ───────────────────────────
   /subscription/me:
     get:
       tags: [Subscription]
       summary: Read my plan and subscription status
-      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Subscription' } } } } }
+      responses:
+        {
+          '200':
+            {
+              description: OK,
+              content:
+                { application/json: { schema: { $ref: '#/components/schemas/Subscription' } } },
+            },
+        }
 
   /subscription/stripe/checkout:
     post:
       tags: [Subscription]
       summary: Create a Stripe Checkout session
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { url: { type: string, format: uri } } } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  { schema: { type: object, properties: { url: { type: string, format: uri } } } },
+              },
+          }
         '403': { $ref: '#/components/responses/EmailVerificationRequired' }
 
   /subscription/stripe/portal:
@@ -433,7 +728,15 @@ paths:
       tags: [Subscription]
       summary: Create a Stripe Customer Portal session
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { url: { type: string, format: uri } } } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  { schema: { type: object, properties: { url: { type: string, format: uri } } } },
+              },
+          }
 
   /subscription/webhook/stripe:
     post:
@@ -451,8 +754,32 @@ paths:
       summary: Verify a Google Play purchase token
       requestBody:
         required: true
-        content: { application/json: { schema: { type: object, required: [packageName, productId, purchaseToken], properties: { packageName: { type: string }, productId: { type: string }, purchaseToken: { type: string } } } } }
-      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Subscription' } } } } }
+        content:
+          {
+            application/json:
+              {
+                schema:
+                  {
+                    type: object,
+                    required: [packageName, productId, purchaseToken],
+                    properties:
+                      {
+                        packageName: { type: string },
+                        productId: { type: string },
+                        purchaseToken: { type: string },
+                      },
+                  },
+              },
+          }
+      responses:
+        {
+          '200':
+            {
+              description: OK,
+              content:
+                { application/json: { schema: { $ref: '#/components/schemas/Subscription' } } },
+            },
+        }
 
   /subscription/iap/apple/verify:
     post:
@@ -460,14 +787,37 @@ paths:
       summary: Verify an App Store receipt
       requestBody:
         required: true
-        content: { application/json: { schema: { type: object, required: [receipt], properties: { receipt: { type: string } } } } }
-      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Subscription' } } } } }
+        content:
+          {
+            application/json:
+              {
+                schema:
+                  { type: object, required: [receipt], properties: { receipt: { type: string } } },
+              },
+          }
+      responses:
+        {
+          '200':
+            {
+              description: OK,
+              content:
+                { application/json: { schema: { $ref: '#/components/schemas/Subscription' } } },
+            },
+        }
 
   /subscription/cancel:
     post:
       tags: [Subscription]
       summary: Mark as cancel-at-period-end (FR-033)
-      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Subscription' } } } } }
+      responses:
+        {
+          '200':
+            {
+              description: OK,
+              content:
+                { application/json: { schema: { $ref: '#/components/schemas/Subscription' } } },
+            },
+        }
 
   # ───────────────────────────────── AI ────────────────────────────────
   /ai/notes/jobs:
@@ -485,23 +835,46 @@ paths:
                 subjectId: { type: string }
                 imageKeys: { type: array, items: { type: string }, minItems: 1 }
       responses:
-        '202': { description: Accepted, content: { application/json: { schema: { type: object, properties: { jobId: { type: string } } } } } }
+        '202':
+          {
+            description: Accepted,
+            content:
+              {
+                application/json:
+                  { schema: { type: object, properties: { jobId: { type: string } } } },
+              },
+          }
         '403': { $ref: '#/components/responses/PremiumRequired' }
         '429':
           description: AI rate limit exceeded
           headers:
-            Retry-After: { description: 'Seconds until retry is possible (hourly window or monthly reset, whichever applies)', schema: { type: integer } }
+            Retry-After:
+              {
+                description: 'Seconds until retry is possible (hourly window or monthly reset, whichever applies)',
+                schema: { type: integer },
+              }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
-              example: { code: AI_RATE_LIMIT, message: 'AI hourly limit (5/hour) reached; try again in 38 minutes.' }
+              example:
+                {
+                  code: AI_RATE_LIMIT,
+                  message: 'AI hourly limit (5/hour) reached; try again in 38 minutes.',
+                }
 
   /ai/notes/jobs/{id}:
     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
     get:
       tags: [AI]
       summary: Poll an AI job
-      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AiJob' } } } } }
+      responses:
+        {
+          '200':
+            {
+              description: OK,
+              content: { application/json: { schema: { $ref: '#/components/schemas/AiJob' } } },
+            },
+        }
 
   /ai/flashcards:
     post:
@@ -509,9 +882,32 @@ paths:
       summary: Generate flashcards from raw text (Premium)
       requestBody:
         required: true
-        content: { application/json: { schema: { type: object, required: [subjectId, text], properties: { subjectId: { type: string }, text: { type: string, minLength: 30, maxLength: 8000 } } } } }
+        content:
+          {
+            application/json:
+              {
+                schema:
+                  {
+                    type: object,
+                    required: [subjectId, text],
+                    properties:
+                      {
+                        subjectId: { type: string },
+                        text: { type: string, minLength: 30, maxLength: 8000 },
+                      },
+                  },
+              },
+          }
       responses:
-        '202': { description: Accepted, content: { application/json: { schema: { type: object, properties: { jobId: { type: string } } } } } }
+        '202':
+          {
+            description: Accepted,
+            content:
+              {
+                application/json:
+                  { schema: { type: object, properties: { jobId: { type: string } } } },
+              },
+          }
         '403': { $ref: '#/components/responses/PremiumRequired' }
         '429': { $ref: '#/components/responses/AiRateLimit' }
 
@@ -521,9 +917,32 @@ paths:
       summary: Generate likely-important questions (Premium)
       requestBody:
         required: true
-        content: { application/json: { schema: { type: object, required: [subjectId, text], properties: { subjectId: { type: string }, text: { type: string, minLength: 30, maxLength: 8000 } } } } }
+        content:
+          {
+            application/json:
+              {
+                schema:
+                  {
+                    type: object,
+                    required: [subjectId, text],
+                    properties:
+                      {
+                        subjectId: { type: string },
+                        text: { type: string, minLength: 30, maxLength: 8000 },
+                      },
+                  },
+              },
+          }
       responses:
-        '202': { description: Accepted, content: { application/json: { schema: { type: object, properties: { jobId: { type: string } } } } } }
+        '202':
+          {
+            description: Accepted,
+            content:
+              {
+                application/json:
+                  { schema: { type: object, properties: { jobId: { type: string } } } },
+              },
+          }
         '403': { $ref: '#/components/responses/PremiumRequired' }
         '429': { $ref: '#/components/responses/AiRateLimit' }
 
@@ -532,7 +951,18 @@ paths:
       tags: [AI]
       summary: 'List my AI artifacts (kept on premium→free downgrade — RD-4)'
       parameters: [{ in: query, name: subjectId, schema: { type: string } }]
-      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AiArtifact' } } } } } }
+      responses:
+        {
+          '200':
+            {
+              description: OK,
+              content:
+                {
+                  application/json:
+                    { schema: { type: array, items: { $ref: '#/components/schemas/AiArtifact' } } },
+                },
+            },
+        }
 
   # ─────────────────────────────── Analytics ──────────────────────────
   /analytics/summary:
@@ -541,9 +971,14 @@ paths:
       summary: Totals over a date range (Premium for ranges beyond current week)
       parameters:
         - { in: query, name: from, required: true, schema: { type: string, format: date } }
-        - { in: query, name: to,   required: true, schema: { type: string, format: date } }
+        - { in: query, name: to, required: true, schema: { type: string, format: date } }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AnalyticsSummary' } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/AnalyticsSummary' } } },
+          }
         '403': { $ref: '#/components/responses/PremiumRequired' }
 
   /analytics/by-subject:
@@ -552,9 +987,19 @@ paths:
       summary: Minutes per subject in range (Premium)
       parameters:
         - { in: query, name: from, required: true, schema: { type: string, format: date } }
-        - { in: query, name: to,   required: true, schema: { type: string, format: date } }
+        - { in: query, name: to, required: true, schema: { type: string, format: date } }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/PerSubjectStat' } } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  {
+                    schema: { type: array, items: { $ref: '#/components/schemas/PerSubjectStat' } },
+                  },
+              },
+          }
         '403': { $ref: '#/components/responses/PremiumRequired' }
 
   /analytics/heatmap:
@@ -563,7 +1008,15 @@ paths:
       summary: Year-long daily focus-minutes heatmap (Premium)
       parameters: [{ in: query, name: year, required: true, schema: { type: integer } }]
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/HeatmapPoint' } } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  { schema: { type: array, items: { $ref: '#/components/schemas/HeatmapPoint' } } },
+              },
+          }
         '403': { $ref: '#/components/responses/PremiumRequired' }
 
   /analytics/performance:
@@ -572,9 +1025,16 @@ paths:
       summary: Completion + retention performance (Premium)
       parameters:
         - { in: query, name: from, required: true, schema: { type: string, format: date } }
-        - { in: query, name: to,   required: true, schema: { type: string, format: date } }
+        - { in: query, name: to, required: true, schema: { type: string, format: date } }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AnalyticsPerformance' } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              {
+                application/json: { schema: { $ref: '#/components/schemas/AnalyticsPerformance' } },
+              },
+          }
         '403': { $ref: '#/components/responses/PremiumRequired' }
 
   # ──────────────────────────────── Uploads ─────────────────────────────
@@ -590,13 +1050,28 @@ paths:
               type: object
               required: [kind, mimeType, sizeBytes]
               properties:
-                kind:      { type: string, enum: [avatar, lecture-image] }
-                mimeType:  { type: string }
+                kind: { type: string, enum: [avatar, lecture-image] }
+                mimeType: { type: string }
                 sizeBytes: { type: integer, minimum: 1 }
       responses:
         '200':
           description: OK
-          content: { application/json: { schema: { type: object, properties: { url: { type: string, format: uri }, key: { type: string }, expiresAt: { type: string, format: date-time } } } } }
+          content:
+            {
+              application/json:
+                {
+                  schema:
+                    {
+                      type: object,
+                      properties:
+                        {
+                          url: { type: string, format: uri },
+                          key: { type: string },
+                          expiresAt: { type: string, format: date-time },
+                        },
+                    },
+                },
+            }
 
   /uploads/confirm:
     post:
@@ -604,7 +1079,11 @@ paths:
       summary: Confirm a completed upload (links the object to the relevant resource)
       requestBody:
         required: true
-        content: { application/json: { schema: { type: object, required: [key], properties: { key: { type: string } } } } }
+        content:
+          {
+            application/json:
+              { schema: { type: object, required: [key], properties: { key: { type: string } } } },
+          }
       responses: { '204': { description: No Content } }
 
   # ──────────────────────────────── Health ─────────────────────────────
@@ -620,11 +1099,25 @@ paths:
       security: []
       summary: Readiness probe (db + redis + fcm)
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { db: { type: string }, redis: { type: string }, fcm: { type: string } } } } } }
+        '200':
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  {
+                    schema:
+                      {
+                        type: object,
+                        properties:
+                          { db: { type: string }, redis: { type: string }, fcm: { type: string } },
+                      },
+                  },
+              },
+          }
         '503': { description: Not ready }
 
 components:
-
   securitySchemes:
     bearerAccess:
       type: http
@@ -640,77 +1133,312 @@ components:
   responses:
     Unauthorized:
       description: Missing / invalid / revoked credential
-      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }, example: { code: UNAUTHORIZED, message: 'Invalid or expired credential.' } } }
+      content:
+        {
+          application/json:
+            {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+              example: { code: UNAUTHORIZED, message: 'Invalid or expired credential.' },
+            },
+        }
     NotFound:
       description: Resource not found (or not owned)
-      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }, example: { code: NOT_FOUND, message: 'Not found.' } } }
+      content:
+        {
+          application/json:
+            {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+              example: { code: NOT_FOUND, message: 'Not found.' },
+            },
+        }
     Conflict:
       description: Resource conflict (e.g., email already registered)
       content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
     Unprocessable:
       description: Validation error
-      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }, example: { code: VALIDATION, message: 'name must not be empty', details: { field: name } } } }
+      content:
+        {
+          application/json:
+            {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+              example:
+                { code: VALIDATION, message: 'name must not be empty', details: { field: name } },
+            },
+        }
     TooManyRequests:
       description: Rate limited
       headers: { Retry-After: { schema: { type: integer } } }
       content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
     PremiumRequired:
       description: Premium-only resource (FR-035)
-      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }, example: { code: PREMIUM_REQUIRED, message: 'Upgrade to premium to access this feature.' } } }
+      content:
+        {
+          application/json:
+            {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+              example:
+                { code: PREMIUM_REQUIRED, message: 'Upgrade to premium to access this feature.' },
+            },
+        }
     SubjectLimit:
       description: Free-plan subject limit reached (FR-012)
-      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }, example: { code: SUBJECT_LIMIT_REACHED, message: 'Free plan allows up to 3 active subjects.' } } }
+      content:
+        {
+          application/json:
+            {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+              example:
+                {
+                  code: SUBJECT_LIMIT_REACHED,
+                  message: 'Free plan allows up to 3 active subjects.',
+                },
+            },
+        }
     EmailVerificationRequired:
       description: Action requires a verified email (RD-1)
-      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }, example: { code: EMAIL_VERIFICATION_REQUIRED, message: 'Please verify your email before changing security-sensitive settings.' } } }
+      content:
+        {
+          application/json:
+            {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+              example:
+                {
+                  code: EMAIL_VERIFICATION_REQUIRED,
+                  message: 'Please verify your email before changing security-sensitive settings.',
+                },
+            },
+        }
     AiRateLimit:
       description: AI rate limit exceeded (FR-039)
       headers: { Retry-After: { schema: { type: integer } } }
-      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }, example: { code: AI_RATE_LIMIT, message: 'AI monthly limit (30/month) reached; resets on the 1st.' } } }
+      content:
+        {
+          application/json:
+            {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+              example:
+                {
+                  code: AI_RATE_LIMIT,
+                  message: 'AI monthly limit (30/month) reached; resets on the 1st.',
+                },
+            },
+        }
 
   requestBodies:
     RegisterBody:
       required: true
-      content: { application/json: { schema: { type: object, required: [email, password, name], properties: { email: { type: string, format: email }, password: { type: string, minLength: 8 }, name: { type: string } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [email, password, name],
+                  properties:
+                    {
+                      email: { type: string, format: email },
+                      password: { type: string, minLength: 8 },
+                      name: { type: string },
+                    },
+                },
+            },
+        }
     LoginBody:
       required: true
-      content: { application/json: { schema: { type: object, required: [email, password, deviceId], properties: { email: { type: string, format: email }, password: { type: string }, deviceId: { type: string }, fcmToken: { type: string } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [email, password, deviceId],
+                  properties:
+                    {
+                      email: { type: string, format: email },
+                      password: { type: string },
+                      deviceId: { type: string },
+                      fcmToken: { type: string },
+                    },
+                },
+            },
+        }
     GoogleLoginBody:
       required: true
-      content: { application/json: { schema: { type: object, required: [idToken, deviceId], properties: { idToken: { type: string }, deviceId: { type: string }, fcmToken: { type: string } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [idToken, deviceId],
+                  properties:
+                    {
+                      idToken: { type: string },
+                      deviceId: { type: string },
+                      fcmToken: { type: string },
+                    },
+                },
+            },
+        }
     RefreshBody:
       required: true
-      content: { application/json: { schema: { type: object, required: [refreshToken, deviceId], properties: { refreshToken: { type: string }, deviceId: { type: string } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [refreshToken, deviceId],
+                  properties: { refreshToken: { type: string }, deviceId: { type: string } },
+                },
+            },
+        }
     ForgotPasswordBody:
       required: true
-      content: { application/json: { schema: { type: object, required: [email], properties: { email: { type: string, format: email } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [email],
+                  properties: { email: { type: string, format: email } },
+                },
+            },
+        }
     ResetPasswordBody:
       required: true
-      content: { application/json: { schema: { type: object, required: [token, newPassword], properties: { token: { type: string }, newPassword: { type: string, minLength: 8 } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [token, newPassword],
+                  properties:
+                    { token: { type: string }, newPassword: { type: string, minLength: 8 } },
+                },
+            },
+        }
     VerifyEmailBody:
       required: true
-      content: { application/json: { schema: { type: object, required: [token], properties: { token: { type: string } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema: { type: object, required: [token], properties: { token: { type: string } } },
+            },
+        }
     UpdateUserBody:
       required: true
-      content: { application/json: { schema: { type: object, properties: { name: { type: string }, locale: { type: string }, timezone: { type: string }, avatarUrl: { type: string, format: uri } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  properties:
+                    {
+                      name: { type: string },
+                      locale: { type: string },
+                      timezone: { type: string },
+                      avatarUrl: { type: string, format: uri },
+                    },
+                },
+            },
+        }
     UpdateSettingsBody:
       required: true
       content: { application/json: { schema: { $ref: '#/components/schemas/UserSettings' } } }
     FcmTokenBody:
       required: true
-      content: { application/json: { schema: { type: object, required: [fcmToken], properties: { fcmToken: { type: string } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                { type: object, required: [fcmToken], properties: { fcmToken: { type: string } } },
+            },
+        }
     CreateSubjectBody:
       required: true
-      content: { application/json: { schema: { type: object, required: [name], properties: { name: { type: string }, color: { type: string }, icon: { type: string }, dailyTargetMinutes: { type: integer, minimum: 0 } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [name],
+                  properties:
+                    {
+                      name: { type: string },
+                      color: { type: string },
+                      icon: { type: string },
+                      dailyTargetMinutes: { type: integer, minimum: 0 },
+                    },
+                },
+            },
+        }
     UpdateSubjectBody:
       required: true
-      content: { application/json: { schema: { type: object, properties: { name: { type: string }, color: { type: string }, icon: { type: string }, dailyTargetMinutes: { type: integer, minimum: 0 }, isArchived: { type: boolean } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  properties:
+                    {
+                      name: { type: string },
+                      color: { type: string },
+                      icon: { type: string },
+                      dailyTargetMinutes: { type: integer, minimum: 0 },
+                      isArchived: { type: boolean },
+                    },
+                },
+            },
+        }
     CreateChapterBody:
       required: true
-      content: { application/json: { schema: { type: object, required: [title], properties: { title: { type: string }, order: { type: integer } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [title],
+                  properties: { title: { type: string }, order: { type: integer } },
+                },
+            },
+        }
     UpdateChapterBody:
       required: true
-      content: { application/json: { schema: { type: object, properties: { title: { type: string }, order: { type: integer }, completed: { type: boolean } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  properties:
+                    {
+                      title: { type: string },
+                      order: { type: integer },
+                      completed: { type: boolean },
+                    },
+                },
+            },
+        }
     CreateScheduleBody:
       required: true
       content:
@@ -728,10 +1456,45 @@ components:
               reminderEnabled: { type: boolean, default: true }
     UpdateScheduleBody:
       required: true
-      content: { application/json: { schema: { type: object, properties: { title: { type: string }, startAt: { type: string, format: date-time }, endAt: { type: string, format: date-time }, daysOfWeek: { type: array, items: { type: integer, minimum: 0, maximum: 6 } }, rrule: { type: string }, reminderMinutesBefore: { type: integer, minimum: 0 }, reminderEnabled: { type: boolean }, isActive: { type: boolean } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  properties:
+                    {
+                      title: { type: string },
+                      startAt: { type: string, format: date-time },
+                      endAt: { type: string, format: date-time },
+                      daysOfWeek: { type: array, items: { type: integer, minimum: 0, maximum: 6 } },
+                      rrule: { type: string },
+                      reminderMinutesBefore: { type: integer, minimum: 0 },
+                      reminderEnabled: { type: boolean },
+                      isActive: { type: boolean },
+                    },
+                },
+            },
+        }
     StartPomodoroBody:
       required: false
-      content: { application/json: { schema: { type: object, properties: { subjectId: { type: string }, focusMinutes: { type: integer, minimum: 1, maximum: 240, default: 25 }, breakMinutes: { type: integer, minimum: 0, maximum: 60, default: 5 } } } } }
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  properties:
+                    {
+                      subjectId: { type: string },
+                      focusMinutes: { type: integer, minimum: 1, maximum: 240, default: 25 },
+                      breakMinutes: { type: integer, minimum: 0, maximum: 60, default: 5 },
+                    },
+                },
+            },
+        }
     PlannedItemBody:
       required: true
       content:
@@ -755,38 +1518,93 @@ components:
         tags: [Tasks, Revisions, Lectures, Exams]
         summary: List planned items of this kind in a range
         parameters:
-          - { in: query, name: from,      required: true,  schema: { type: string, format: date-time } }
-          - { in: query, name: to,        required: true,  schema: { type: string, format: date-time } }
+          - { in: query, name: from, required: true, schema: { type: string, format: date-time } }
+          - { in: query, name: to, required: true, schema: { type: string, format: date-time } }
           - { in: query, name: subjectId, required: false, schema: { type: string } }
-        responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/PlannedItem' } } } } } }
+        responses:
+          {
+            '200':
+              {
+                description: OK,
+                content:
+                  {
+                    application/json:
+                      {
+                        schema:
+                          { type: array, items: { $ref: '#/components/schemas/PlannedItem' } },
+                      },
+                  },
+              },
+          }
       post:
         tags: [Tasks, Revisions, Lectures, Exams]
         summary: Create a planned item of this kind
         requestBody: { $ref: '#/components/requestBodies/PlannedItemBody' }
-        responses: { '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/PlannedItem' } } } } }
+        responses:
+          {
+            '201':
+              {
+                description: Created,
+                content:
+                  { application/json: { schema: { $ref: '#/components/schemas/PlannedItem' } } },
+              },
+          }
     PlannedItemResource:
       parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
-      get:    { tags: [Tasks, Revisions, Lectures, Exams], summary: Read one, responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlannedItem' } } } } } }
+      get:
+        {
+          tags: [Tasks, Revisions, Lectures, Exams],
+          summary: Read one,
+          responses:
+            {
+              '200':
+                {
+                  description: OK,
+                  content:
+                    { application/json: { schema: { $ref: '#/components/schemas/PlannedItem' } } },
+                },
+            },
+        }
       patch:
         tags: [Tasks, Revisions, Lectures, Exams]
         summary: Update one (cancels and reschedules pending reminders — FR-027)
         requestBody: { $ref: '#/components/requestBodies/PlannedItemBody' }
-        responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlannedItem' } } } } }
-      delete: { tags: [Tasks, Revisions, Lectures, Exams], summary: Delete one (cancels pending reminders — FR-027), responses: { '204': { description: No Content } } }
+        responses:
+          {
+            '200':
+              {
+                description: OK,
+                content:
+                  { application/json: { schema: { $ref: '#/components/schemas/PlannedItem' } } },
+              },
+          }
+      delete:
+        {
+          tags: [Tasks, Revisions, Lectures, Exams],
+          summary: Delete one (cancels pending reminders — FR-027),
+          responses: { '204': { description: No Content } },
+        }
     PlannedItemComplete:
       parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
       post:
         tags: [Tasks, Revisions, Lectures, Exams]
         summary: 'Mark complete (awards reward points; does NOT advance streak — RD-3 / FR-024)'
-        responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlannedItem' } } } } }
+        responses:
+          {
+            '200':
+              {
+                description: OK,
+                content:
+                  { application/json: { schema: { $ref: '#/components/schemas/PlannedItem' } } },
+              },
+          }
 
   schemas:
-
     ErrorResponse:
       type: object
       required: [code, message]
       properties:
-        code:    { type: string, example: VALIDATION }
+        code: { type: string, example: VALIDATION }
         message: { type: string }
         details: { type: object, additionalProperties: true }
 
@@ -794,217 +1612,236 @@ components:
       type: object
       required: [accessToken, refreshToken, accessExpiresIn, refreshExpiresIn]
       properties:
-        accessToken:      { type: string }
-        refreshToken:     { type: string }
-        accessExpiresIn:  { type: integer, example: 900 }
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        accessExpiresIn: { type: integer, example: 900 }
         refreshExpiresIn: { type: integer, example: 2592000 }
 
     AuthResponse:
       type: object
       properties:
-        user:   { $ref: '#/components/schemas/User' }
+        user: { $ref: '#/components/schemas/User' }
         tokens: { $ref: '#/components/schemas/TokenPair' }
 
     AuthSession:
       type: object
       properties:
-        id:        { type: string }
-        deviceId:  { type: string }
+        id: { type: string }
+        deviceId: { type: string }
         userAgent: { type: string }
-        ip:        { type: string }
+        ip: { type: string }
         createdAt: { type: string, format: date-time }
         expiresAt: { type: string, format: date-time }
-        current:   { type: boolean, description: True if this is the session making the request }
+        current: { type: boolean, description: True if this is the session making the request }
 
     UserSettings:
       type: object
       properties:
-        locale:   { type: string, example: en-US }
+        locale: { type: string, example: en-US }
         timezone: { type: string, example: Europe/Berlin }
         focusMode: { type: boolean }
         notifications:
           type: object
           properties:
             reminders: { type: boolean }
-            streak:    { type: boolean }
+            streak: { type: boolean }
             marketing: { type: boolean }
 
     User:
       type: object
       properties:
-        id:             { type: string }
-        email:          { type: string, format: email }
-        name:           { type: string }
-        avatarUrl:      { type: string, format: uri }
-        emailVerified:  { type: boolean }
-        plan:           { type: string, enum: [free, premium] }
-        premiumUntil:   { type: string, format: date-time }
-        settings:       { $ref: '#/components/schemas/UserSettings' }
-        totalPoints:    { type: integer }
+        id: { type: string }
+        email: { type: string, format: email }
+        name: { type: string }
+        avatarUrl: { type: string, format: uri }
+        emailVerified: { type: boolean }
+        plan: { type: string, enum: [free, premium] }
+        premiumUntil: { type: string, format: date-time }
+        settings: { $ref: '#/components/schemas/UserSettings' }
+        totalPoints: { type: integer }
 
     Subject:
       type: object
       properties:
-        id:                 { type: string }
-        name:               { type: string }
-        color:              { type: string }
-        icon:               { type: string }
+        id: { type: string }
+        name: { type: string }
+        color: { type: string }
+        icon: { type: string }
         dailyTargetMinutes: { type: integer }
-        progressPercent:    { type: number }
-        isArchived:         { type: boolean }
+        progressPercent: { type: number }
+        isArchived: { type: boolean }
 
     Chapter:
       type: object
       properties:
-        id:          { type: string }
-        subjectId:   { type: string }
-        title:       { type: string }
-        order:       { type: integer }
-        completed:   { type: boolean }
+        id: { type: string }
+        subjectId: { type: string }
+        title: { type: string }
+        order: { type: integer }
+        completed: { type: boolean }
         completedAt: { type: string, format: date-time }
 
     StudySchedule:
       type: object
       properties:
-        id:                    { type: string }
-        subjectId:             { type: string }
-        title:                 { type: string }
-        startAt:               { type: string, format: date-time }
-        endAt:                 { type: string, format: date-time }
-        daysOfWeek:            { type: array, items: { type: integer } }
-        rrule:                 { type: string }
+        id: { type: string }
+        subjectId: { type: string }
+        title: { type: string }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        daysOfWeek: { type: array, items: { type: integer } }
+        rrule: { type: string }
         reminderMinutesBefore: { type: integer }
-        reminderEnabled:       { type: boolean }
-        isActive:              { type: boolean }
+        reminderEnabled: { type: boolean }
+        isActive: { type: boolean }
 
     PomodoroSession:
       type: object
       properties:
-        id:                { type: string }
-        subjectId:         { type: string }
-        startedAt:         { type: string, format: date-time }
-        endedAt:           { type: string, format: date-time }
-        focusMinutes:      { type: integer }
-        breakMinutes:      { type: integer }
-        completedCycles:   { type: integer }
+        id: { type: string }
+        subjectId: { type: string }
+        startedAt: { type: string, format: date-time }
+        endedAt: { type: string, format: date-time }
+        focusMinutes: { type: integer }
+        breakMinutes: { type: integer }
+        completedCycles: { type: integer }
         totalFocusMinutes: { type: integer }
-        status:            { type: string, enum: [active, paused, completed, aborted] }
+        status: { type: string, enum: [active, paused, completed, aborted] }
 
     PomodoroPage:
       type: object
       properties:
-        items:      { type: array, items: { $ref: '#/components/schemas/PomodoroSession' } }
+        items: { type: array, items: { $ref: '#/components/schemas/PomodoroSession' } }
         nextCursor: { type: string }
 
     Streak:
       type: object
       properties:
-        current:        { type: integer }
-        longest:        { type: integer }
+        current: { type: integer }
+        longest: { type: integer }
         lastActiveDate: { type: string }
-        points:         { type: integer }
+        points: { type: integer }
         rewards:
           type: array
-          items: { type: object, properties: { code: { type: string }, awardedAt: { type: string, format: date-time } } }
+          items:
+            {
+              type: object,
+              properties:
+                { code: { type: string }, awardedAt: { type: string, format: date-time } },
+            }
 
     PlannedItem:
       type: object
       properties:
-        id:                    { type: string }
-        kind:                  { type: string, enum: [task, revision, lecture, exam] }
-        subjectId:             { type: string }
-        title:                 { type: string }
-        notes:                 { type: string }
-        plannedAt:             { type: string, format: date-time }
-        durationMinutes:       { type: integer }
-        recurrence:            { type: string, enum: [daily, weekly, once] }
+        id: { type: string }
+        kind: { type: string, enum: [task, revision, lecture, exam] }
+        subjectId: { type: string }
+        title: { type: string }
+        notes: { type: string }
+        plannedAt: { type: string, format: date-time }
+        durationMinutes: { type: integer }
+        recurrence: { type: string, enum: [daily, weekly, once] }
         reminderMinutesBefore: { type: integer }
-        reminderEnabled:       { type: boolean }
-        completed:             { type: boolean }
-        completedAt:           { type: string, format: date-time }
-        rewardPoints:          { type: integer }
+        reminderEnabled: { type: boolean }
+        completed: { type: boolean }
+        completedAt: { type: string, format: date-time }
+        rewardPoints: { type: integer }
 
     Notification:
       type: object
       properties:
-        id:        { type: string }
-        type:      { type: string, enum: [reminder, streak, reward, system] }
-        title:     { type: string }
-        body:      { type: string }
-        data:      { type: object, additionalProperties: true }
-        read:      { type: boolean }
+        id: { type: string }
+        type: { type: string, enum: [reminder, streak, reward, system] }
+        title: { type: string }
+        body: { type: string }
+        data: { type: object, additionalProperties: true }
+        read: { type: boolean }
         createdAt: { type: string, format: date-time }
 
     NotificationPage:
       type: object
       properties:
-        items:      { type: array, items: { $ref: '#/components/schemas/Notification' } }
+        items: { type: array, items: { $ref: '#/components/schemas/Notification' } }
         nextCursor: { type: string }
 
     NotificationPrefs:
       type: object
       properties:
         reminders: { type: boolean }
-        streak:    { type: boolean }
+        streak: { type: boolean }
         marketing: { type: boolean }
 
     Subscription:
       type: object
       properties:
-        provider:          { type: string, enum: [stripe, google_play, app_store] }
-        status:            { type: string, enum: [trialing, active, past_due, canceled, expired] }
-        currentPeriodEnd:  { type: string, format: date-time }
-        priceId:           { type: string }
+        provider: { type: string, enum: [stripe, google_play, app_store] }
+        status: { type: string, enum: [trialing, active, past_due, canceled, expired] }
+        currentPeriodEnd: { type: string, format: date-time }
+        priceId: { type: string }
 
     AiJob:
       type: object
       properties:
-        id:            { type: string }
-        status:        { type: string, enum: [queued, processing, completed, failed] }
+        id: { type: string }
+        status: { type: string, enum: [queued, processing, completed, failed] }
         failureReason: { type: string }
-        artifactIds:   { type: array, items: { type: string } }
-        createdAt:     { type: string, format: date-time }
-        completedAt:   { type: string, format: date-time }
+        artifactIds: { type: array, items: { type: string } }
+        createdAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time }
 
     AiArtifact:
       type: object
       properties:
-        id:        { type: string }
-        kind:      { type: string, enum: [summary, flashcards, questions] }
+        id: { type: string }
+        kind: { type: string, enum: [summary, flashcards, questions] }
         subjectId: { type: string }
-        content:   { type: object, description: 'Shape varies by kind — see data-model.md.' }
+        content: { type: object, description: 'Shape varies by kind — see data-model.md.' }
         createdAt: { type: string, format: date-time }
 
     AnalyticsSummary:
       type: object
       properties:
-        range: { type: object, properties: { from: { type: string, format: date }, to: { type: string, format: date } } }
+        range:
+          {
+            type: object,
+            properties:
+              { from: { type: string, format: date }, to: { type: string, format: date } },
+          }
         totals:
           type: object
           properties:
-            minutes:        { type: integer }
-            sessions:       { type: integer }
+            minutes: { type: integer }
+            sessions: { type: integer }
             tasksCompleted: { type: integer }
         series:
           type: array
-          items: { type: object, properties: { date: { type: string, format: date }, minutes: { type: integer }, tasks: { type: integer } } }
+          items:
+            {
+              type: object,
+              properties:
+                {
+                  date: { type: string, format: date },
+                  minutes: { type: integer },
+                  tasks: { type: integer },
+                },
+            }
 
     PerSubjectStat:
       type: object
       properties:
         subjectId: { type: string }
-        name:      { type: string }
-        minutes:   { type: integer }
-        sessions:  { type: integer }
+        name: { type: string }
+        minutes: { type: integer }
+        sessions: { type: integer }
 
     HeatmapPoint:
       type: object
       properties:
-        date:    { type: string, format: date }
+        date: { type: string, format: date }
         minutes: { type: integer }
 
     AnalyticsPerformance:
       type: object
       properties:
-        completionRate:   { type: number }
-        streakRetention:  { type: number }
+        completionRate: { type: number }
+        streakRetention: { type: number }
