@@ -864,6 +864,62 @@ class AppLocalizationsAr extends AppLocalizations {
   String get plannerSavePlan => 'حفظ الخطة';
 
   @override
+  String get plannerReminder => 'تذكير';
+
+  @override
+  String get plannerReminderOff => 'بدون تذكير';
+
+  @override
+  String get plannerReminderAtTime => 'في وقت الحدث';
+
+  @override
+  String plannerReminderMinutesBefore(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: 'قبل $minutes دقيقة',
+      many: 'قبل $minutes دقيقة',
+      few: 'قبل $minutes دقائق',
+      two: 'قبل دقيقتين',
+      one: 'قبل دقيقة واحدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get plannerReminderHourBefore => 'قبل ساعة واحدة';
+
+  @override
+  String get plannerReminderDayBefore => 'قبل يوم واحد';
+
+  @override
+  String plannerReminderNotificationTitle(String title) {
+    return 'تذكير: $title';
+  }
+
+  @override
+  String plannerReminderNotificationBody(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: 'مستحق خلال $minutes دقيقة.',
+      many: 'مستحق خلال $minutes دقيقة.',
+      few: 'مستحق خلال $minutes دقائق.',
+      two: 'مستحق خلال دقيقتين.',
+      one: 'مستحق خلال دقيقة واحدة.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String plannerDueNotificationTitle(String title) {
+    return 'مستحق الآن: $title';
+  }
+
+  @override
+  String get plannerDueNotificationBody => 'هذا مستحق الآن. لا تنسَ!';
+
+  @override
   String get plannerTypeTask => 'مهمة';
 
   @override

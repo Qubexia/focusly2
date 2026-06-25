@@ -392,6 +392,44 @@
   "plannerSubjectSelect": "Select",
   "plannerSubjectGeneral": "General",
   "plannerSavePlan": "Save Plan",
+  "plannerReminder": "Reminder",
+  "plannerReminderOff": "No reminder",
+  "plannerReminderAtTime": "At time of event",
+  "plannerReminderMinutesBefore": "{minutes, plural, =1{1 minute before} other{{minutes} minutes before}}",
+  "@plannerReminderMinutesBefore": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "plannerReminderHourBefore": "1 hour before",
+  "plannerReminderDayBefore": "1 day before",
+  "plannerReminderNotificationTitle": "Reminder: {title}",
+  "@plannerReminderNotificationTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "plannerReminderNotificationBody": "{minutes, plural, =1{Due in 1 minute.} other{Due in {minutes} minutes.}}",
+  "@plannerReminderNotificationBody": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "plannerDueNotificationTitle": "Due now: {title}",
+  "@plannerDueNotificationTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "plannerDueNotificationBody": "This is due now. Don't forget!",
   "plannerTypeTask": "Task",
   "plannerTypeRevision": "Revision",
   "plannerTypeLecture": "Lecture",

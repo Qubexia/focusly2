@@ -6,8 +6,11 @@ import 'package:go_router/go_router.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:zakerly/l10n/app_localizations.dart';
 
+import '../../../../core/premium/premium_status.dart';
 import '../../../../core/services/schedule_focus_bus.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../subscription/presentation/cubit/subscription_cubit.dart';
 import '../../../subjects/data/models/subject_model.dart';
 import '../../data/models/pomodoro_session_model.dart';
 import '../cubit/pomodoro_cubit.dart';
@@ -572,12 +575,19 @@ class _ActionButtons extends StatelessWidget {
     final cubit = context.read<PomodoroCubit>();
 
     if (state.activeSession == null) {
+      // Premium users get a distraction-free session: silence the whole device.
+      final isPremium = hasPremiumAccess(
+        authState: context.watch<AuthBloc>().state,
+        subscription: context.watch<SubscriptionCubit>().state.subscription,
+      );
       return Center(
         child: _PrimaryBtn(
           label: l10n.pomodoroStartSession,
           icon: Icons.play_arrow_rounded,
           accentColor: accentColor,
-          onTap: state.isSaving ? null : cubit.startSession,
+          onTap: state.isSaving
+              ? null
+              : () => cubit.startSession(silenceNotifications: isPremium),
         ),
       );
     }

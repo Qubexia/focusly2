@@ -11,10 +11,15 @@ class CreatePlannedItemSheet extends StatefulWidget {
     required this.initialDate,
     required this.onSave,
     this.isSaving = false,
+    this.lockedSubjectId,
   });
 
   final DateTime initialDate;
   final bool isSaving;
+
+  /// When set, the sheet is scoped to this subject and hides the subject
+  /// picker — every created item belongs to the given subject.
+  final String? lockedSubjectId;
   final Function({
     required PlannedItemType type,
     required String title,
@@ -22,6 +27,7 @@ class CreatePlannedItemSheet extends StatefulWidget {
     required DateTime date,
     String? time,
     String? subjectId,
+    int? reminderMinutesBefore,
   }) onSave;
 
   @override
@@ -37,6 +43,13 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay? _selectedTime;
   String? _selectedSubjectId;
+
+  /// Minutes-before-due to fire the reminder. `null` = no reminder, `0` = at
+  /// the exact due time. Defaults to a 15-minute heads-up.
+  int? _reminderMinutesBefore = 15;
+
+  /// Reminder offsets offered in the picker (minutes before due).
+  static const List<int?> _reminderOptions = [null, 0, 5, 15, 30, 60, 1440];
   
   List<SubjectModel> _subjects = [];
   bool _isLoadingSubjects = true;
@@ -45,7 +58,12 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
   void initState() {
     super.initState();
     _selectedDate = widget.initialDate;
-    _loadSubjects();
+    _selectedSubjectId = widget.lockedSubjectId;
+    if (widget.lockedSubjectId == null) {
+      _loadSubjects();
+    } else {
+      _isLoadingSubjects = false;
+    }
   }
 
   Future<void> _loadSubjects() async {
@@ -220,36 +238,58 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _SectionLabel(label: l10n.plannerSubject),
-                        const SizedBox(height: 8),
-                        _isLoadingSubjects
-                            ? const Center(child: LinearProgressIndicator())
-                            : DropdownButtonFormField<String?>(
-                                initialValue: _selectedSubjectId,
-                                decoration: const InputDecoration(
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  if (widget.lockedSubjectId == null) ...[
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _SectionLabel(label: l10n.plannerSubject),
+                          const SizedBox(height: 8),
+                          _isLoadingSubjects
+                              ? const Center(child: LinearProgressIndicator())
+                              : DropdownButtonFormField<String?>(
+                                  initialValue: _selectedSubjectId,
+                                  decoration: const InputDecoration(
+                                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
+                                  hint: Text(l10n.plannerSubjectSelect),
+                                  items: [
+                                    DropdownMenuItem(value: null, child: Text(l10n.plannerSubjectGeneral)),
+                                    ..._subjects.map((s) => DropdownMenuItem(
+                                          value: s.id,
+                                          child: Text(s.name, overflow: TextOverflow.ellipsis),
+                                        )),
+                                  ],
+                                  onChanged: (val) => setState(() => _selectedSubjectId = val),
                                 ),
-                                hint: Text(l10n.plannerSubjectSelect),
-                                items: [
-                                  DropdownMenuItem(value: null, child: Text(l10n.plannerSubjectGeneral)),
-                                  ..._subjects.map((s) => DropdownMenuItem(
-                                        value: s.id,
-                                        child: Text(s.name, overflow: TextOverflow.ellipsis),
-                                      )),
-                                ],
-                                onChanged: (val) => setState(() => _selectedSubjectId = val),
-                              ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
-              
+
+              const SizedBox(height: 24),
+              _SectionLabel(label: l10n.plannerReminder),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<int?>(
+                initialValue: _reminderMinutesBefore,
+                decoration: const InputDecoration(
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  prefixIcon: Icon(Icons.notifications_active_rounded, size: 20),
+                ),
+                items: _reminderOptions
+                    .map((minutes) => DropdownMenuItem<int?>(
+                          value: minutes,
+                          child: Text(_reminderLabel(l10n, minutes)),
+                        ))
+                    .toList(),
+                onChanged: (value) =>
+                    setState(() => _reminderMinutesBefore = value),
+              ),
+
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -278,7 +318,16 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
       date: _selectedDate,
       time: _selectedTime?.format(context),
       subjectId: _selectedSubjectId,
+      reminderMinutesBefore: _reminderMinutesBefore,
     );
+  }
+
+  String _reminderLabel(AppLocalizations l10n, int? minutes) {
+    if (minutes == null) return l10n.plannerReminderOff;
+    if (minutes == 0) return l10n.plannerReminderAtTime;
+    if (minutes == 60) return l10n.plannerReminderHourBefore;
+    if (minutes == 1440) return l10n.plannerReminderDayBefore;
+    return l10n.plannerReminderMinutesBefore(minutes);
   }
 
   IconData _getIcon(PlannedItemType type) {

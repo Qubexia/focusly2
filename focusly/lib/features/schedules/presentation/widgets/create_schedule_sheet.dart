@@ -58,7 +58,7 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
   @override
   void initState() {
     super.initState();
-    _selectedDate = _dateOnly(_selectedDate);
+    _selectedDate = _dateOnly(widget.selectedDate);
     _prefillFromInitial();
     _loadSubjects();
   }

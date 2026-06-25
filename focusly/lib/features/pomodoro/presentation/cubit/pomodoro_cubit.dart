@@ -9,6 +9,7 @@ import '../../../subjects/data/repositories/subjects_repository.dart';
 import '../../data/models/pomodoro_session_model.dart';
 import '../../data/models/pomodoro_today_model.dart';
 import '../../data/repositories/pomodoro_repository.dart';
+import '../../../../core/services/dnd_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/schedule_focus_bus.dart';
 import '../../../../core/localization/app_l10n.dart';
@@ -28,6 +29,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
   final PomodoroRepository _repository;
   final SubjectsRepository _subjectsRepository;
   final NotificationService _notificationService = NotificationService();
+  final DndService _dndService = DndService();
   final SchedulesRemoteDataSource _schedulesDataSource =
       SchedulesRemoteDataSource();
   Timer? _ticker;
@@ -254,7 +256,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
     }
   }
 
-  Future<void> startSession() async {
+  Future<void> startSession({bool silenceNotifications = false}) async {
     if (state.activeSession != null) return;
     emit(state.copyWith(isSaving: true, clearFeedback: true));
     try {
@@ -290,6 +292,10 @@ class PomodoroCubit extends Cubit<PomodoroState> {
       );
       await _refreshTodaySafely();
       _restartTickerIfNeeded();
+      // Premium perk: silence the whole device for the focus session.
+      if (silenceNotifications) {
+        await _dndService.enableFocusSilence();
+      }
     } on DioException catch (e) {
       final code = _extractCode(e);
       if (code == 'POMODORO_ALREADY_ACTIVE') {
@@ -392,6 +398,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
       await _repository.completeSession(session.id);
       _stopTicker();
       _resetAnchors(running: false);
+      await _dndService.disableFocusSilence();
       emit(
         state.copyWith(
           isSaving: false,
@@ -426,6 +433,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
       await _repository.abortSession(session.id);
       _stopTicker();
       _resetAnchors(running: false);
+      await _dndService.disableFocusSilence();
       // Aborting does not count toward the schedule; drop any link.
       _linkedScheduleId = null;
       _linkedScheduleDate = null;
@@ -583,11 +591,15 @@ class PomodoroCubit extends Cubit<PomodoroState> {
     _stopTicker();
     if (_autoCompleting) return;
     _autoCompleting = true;
-    _notificationService.showNotification(
-      title: AppL10n.current.pomodoroSessionDoneTitle,
-      body: AppL10n.current.pomodoroSessionDoneBody,
-    );
-    completeSession();
+    // Lift the focus-session silence first so the completion alert is audible,
+    // then surface it and finalize the session.
+    _dndService.disableFocusSilence().whenComplete(() {
+      _notificationService.showNotification(
+        title: AppL10n.current.pomodoroSessionDoneTitle,
+        body: AppL10n.current.pomodoroSessionDoneBody,
+      );
+      completeSession();
+    });
   }
 
   void _stopTicker() {

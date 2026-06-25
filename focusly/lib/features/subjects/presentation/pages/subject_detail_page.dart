@@ -6,6 +6,7 @@ import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../ai/presentation/pages/ai_artifact_viewer_page.dart';
+import '../../../planner/presentation/widgets/subject_planner_section.dart';
 import '../../data/models/chapter_model.dart';
 import '../../data/models/subject_model.dart';
 import '../cubit/subject_detail_cubit.dart';
@@ -116,7 +117,14 @@ class _SubjectDetailView extends StatelessWidget {
                                   _pickAndAnalyzeSubjectPdf(context),
                               onView: () => _openSubjectMaterials(context),
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 24),
+                            SubjectPlannerSection(
+                              subjectId: subject.id,
+                              accentColor: _SubjectPalette.resolveColor(
+                                subject.color,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
                             Text(
                               l10n.subjectsChaptersHeader,
                               style: Theme.of(context)

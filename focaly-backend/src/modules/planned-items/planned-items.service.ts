@@ -7,10 +7,7 @@ import { PlannedItemCompletedEvent } from '../../shared/events/planned-item-comp
 import { PlannedItemDeletedEvent } from '../../shared/events/planned-item-deleted.event';
 import { UsersRepository } from '../users/users.repository';
 
-import {
-  CreatePlannedItemDto,
-  UpdatePlannedItemDto,
-} from './dto';
+import { CreatePlannedItemDto, UpdatePlannedItemDto } from './dto';
 import { PlannedItemsRepository } from './planned-items.repository';
 import { PlannedItemKind } from './schemas/planned-item.schema';
 
@@ -31,21 +28,33 @@ export class PlannedItemsService {
       notes: dto.notes ?? null,
       plannedAt: new Date(dto.plannedAt),
       durationMinutes: dto.durationMinutes ?? null,
-      recurrence: dto.recurrence as any ?? 'once',
+      recurrence: (dto.recurrence as 'daily' | 'weekly' | 'once' | undefined) ?? 'once',
       reminderMinutesBefore: dto.reminderMinutesBefore ?? 15,
       reminderEnabled: dto.reminderEnabled ?? true,
       rewardPoints: dto.rewardPoints ?? 0,
     });
 
-    this.eventBus.publish(
-      new PlannedItemChangedEvent(userId, item.id, kind),
-    );
+    this.eventBus.publish(new PlannedItemChangedEvent(userId, String(item.id), kind));
 
     return item;
   }
 
-  async findAll(userId: string, kind: PlannedItemKind, includeCompleted?: string) {
-    return this.repository.findAllByUser(userId, kind, includeCompleted === 'true');
+  async findAll(
+    userId: string,
+    kind: PlannedItemKind,
+    options: {
+      subjectId?: string;
+      from?: string;
+      to?: string;
+      includeCompleted?: string;
+    } = {},
+  ) {
+    return this.repository.findAllByUser(userId, kind, {
+      subjectId: options.subjectId,
+      from: options.from,
+      to: options.to,
+      includeCompleted: options.includeCompleted === 'true',
+    });
   }
 
   async findOne(userId: string, kind: PlannedItemKind, id: string) {
@@ -75,7 +84,8 @@ export class PlannedItemsService {
     if (dto.plannedAt !== undefined) update.plannedAt = new Date(dto.plannedAt);
     if (dto.durationMinutes !== undefined) update.durationMinutes = dto.durationMinutes;
     if (dto.recurrence !== undefined) update.recurrence = dto.recurrence;
-    if (dto.reminderMinutesBefore !== undefined) update.reminderMinutesBefore = dto.reminderMinutesBefore;
+    if (dto.reminderMinutesBefore !== undefined)
+      update.reminderMinutesBefore = dto.reminderMinutesBefore;
     if (dto.reminderEnabled !== undefined) update.reminderEnabled = dto.reminderEnabled;
     if (dto.rewardPoints !== undefined) update.rewardPoints = dto.rewardPoints;
 
@@ -87,9 +97,7 @@ export class PlannedItemsService {
       });
     }
 
-    this.eventBus.publish(
-      new PlannedItemChangedEvent(userId, id, kind),
-    );
+    this.eventBus.publish(new PlannedItemChangedEvent(userId, id, kind));
 
     return updated;
   }
@@ -114,9 +122,7 @@ export class PlannedItemsService {
       await this.usersRepository.updateOne({ _id: userId }, { $inc: { totalPoints: points } });
     }
 
-    this.eventBus.publish(
-      new PlannedItemCompletedEvent(userId, id, kind, points),
-    );
+    this.eventBus.publish(new PlannedItemCompletedEvent(userId, id, kind, points));
 
     return updated;
   }
@@ -132,8 +138,6 @@ export class PlannedItemsService {
 
     await this.repository.hardDelete(id);
 
-    this.eventBus.publish(
-      new PlannedItemDeletedEvent(userId, id, kind),
-    );
+    this.eventBus.publish(new PlannedItemDeletedEvent(userId, id, kind));
   }
 }

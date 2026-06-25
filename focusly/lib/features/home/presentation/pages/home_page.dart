@@ -130,7 +130,7 @@ class _HomeContent extends StatelessWidget {
                       _UpcomingTodaySection(
                         schedules: homeState.todaySchedules,
                         tasks: homeState.todayTasks,
-                        onOpenPlanner: () => context.push('/planner'),
+                        onOpenPlanner: () => context.push('/subjects'),
                         onOpenSchedule: () => context.go('/home?tab=1'),
                       ).animate().fadeIn(delay: 380.ms, duration: 500.ms),
                     ],
@@ -903,7 +903,7 @@ class _QuickActions extends StatelessWidget {
                 label: l10n.homeQuickAddTaskLabel,
                 subtitle: l10n.homeQuickAddTaskSubtitle,
                 icon: Icons.add_task_rounded,
-                route: '/planner',
+                route: '/subjects',
               ),
             ),
           ],

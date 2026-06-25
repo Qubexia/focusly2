@@ -198,6 +198,7 @@ class NotificationService {
     required String body,
     required DateTime scheduledDate,
     String? payload,
+    bool recordInInbox = true,
   }) async {
     await _notificationsPlugin.zonedSchedule(
       id: id,
@@ -208,6 +209,10 @@ class NotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       payload: payload,
     );
+
+    // Re-sync passes record different. When re-scheduling an already-known
+    // reminder we skip the inbox write so repeated syncs don't duplicate rows.
+    if (!recordInInbox) return;
 
     await _localDataSource.saveNotification(
       NotificationInboxModel(

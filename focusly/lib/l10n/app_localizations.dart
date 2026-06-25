@@ -1616,6 +1616,66 @@ abstract class AppLocalizations {
   /// **'Save Plan'**
   String get plannerSavePlan;
 
+  /// No description provided for @plannerReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get plannerReminder;
+
+  /// No description provided for @plannerReminderOff.
+  ///
+  /// In en, this message translates to:
+  /// **'No reminder'**
+  String get plannerReminderOff;
+
+  /// No description provided for @plannerReminderAtTime.
+  ///
+  /// In en, this message translates to:
+  /// **'At time of event'**
+  String get plannerReminderAtTime;
+
+  /// No description provided for @plannerReminderMinutesBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes, plural, =1{1 minute before} other{{minutes} minutes before}}'**
+  String plannerReminderMinutesBefore(int minutes);
+
+  /// No description provided for @plannerReminderHourBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour before'**
+  String get plannerReminderHourBefore;
+
+  /// No description provided for @plannerReminderDayBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'1 day before'**
+  String get plannerReminderDayBefore;
+
+  /// No description provided for @plannerReminderNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder: {title}'**
+  String plannerReminderNotificationTitle(String title);
+
+  /// No description provided for @plannerReminderNotificationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes, plural, =1{Due in 1 minute.} other{Due in {minutes} minutes.}}'**
+  String plannerReminderNotificationBody(int minutes);
+
+  /// No description provided for @plannerDueNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Due now: {title}'**
+  String plannerDueNotificationTitle(String title);
+
+  /// No description provided for @plannerDueNotificationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This is due now. Don\'t forget!'**
+  String get plannerDueNotificationBody;
+
   /// No description provided for @plannerTypeTask.
   ///
   /// In en, this message translates to:

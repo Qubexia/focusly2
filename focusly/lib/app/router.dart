@@ -11,7 +11,6 @@ import '../../features/auth/presentation/pages/verify_email_page.dart';
 import '../../features/subscription/presentation/pages/paywall_page.dart';
 import '../../features/home/presentation/pages/main_shell.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
-import '../../features/planner/presentation/pages/planner_page.dart';
 import '../../features/pomodoro/presentation/pages/pomodoro_history_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
 import '../../features/subjects/presentation/pages/subject_detail_page.dart';
@@ -76,10 +75,6 @@ final GoRouter appRouter = GoRouter(
         final tab = int.tryParse(state.uri.queryParameters['tab'] ?? '');
         return MainShell(initialIndex: tab == null ? 0 : tab.clamp(0, 4));
       },
-    ),
-    GoRoute(
-      path: '/planner',
-      builder: (context, state) => const PlannerPage(),
     ),
     GoRoute(
       path: '/pomodoro/history',

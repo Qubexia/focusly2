@@ -849,6 +849,56 @@ class AppLocalizationsEn extends AppLocalizations {
   String get plannerSavePlan => 'Save Plan';
 
   @override
+  String get plannerReminder => 'Reminder';
+
+  @override
+  String get plannerReminderOff => 'No reminder';
+
+  @override
+  String get plannerReminderAtTime => 'At time of event';
+
+  @override
+  String plannerReminderMinutesBefore(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes minutes before',
+      one: '1 minute before',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get plannerReminderHourBefore => '1 hour before';
+
+  @override
+  String get plannerReminderDayBefore => '1 day before';
+
+  @override
+  String plannerReminderNotificationTitle(String title) {
+    return 'Reminder: $title';
+  }
+
+  @override
+  String plannerReminderNotificationBody(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: 'Due in $minutes minutes.',
+      one: 'Due in 1 minute.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String plannerDueNotificationTitle(String title) {
+    return 'Due now: $title';
+  }
+
+  @override
+  String get plannerDueNotificationBody => 'This is due now. Don\'t forget!';
+
+  @override
   String get plannerTypeTask => 'Task';
 
   @override

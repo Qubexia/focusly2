@@ -126,7 +126,7 @@ class ProfilePage extends StatelessWidget {
                         icon: Icons.checklist_rounded,
                         title: l10n.profileDailyPlanner,
                         subtitle: l10n.profileDailyPlannerSubtitle,
-                        onTap: () => context.push('/planner'),
+                        onTap: () => context.push('/subjects'),
                       ),
                       _InfoActionTile(
                         icon: Icons.auto_awesome_rounded,

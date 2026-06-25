@@ -48,7 +48,16 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           clientSecret.startsWith('egy_csk_') ||
           clientSecret.startsWith('csk_');
 
+      // TEMP DIAGNOSTIC: shows which branch decides the Paymob flow on-device.
+      debugPrint(
+        '[Paymob] checkout keys=${checkout.keys.toList()} '
+        'publicKeyLen=${publicKey.length} '
+        'clientSecretPrefix=${clientSecret.isEmpty ? "<empty>" : clientSecret.substring(0, clientSecret.length < 8 ? clientSecret.length : 8)} '
+        'canUseNativeSdk=$canUseNativeSdk',
+      );
+
       if (publicKey.isEmpty || clientSecret.isEmpty) {
+        debugPrint('[Paymob] ABORT: session incomplete (missing key/secret)');
         emit(
           state.copyWith(
             isPurchasing: false,
@@ -60,6 +69,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       }
 
       if (!canUseNativeSdk) {
+        debugPrint('[Paymob] ABORT: canUseNativeSdk=false (backend not flagged + secret prefix unrecognized)');
         emit(
           state.copyWith(
             isPurchasing: false,
@@ -69,6 +79,8 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         );
         return;
       }
+
+      debugPrint('[Paymob] opening native SDK sheet...');
 
       final PaymobPaymentResult result;
       try {
@@ -84,13 +96,17 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       } on PlatformException catch (e) {
         // Native payment sheet failed to open / crashed: surface a clean error
         // instead of letting the exception bubble up and tear down the app.
+        debugPrint('[Paymob] PlatformException code=${e.code} message=${e.message} details=${e.details}');
+        final cleanMessage = (e.message?.trim().isNotEmpty == true)
+            ? e.message!.trim()
+            : AppL10n.current.subscriptionPaymentFailed;
         emit(
           state.copyWith(
             isPurchasing: false,
             feedbackType: SubscriptionFeedbackType.error,
-            feedbackMessage: (e.message?.trim().isNotEmpty == true)
-                ? e.message!.trim()
-                : AppL10n.current.subscriptionPaymentFailed,
+            // TEMP DIAGNOSTIC: prefix the native error code so it is visible
+            // on-device without a cable (e.g. "NO_ACTIVITY", "MISSING_PARAMETERS").
+            feedbackMessage: '[${e.code}] $cleanMessage',
           ),
         );
         return;
@@ -139,6 +155,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         ),
       );
     } on DioException catch (e) {
+      debugPrint('[Paymob] DioException type=${e.type} status=${e.response?.statusCode} url=${e.requestOptions.uri} data=${e.response?.data}');
       emit(
         state.copyWith(
           isPurchasing: false,
@@ -146,7 +163,8 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           feedbackMessage: _extractMessage(e),
         ),
       );
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[Paymob] Unexpected error: $e\n$st');
       emit(
         state.copyWith(
           isPurchasing: false,

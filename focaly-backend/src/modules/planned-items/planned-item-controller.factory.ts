@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Type,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -36,8 +37,17 @@ export function createPlannedItemController(
     @Get()
     findAll(
       @CurrentUser() user: CurrentUserPayload,
+      @Query('subjectId') subjectId?: string,
+      @Query('from') from?: string,
+      @Query('to') to?: string,
+      @Query('includeCompleted') includeCompleted?: string,
     ) {
-      return this.service.findAll(user.id, kind);
+      return this.service.findAll(user.id, kind, {
+        subjectId,
+        from,
+        to,
+        includeCompleted,
+      });
     }
 
     @Get(':id')
@@ -70,6 +80,10 @@ export function createPlannedItemController(
 }
 
 export const TasksController = createPlannedItemController('task', 'tasks', 'Tasks');
-export const RevisionsController = createPlannedItemController('revision', 'revisions', 'Revisions');
+export const RevisionsController = createPlannedItemController(
+  'revision',
+  'revisions',
+  'Revisions',
+);
 export const LecturesController = createPlannedItemController('lecture', 'lectures', 'Lectures');
 export const ExamsController = createPlannedItemController('exam', 'exams', 'Exams');
