@@ -64,7 +64,7 @@ class PlannedItemModel {
       date: plannedAt,
       time: _extractTime(json['time'], plannedAt),
       subjectId: _nullableString(json['subjectId'] ?? json['subject']),
-      completed: (json['completed'] ?? false) as bool,
+      completed: _parseBool(json['completed']),
       type: _stringifyId(json['type'] ?? json['kind'] ?? 'task'),
     );
   }
@@ -79,6 +79,17 @@ class PlannedItemModel {
     if (value == null) return null;
     if (value is String) return value;
     return value.toString();
+  }
+
+  static bool _parseBool(dynamic value) {
+    if (value == null) return false;
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == 'true' || normalized == '1';
+    }
+    return false;
   }
 
   static DateTime _parseDate(dynamic value) {

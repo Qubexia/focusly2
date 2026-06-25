@@ -102,16 +102,19 @@ class PlannerCubit extends Cubit<PlannerState> {
 
       _log('Created item "${created.title}" (id=${created.id}, type=${type.key})');
 
-      // Schedule local reminders off the time the user actually picked (an
-      // unambiguous local instant) rather than the value round-tripped through
-      // the backend, which may come back in UTC.
-      await _scheduleItemReminders(
-        itemId: created.id,
-        title: title,
-        type: type,
-        due: _composeDueDateTime(date, time),
-        reminderMinutesBefore: reminderMinutesBefore,
-      );
+      // Reminders are best-effort: a scheduling failure on release APKs
+      // (exact-alarm permission, timezone, etc.) must not fail the create flow.
+      try {
+        await _scheduleItemReminders(
+          itemId: created.id,
+          title: title,
+          type: type,
+          due: _composeDueDateTime(date, time),
+          reminderMinutesBefore: reminderMinutesBefore,
+        );
+      } catch (e, st) {
+        _log('Reminder scheduling failed after create (item persisted): $e\n$st');
+      }
 
       emit(state.copyWith(
         isSaving: false,
@@ -262,14 +265,18 @@ class PlannerCubit extends Cubit<PlannerState> {
       if (item.id.isEmpty || item.completed) continue;
       if (!item.date.isAfter(now)) continue;
 
-      await _notificationService.scheduleNotification(
-        id: _dueNotificationId(item.id),
-        title: AppL10n.current.plannerDueNotificationTitle(item.title),
-        body: AppL10n.current.plannerDueNotificationBody,
-        scheduledDate: item.date,
-        payload: 'planner:${item.type}:${item.id}',
-        recordInInbox: false,
-      );
+      try {
+        await _notificationService.scheduleNotification(
+          id: _dueNotificationId(item.id),
+          title: AppL10n.current.plannerDueNotificationTitle(item.title),
+          body: AppL10n.current.plannerDueNotificationBody,
+          scheduledDate: item.date,
+          payload: 'planner:${item.type}:${item.id}',
+          recordInInbox: false,
+        );
+      } catch (e) {
+        _log('Skipped re-sync for "${item.title}": $e');
+      }
     }
     _log('Re-synced due notifications for ${items.length} loaded item(s)');
   }

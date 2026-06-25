@@ -38,7 +38,10 @@ class UserModel {
     );
   }
 
-  bool get isPremium =>
-      plan == 'premium' &&
-      (premiumUntil == null || premiumUntil!.isAfter(DateTime.now()));
+  // MANUAL OVERRIDE: all premium features unlocked for free on the client.
+  // To restore real subscription gating, revert to the original check below.
+  bool get isPremium => true;
+  // bool get isPremium =>
+  //     plan == 'premium' &&
+  //     (premiumUntil == null || premiumUntil!.isAfter(DateTime.now()));
 }

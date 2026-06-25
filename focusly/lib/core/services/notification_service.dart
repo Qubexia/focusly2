@@ -1,8 +1,9 @@
+import 'dart:developer' as developer;
 import 'dart:io';
-import 'dart:ui' show Color;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -34,6 +35,10 @@ class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
 
   bool _isInitialized = false;
+  bool _localTimeZoneReady = false;
+
+  void _log(String message) =>
+      developer.log(message, name: 'NotificationService');
 
   static const AndroidNotificationChannel _mainChannel =
       AndroidNotificationChannel(
@@ -83,6 +88,7 @@ class NotificationService {
     if (_isInitialized) return;
 
     tz.initializeTimeZones();
+    await _ensureLocalTimeZone();
 
     const initializationSettingsAndroid =
         AndroidInitializationSettings('ic_notification');
@@ -200,13 +206,14 @@ class NotificationService {
     String? payload,
     bool recordInInbox = true,
   }) async {
-    await _notificationsPlugin.zonedSchedule(
+    await _ensureLocalTimeZone();
+
+    final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
+    await _zonedScheduleWithFallback(
       id: id,
       title: title,
       body: body,
-      scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
-      notificationDetails: _scheduledNotificationDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      scheduledDate: tzDate,
       payload: payload,
     );
 
@@ -214,15 +221,74 @@ class NotificationService {
     // reminder we skip the inbox write so repeated syncs don't duplicate rows.
     if (!recordInInbox) return;
 
-    await _localDataSource.saveNotification(
-      NotificationInboxModel(
-        id: id.toString(),
-        title: title,
-        body: body,
-        createdAt: scheduledDate,
-        type: payload,
-      ),
-    );
+    try {
+      await _localDataSource.saveNotification(
+        NotificationInboxModel(
+          id: id.toString(),
+          title: title,
+          body: body,
+          createdAt: scheduledDate,
+          type: payload,
+        ),
+      );
+    } catch (e) {
+      _log('Inbox write failed for notification $id: $e');
+    }
+  }
+
+  Future<void> _ensureLocalTimeZone() async {
+    if (_localTimeZoneReady) return;
+
+    try {
+      final offset = DateTime.now().timeZoneOffset;
+      final hours = offset.inHours;
+      // IANA "Etc/GMT" labels invert the sign (GMT-2 == UTC+2).
+      final etcName = hours >= 0 ? 'Etc/GMT-$hours' : 'Etc/GMT+${-hours}';
+      tz.setLocalLocation(tz.getLocation(etcName));
+    } catch (e) {
+      _log('Could not resolve device timezone, using UTC: $e');
+      tz.setLocalLocation(tz.UTC);
+    }
+
+    _localTimeZoneReady = true;
+  }
+
+  Future<void> _zonedScheduleWithFallback({
+    required int id,
+    required String title,
+    required String body,
+    required tz.TZDateTime scheduledDate,
+    String? payload,
+  }) async {
+    const modes = [
+      AndroidScheduleMode.exactAllowWhileIdle,
+      AndroidScheduleMode.inexactAllowWhileIdle,
+      AndroidScheduleMode.alarmClock,
+    ];
+
+    Object? lastError;
+    for (final mode in modes) {
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          id: id,
+          title: title,
+          body: body,
+          scheduledDate: scheduledDate,
+          notificationDetails: _scheduledNotificationDetails,
+          androidScheduleMode: mode,
+          payload: payload,
+        );
+        return;
+      } on PlatformException catch (e) {
+        lastError = e;
+        _log('zonedSchedule failed with $mode: ${e.code} ${e.message}');
+      } catch (e) {
+        lastError = e;
+        _log('zonedSchedule failed with $mode: $e');
+      }
+    }
+
+    throw lastError ?? StateError('Could not schedule notification $id');
   }
 
   Future<void> cancelAll() async {

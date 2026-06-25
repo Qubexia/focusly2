@@ -14,6 +14,11 @@ bool hasPremiumAccess({
 
 }) {
 
+  // MANUAL OVERRIDE: all premium features unlocked for free on the client.
+  // To restore real gating, delete the line below.
+  return true;
+
+  // ignore: dead_code
   if (subscription != null) {
 
     if (subscription.isCanceled || subscription.status == 'expired') {
