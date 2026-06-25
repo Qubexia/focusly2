@@ -766,7 +766,7 @@ class _UpcomingTodaySection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 104,
+          height: 110,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: schedules.length + tasks.length,
