@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 
-import { ERROR_CODES } from '../dto/api-response';
 import type { CurrentUserPayload } from '../decorators/current-user.decorator';
+import { ERROR_CODES } from '../dto/api-response';
 
 @Injectable()
 export class PremiumGuard implements CanActivate {
@@ -14,6 +14,14 @@ export class PremiumGuard implements CanActivate {
         message: 'Upgrade to premium to access this feature.',
       });
     }
+
+    // MANUAL OVERRIDE: premium gating disabled — all authenticated users get
+    // access for free (mirrors the client-side override in
+    // premium_status.dart `hasPremiumAccess`). To restore real gating, delete
+    // the two lines below.
+    const premiumGatingDisabled = true as boolean;
+    if (premiumGatingDisabled) return true;
+
     if (
       user.plan === 'premium' &&
       (user.premiumUntil === undefined ||
