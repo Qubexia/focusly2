@@ -181,13 +181,18 @@ class _AiNotesHubView extends StatelessWidget {
                                 const SizedBox(height: 18),
                                 DropdownButtonFormField<String>(
                                   initialValue: state.selectedSubjectId,
+                                  isExpanded: true,
                                   decoration:
                                       InputDecoration(labelText: l10n.aiSubjectLabel),
                                   items: state.subjects
                                       .map(
                                         (s) => DropdownMenuItem(
                                           value: s.id,
-                                          child: Text(s.name),
+                                          child: Text(
+                                            s.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                       )
                                       .toList(),

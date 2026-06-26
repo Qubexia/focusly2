@@ -3,7 +3,14 @@
     <!-- Lets a premium focus session put the whole device into Do-Not-Disturb. -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Exact alarms for due/reminder notifications.
+         SCHEDULE_EXACT_ALARM: user-grantable on Android 12 (API 31).
+         USE_EXACT_ALARM: auto-granted on Android 13+ (API 33+) so reminders
+         fire on time without the user opening "Alarms & reminders" settings.
+         Note: Google Play restricts USE_EXACT_ALARM to alarm/calendar/reminder
+         apps; a study-reminder app qualifies, but declare the use in Play Console. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission
