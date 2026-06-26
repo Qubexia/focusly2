@@ -186,7 +186,11 @@ class PlannerCubit extends Cubit<PlannerState> {
   }
 
   String _toPlannedAtIso(DateTime date, String? time) {
-    return _composeDueDateTime(date, time).toIso8601String();
+    // Send the absolute instant in UTC ("...Z") so the backend stores the exact
+    // moment. A naive local ISO string (no offset) is misread as server-local
+    // time, shifting the stored time by the device's UTC offset and breaking
+    // the scheduled "due" notification.
+    return _composeDueDateTime(date, time).toUtc().toIso8601String();
   }
 
   /// Combines the chosen [date] with the optional [time] string into a single

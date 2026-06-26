@@ -94,7 +94,11 @@ class PlannedItemModel {
 
   static DateTime _parseDate(dynamic value) {
     if (value == null) return DateTime.now();
-    if (value is String) return DateTime.parse(value);
+    // The backend returns plannedAt in UTC ("...Z"). Convert to local so the
+    // displayed time and the scheduled notification both use the device's
+    // wall-clock time the user actually picked.
+    if (value is String) return DateTime.parse(value).toLocal();
+    if (value is DateTime) return value.toLocal();
     return DateTime.now();
   }
 
