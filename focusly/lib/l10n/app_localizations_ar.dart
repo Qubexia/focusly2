@@ -894,7 +894,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String plannerReminderNotificationTitle(String title) {
-    return 'تذكير: $title';
+    return '⏰ تذكير: $title';
   }
 
   @override
@@ -902,22 +902,22 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       minutes,
       locale: localeName,
-      other: 'مستحق خلال $minutes دقيقة.',
-      many: 'مستحق خلال $minutes دقيقة.',
-      few: 'مستحق خلال $minutes دقائق.',
-      two: 'مستحق خلال دقيقتين.',
-      one: 'مستحق خلال دقيقة واحدة.',
+      other: 'تبدأ خلال $minutes دقيقة، استعد!',
+      many: 'تبدأ خلال $minutes دقيقة، استعد!',
+      few: 'تبدأ خلال $minutes دقائق، استعد!',
+      two: 'تبدأ خلال دقيقتين، استعد!',
+      one: 'تبدأ خلال دقيقة واحدة، استعد!',
     );
     return '$_temp0';
   }
 
   @override
   String plannerDueNotificationTitle(String title) {
-    return 'مستحق الآن: $title';
+    return '📚 $title';
   }
 
   @override
-  String get plannerDueNotificationBody => 'هذا مستحق الآن. لا تنسَ!';
+  String get plannerDueNotificationBody => 'حان وقت مذاكرتك، يلا نبدأ! ✨';
 
   @override
   String get plannerTypeTask => 'مهمة';

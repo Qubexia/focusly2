@@ -876,7 +876,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String plannerReminderNotificationTitle(String title) {
-    return 'Reminder: $title';
+    return '⏰ Reminder: $title';
   }
 
   @override
@@ -884,19 +884,19 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       minutes,
       locale: localeName,
-      other: 'Due in $minutes minutes.',
-      one: 'Due in 1 minute.',
+      other: 'Starts in $minutes minutes — get ready!',
+      one: 'Starts in 1 minute — get ready!',
     );
     return '$_temp0';
   }
 
   @override
   String plannerDueNotificationTitle(String title) {
-    return 'Due now: $title';
+    return '📚 $title';
   }
 
   @override
-  String get plannerDueNotificationBody => 'This is due now. Don\'t forget!';
+  String get plannerDueNotificationBody => 'It\'s study time — let\'s go! ✨';
 
   @override
   String get plannerTypeTask => 'Task';

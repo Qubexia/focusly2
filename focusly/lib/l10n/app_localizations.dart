@@ -1655,25 +1655,25 @@ abstract class AppLocalizations {
   /// No description provided for @plannerReminderNotificationTitle.
   ///
   /// In en, this message translates to:
-  /// **'Reminder: {title}'**
+  /// **'⏰ Reminder: {title}'**
   String plannerReminderNotificationTitle(String title);
 
   /// No description provided for @plannerReminderNotificationBody.
   ///
   /// In en, this message translates to:
-  /// **'{minutes, plural, =1{Due in 1 minute.} other{Due in {minutes} minutes.}}'**
+  /// **'{minutes, plural, =1{Starts in 1 minute — get ready!} other{Starts in {minutes} minutes — get ready!}}'**
   String plannerReminderNotificationBody(int minutes);
 
   /// No description provided for @plannerDueNotificationTitle.
   ///
   /// In en, this message translates to:
-  /// **'Due now: {title}'**
+  /// **'📚 {title}'**
   String plannerDueNotificationTitle(String title);
 
   /// No description provided for @plannerDueNotificationBody.
   ///
   /// In en, this message translates to:
-  /// **'This is due now. Don\'t forget!'**
+  /// **'It\'s study time — let\'s go! ✨'**
   String get plannerDueNotificationBody;
 
   /// No description provided for @plannerTypeTask.

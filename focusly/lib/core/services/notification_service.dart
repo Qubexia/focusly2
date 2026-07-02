@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 
@@ -6,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -113,7 +115,9 @@ class NotificationService {
             AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.createNotificationChannel(_mainChannel);
     await androidPlugin?.createNotificationChannel(_scheduledChannel);
-    await androidPlugin?.requestExactAlarmsPermission();
+    // Exact-alarm + battery-optimisation grants are handled in
+    // requestPermissions() (called right after init) so we can check status
+    // first and avoid opening the system settings page twice.
 
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
@@ -139,6 +143,7 @@ class NotificationService {
 
     if (Platform.isAndroid) {
       await Permission.notification.request();
+      await _ensureAndroidAlarmReliability();
     } else if (Platform.isIOS) {
       await _notificationsPlugin
           .resolvePlatformSpecificImplementation<
@@ -148,6 +153,48 @@ class NotificationService {
             badge: true,
             sound: true,
           );
+    }
+  }
+
+  /// Scheduled reminders fire through Android's [AlarmManager]. Two device
+  /// policies silently drop those alarms in a release build (they never bite in
+  /// debug because the tooling keeps the process alive):
+  ///   1. Missing the "Alarms & reminders" (SCHEDULE_EXACT_ALARM) grant — exact
+  ///      alarms are refused, so reminders only fire inexactly (or not at all).
+  ///   2. Battery optimisation force-stopping the app, which wipes every pending
+  ///      alarm the app registered.
+  /// Requesting both up front is what makes reminders actually fire after the
+  /// user installs the APK and swipes the app away.
+  Future<void> _ensureAndroidAlarmReliability() async {
+    try {
+      final exactAlarm = await Permission.scheduleExactAlarm.status;
+      if (!exactAlarm.isGranted) {
+        final result = await Permission.scheduleExactAlarm.request();
+        _log('scheduleExactAlarm permission after request: $result');
+      }
+    } catch (e) {
+      _log('Could not resolve exact-alarm permission: $e');
+    }
+
+    try {
+      final battery = await Permission.ignoreBatteryOptimizations.status;
+      if (!battery.isGranted) {
+        final result = await Permission.ignoreBatteryOptimizations.request();
+        _log('ignoreBatteryOptimizations after request: $result');
+      }
+    } catch (e) {
+      _log('Could not request battery-optimisation exemption: $e');
+    }
+  }
+
+  /// Whether the OS will let us schedule exact alarms. Reminders downgrade to
+  /// inexact (and may be batched far past their time) when this is false.
+  Future<bool> canScheduleExactAlarms() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      return (await Permission.scheduleExactAlarm.status).isGranted;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -216,6 +263,7 @@ class NotificationService {
       scheduledDate: tzDate,
       payload: payload,
     );
+    await _rememberFireTime(id, scheduledDate);
 
     // Re-sync passes record different. When re-scheduling an already-known
     // reminder we skip the inbox write so repeated syncs don't duplicate rows.
@@ -260,10 +308,18 @@ class NotificationService {
     required tz.TZDateTime scheduledDate,
     String? payload,
   }) async {
+    // Order matters for reliability in a release build left in Doze:
+    //  1. exactAllowWhileIdle — fires on time when SCHEDULE_EXACT_ALARM is
+    //     granted; throws exact_alarms_not_permitted when it isn't.
+    //  2. alarmClock — setAlarmClock(); fires reliably even in Doze and does
+    //     NOT need the exact-alarm permission, so it's the right fallback when
+    //     exact is refused (NOT inexact, which Doze batches for hours).
+    //  3. inexactAllowWhileIdle — last resort; always schedules but may be
+    //     delayed heavily.
     const modes = [
       AndroidScheduleMode.exactAllowWhileIdle,
-      AndroidScheduleMode.inexactAllowWhileIdle,
       AndroidScheduleMode.alarmClock,
+      AndroidScheduleMode.inexactAllowWhileIdle,
     ];
 
     Object? lastError;
@@ -289,6 +345,43 @@ class NotificationService {
     }
 
     throw lastError ?? StateError('Could not schedule notification $id');
+  }
+
+  /// Dumps every notification currently registered with the OS alarm manager.
+  /// Use while debugging to confirm a scheduled reminder actually landed and
+  /// when it is expected to fire.
+  Future<void> logPendingNotifications() async {
+    final pending = await _notificationsPlugin.pendingNotificationRequests();
+    final fireTimes = await _readFireTimes();
+    _log('Pending notifications: ${pending.length}');
+    for (final p in pending) {
+      final at = fireTimes[p.id.toString()] ?? 'unknown';
+      _log('  • id=${p.id} fires=$at title="${p.title}" payload=${p.payload}');
+    }
+  }
+
+  // The plugin's pendingNotificationRequests() doesn't expose the scheduled
+  // fire time, so we remember it ourselves keyed by notification id. Stored
+  // times are best-effort and only used for debugging/observability.
+  static const String _fireTimesKey = 'notification_fire_times';
+
+  Future<Map<String, String>> _readFireTimes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_fireTimesKey);
+    if (raw == null || raw.isEmpty) return {};
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    return decoded.map((key, value) => MapEntry(key, value.toString()));
+  }
+
+  Future<void> _rememberFireTime(int id, DateTime scheduledDate) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final times = await _readFireTimes();
+      times[id.toString()] = scheduledDate.toIso8601String();
+      await prefs.setString(_fireTimesKey, jsonEncode(times));
+    } catch (e) {
+      _log('Could not remember fire time for $id: $e');
+    }
   }
 
   Future<void> cancelAll() async {

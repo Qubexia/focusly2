@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:zakerly/core/localization/app_l10n.dart';
 import '../../../../core/services/notification_service.dart';
+import '../../data/datasources/planner_reminder_store.dart';
 import '../../data/models/planned_item_model.dart';
 import '../../data/repositories/planner_repository.dart';
 
@@ -15,13 +16,16 @@ class PlannerCubit extends Cubit<PlannerState> {
   PlannerCubit({
     PlannerRepository? repository,
     NotificationService? notificationService,
+    PlannerReminderStore? reminderStore,
     this.subjectId,
   })  : _repository = repository ?? PlannerRepository(),
         _notificationService = notificationService ?? NotificationService(),
+        _reminderStore = reminderStore ?? PlannerReminderStore(),
         super(PlannerState(selectedDate: DateTime.now()));
 
   final PlannerRepository _repository;
   final NotificationService _notificationService;
+  final PlannerReminderStore _reminderStore;
 
   /// When set, the planner only loads/creates items scoped to this subject.
   final String? subjectId;
@@ -226,6 +230,14 @@ class PlannerCubit extends Cubit<PlannerState> {
     final now = DateTime.now();
     final payload = 'planner:${type.key}:$itemId';
 
+    // Persist the offset so the re-sync on later opens can re-arm this reminder
+    // even after the app was closed. Clear it when the item has no reminder.
+    if (reminderMinutesBefore != null && reminderMinutesBefore > 0) {
+      await _reminderStore.setOffset(itemId, reminderMinutesBefore);
+    } else {
+      await _reminderStore.remove(itemId);
+    }
+
     // "Before due" reminder.
     if (reminderMinutesBefore != null && reminderMinutesBefore > 0) {
       final remindAt = due.subtract(Duration(minutes: reminderMinutesBefore));
@@ -269,24 +281,52 @@ class PlannerCubit extends Cubit<PlannerState> {
       if (item.id.isEmpty || item.completed) continue;
       if (!item.date.isAfter(now)) continue;
 
+      final payload = 'planner:${item.type}:${item.id}';
       try {
         await _notificationService.scheduleNotification(
           id: _dueNotificationId(item.id),
           title: AppL10n.current.plannerDueNotificationTitle(item.title),
           body: AppL10n.current.plannerDueNotificationBody,
           scheduledDate: item.date,
-          payload: 'planner:${item.type}:${item.id}',
+          payload: payload,
           recordInInbox: false,
         );
+        _log('Re-synced DUE for "${item.title}" at ${item.date} (now=$now)');
       } catch (e) {
         _log('Skipped re-sync for "${item.title}": $e');
       }
+
+      // Re-arm the "before due" reminder from the locally-stored offset, since
+      // the backend doesn't persist it. Only the DUE alert survives on its own.
+      final offset = await _reminderStore.getOffset(item.id);
+      if (offset != null && offset > 0) {
+        final remindAt = item.date.subtract(Duration(minutes: offset));
+        if (remindAt.isAfter(now)) {
+          try {
+            await _notificationService.scheduleNotification(
+              id: _reminderNotificationId(item.id),
+              title:
+                  AppL10n.current.plannerReminderNotificationTitle(item.title),
+              body: AppL10n.current.plannerReminderNotificationBody(offset),
+              scheduledDate: remindAt,
+              payload: payload,
+              recordInInbox: false,
+            );
+            _log('Re-synced REMINDER for "${item.title}" at $remindAt '
+                '($offset min before)');
+          } catch (e) {
+            _log('Skipped reminder re-sync for "${item.title}": $e');
+          }
+        }
+      }
     }
     _log('Re-synced due notifications for ${items.length} loaded item(s)');
+    await _notificationService.logPendingNotifications();
   }
 
   Future<void> _cancelItemReminders(String itemId) async {
     if (itemId.isEmpty) return;
+    await _reminderStore.remove(itemId);
     await _notificationService.cancel(_dueNotificationId(itemId));
     await _notificationService.cancel(_reminderNotificationId(itemId));
   }
@@ -294,7 +334,14 @@ class PlannerCubit extends Cubit<PlannerState> {
   (int, int)? _parseTime(String? value) {
     if (value == null || value.trim().isEmpty) return null;
 
-    final normalized = value.trim().toUpperCase();
+    // Defensive: a localized TimeOfDay string can carry Arabic-Indic digits
+    // (٠-٩) which int.tryParse rejects. Fold them back to ASCII so the value
+    // parses regardless of the device locale.
+    final ascii = value.replaceAllMapped(
+      RegExp('[٠-٩]'),
+      (m) => '٠١٢٣٤٥٦٧٨٩'.indexOf(m[0]!).toString(),
+    );
+    final normalized = ascii.trim().toUpperCase();
     final isPm = normalized.endsWith('PM');
     final isAm = normalized.endsWith('AM');
     final timePart = normalized

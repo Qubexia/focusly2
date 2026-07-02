@@ -316,7 +316,10 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
       title: _titleController.text.trim(),
       notes: _notesController.text.trim(),
       date: _selectedDate,
-      time: _selectedTime?.format(context),
+      time: _selectedTime == null
+          ? null
+          : '${_selectedTime!.hour.toString().padLeft(2, '0')}:'
+              '${_selectedTime!.minute.toString().padLeft(2, '0')}',
       subjectId: _selectedSubjectId,
       reminderMinutesBefore: _reminderMinutesBefore,
     );

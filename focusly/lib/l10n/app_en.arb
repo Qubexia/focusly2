@@ -405,7 +405,7 @@
   },
   "plannerReminderHourBefore": "1 hour before",
   "plannerReminderDayBefore": "1 day before",
-  "plannerReminderNotificationTitle": "Reminder: {title}",
+  "plannerReminderNotificationTitle": "⏰ Reminder: {title}",
   "@plannerReminderNotificationTitle": {
     "placeholders": {
       "title": {
@@ -413,7 +413,7 @@
       }
     }
   },
-  "plannerReminderNotificationBody": "{minutes, plural, =1{Due in 1 minute.} other{Due in {minutes} minutes.}}",
+  "plannerReminderNotificationBody": "{minutes, plural, =1{Starts in 1 minute — get ready!} other{Starts in {minutes} minutes — get ready!}}",
   "@plannerReminderNotificationBody": {
     "placeholders": {
       "minutes": {
@@ -421,7 +421,7 @@
       }
     }
   },
-  "plannerDueNotificationTitle": "Due now: {title}",
+  "plannerDueNotificationTitle": "📚 {title}",
   "@plannerDueNotificationTitle": {
     "placeholders": {
       "title": {
@@ -429,7 +429,7 @@
       }
     }
   },
-  "plannerDueNotificationBody": "This is due now. Don't forget!",
+  "plannerDueNotificationBody": "It's study time — let's go! ✨",
   "plannerTypeTask": "Task",
   "plannerTypeRevision": "Revision",
   "plannerTypeLecture": "Lecture",
