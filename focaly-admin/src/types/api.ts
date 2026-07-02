@@ -149,6 +149,7 @@ export interface AiSettings {
   apiKeySet: boolean;
   apiKeyPreview: string | null;
   apiKeySource: 'database' | 'env' | 'none';
+  baseUrl: string;
   model: string;
   temperature: number;
   systemPrompt: string | null;
@@ -158,9 +159,29 @@ export interface AiSettings {
 export interface UpdateAiSettingsPayload {
   enabled?: boolean;
   apiKey?: string;
+  baseUrl?: string;
   model?: string;
   temperature?: number;
   systemPrompt?: string;
+}
+
+export interface PlatformSettings {
+  premiumGatingEnabled: boolean;
+  freeSubjectLimit: number;
+  aiHourlyLimit: number;
+  aiMonthlyLimit: number;
+  maintenanceMode: boolean;
+  maintenanceMessage: string | null;
+  updatedAt: string | null;
+}
+
+export interface UpdatePlatformSettingsPayload {
+  premiumGatingEnabled?: boolean;
+  freeSubjectLimit?: number;
+  aiHourlyLimit?: number;
+  aiMonthlyLimit?: number;
+  maintenanceMode?: boolean;
+  maintenanceMessage?: string | null;
 }
 
 export interface AiTestResult {

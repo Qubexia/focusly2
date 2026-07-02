@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:zakerly/l10n/app_localizations.dart';
 
+import '../../../../core/config/platform_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/premium_gate_sheet.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -56,7 +57,9 @@ class _SubjectsView extends StatelessWidget {
         final user = authState is AuthAuthenticated ? authState.user : null;
         final countLabel = user?.isPremium == true
             ? l10n.subjectsActiveCount(state.subjects.length)
-            : l10n.subjectsFreeCount(state.subjects.length);
+            : l10n
+                .subjectsFreeCount(state.subjects.length)
+                .replaceFirst('/3', '/${PlatformConfig.current.freeSubjectLimit}');
 
         return Scaffold(
           appBar: AppBar(

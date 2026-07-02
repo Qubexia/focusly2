@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
 import { ERROR_CODES } from '../../common/dto/api-response';
+import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
+import { UsersRepository } from '../users/users.repository';
 
 import { ChaptersRepository } from './chapters.repository';
 import { CreateSubjectDto, UpdateSubjectDto } from './dto';
@@ -13,9 +15,32 @@ export class SubjectsService {
     private readonly subjectsRepository: SubjectsRepository,
     private readonly chaptersRepository: ChaptersRepository,
     private readonly eventBus: EventBus,
+    private readonly platformSettings: PlatformSettingsService,
+    private readonly usersRepository: UsersRepository,
   ) {}
 
   async create(userId: string, dto: CreateSubjectDto) {
+    const [settings, user] = await Promise.all([
+      this.platformSettings.resolve(),
+      this.usersRepository.findActiveById(userId),
+    ]);
+    if (!user) {
+      throw new NotFoundException({
+        code: ERROR_CODES.NOT_FOUND,
+        message: 'User was not found.',
+      });
+    }
+
+    if (settings.premiumGatingEnabled && user.plan !== 'premium') {
+      const count = await this.subjectsRepository.countActiveByUser(userId);
+      if (count >= settings.freeSubjectLimit) {
+        throw new ForbiddenException({
+          code: ERROR_CODES.SUBJECT_LIMIT_REACHED,
+          message: `Free plan allows up to ${settings.freeSubjectLimit} subjects.`,
+        });
+      }
+    }
+
     return this.subjectsRepository.create({ userId, ...dto });
   }
 

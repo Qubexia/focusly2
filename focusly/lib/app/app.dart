@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zakerly/l10n/app_localizations.dart';
@@ -5,6 +7,7 @@ import 'package:zakerly/l10n/app_localizations.dart';
 import '../core/localization/app_l10n.dart';
 import '../core/localization/locale_cubit.dart';
 import '../core/services/deep_link_service.dart';
+import '../core/services/notification_service.dart';
 import '../core/services/premium_refresh_service.dart';
 import '../core/theme/app_theme.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
@@ -29,6 +32,11 @@ class _ZakerlyAppState extends State<ZakerlyApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       DeepLinkService.instance.initialize(appRouter);
+      // Re-request on first frame so Android shows the permission sheet over
+      // a visible activity — startup calls in main() often fail on release APKs.
+      if (Platform.isAndroid) {
+        NotificationService().ensureReadyForScheduling(requestIfMissing: true);
+      }
     });
   }
 
@@ -43,6 +51,9 @@ class _ZakerlyAppState extends State<ZakerlyApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _refreshPremiumStatus();
+      if (Platform.isAndroid) {
+        NotificationService().ensureReadyForScheduling(requestIfMissing: false);
+      }
     }
   }
 

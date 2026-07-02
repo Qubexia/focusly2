@@ -6,6 +6,7 @@ import {
   FolderKanban,
   LayoutDashboard,
   LogOut,
+  Settings2,
   Users,
 } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
@@ -29,6 +30,7 @@ const NAV = [
   { to: '/analytics', label: 'Analytics', icon: BarChart3, end: false },
   { to: '/notifications', label: 'Notifications', icon: Bell, end: false },
   { to: '/content', label: 'Content', icon: FolderKanban, end: false },
+  { to: '/platform', label: 'Platform', icon: Settings2, end: false },
   { to: '/ai', label: 'AI Settings', icon: Bot, end: false },
 ];
 

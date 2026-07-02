@@ -8,6 +8,7 @@ import { ContentPage } from '@/pages/ContentPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { OverviewPage } from '@/pages/OverviewPage';
+import { PlatformSettingsPage } from '@/pages/PlatformSettingsPage';
 import { SubscriptionsPage } from '@/pages/SubscriptionsPage';
 import { UserDetailPage } from '@/pages/UserDetailPage';
 import { UsersPage } from '@/pages/UsersPage';
@@ -26,6 +27,7 @@ export default function App(): JSX.Element {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/content" element={<ContentPage />} />
           <Route path="/ai" element={<AiSettingsPage />} />
+          <Route path="/platform" element={<PlatformSettingsPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

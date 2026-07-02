@@ -56,6 +56,7 @@ dependencies:
   app_links: ^6.4.0
   paymob: ^1.2.0
   wakelock_plus: ^1.2.8
+  flutter_timezone: ^5.1.0
 
 dev_dependencies:
   flutter_test:

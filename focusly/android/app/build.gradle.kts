@@ -44,8 +44,11 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
-            // Keep rules for flutter_local_notifications + Gson; without them
-            // R8 breaks scheduled reminders in release builds only.
+            // R8 + resource shrinker can strip notification Gson models and icons
+            // that Dart references only by name. keep.xml + proguard-rules.pro
+            // prevent the silent "scheduled but never shown" release-only failure.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

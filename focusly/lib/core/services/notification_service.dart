@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -41,6 +42,13 @@ class NotificationService {
 
   void _log(String message) =>
       developer.log(message, name: 'NotificationService');
+
+  AndroidFlutterLocalNotificationsPlugin? get _androidPlugin =>
+      _notificationsPlugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+
+  /// AlarmManager notification ids must be stable positive ints on some OEM builds.
+  static int _normalizeNotificationId(int id) => id & 0x7FFFFFFF;
 
   static const AndroidNotificationChannel _mainChannel =
       AndroidNotificationChannel(
@@ -110,11 +118,8 @@ class NotificationService {
       onDidReceiveNotificationResponse: (details) {},
     );
 
-    final androidPlugin = _notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    await androidPlugin?.createNotificationChannel(_mainChannel);
-    await androidPlugin?.createNotificationChannel(_scheduledChannel);
+    await _androidPlugin?.createNotificationChannel(_mainChannel);
+    await _androidPlugin?.createNotificationChannel(_scheduledChannel);
     // Exact-alarm + battery-optimisation grants are handled in
     // requestPermissions() (called right after init) so we can check status
     // first and avoid opening the system settings page twice.
@@ -142,8 +147,7 @@ class NotificationService {
     );
 
     if (Platform.isAndroid) {
-      await Permission.notification.request();
-      await _ensureAndroidAlarmReliability();
+      await ensureReadyForScheduling(requestIfMissing: true);
     } else if (Platform.isIOS) {
       await _notificationsPlugin
           .resolvePlatformSpecificImplementation<
@@ -156,26 +160,46 @@ class NotificationService {
     }
   }
 
-  /// Scheduled reminders fire through Android's [AlarmManager]. Two device
-  /// policies silently drop those alarms in a release build (they never bite in
-  /// debug because the tooling keeps the process alive):
-  ///   1. Missing the "Alarms & reminders" (SCHEDULE_EXACT_ALARM) grant — exact
-  ///      alarms are refused, so reminders only fire inexactly (or not at all).
-  ///   2. Battery optimisation force-stopping the app, which wipes every pending
-  ///      alarm the app registered.
-  /// Requesting both up front is what makes reminders actually fire after the
-  /// user installs the APK and swipes the app away.
-  Future<void> _ensureAndroidAlarmReliability() async {
-    try {
-      final exactAlarm = await Permission.scheduleExactAlarm.status;
-      if (!exactAlarm.isGranted) {
-        final result = await Permission.scheduleExactAlarm.request();
-        _log('scheduleExactAlarm permission after request: $result');
-      }
-    } catch (e) {
-      _log('Could not resolve exact-alarm permission: $e');
+  /// Ensures Android can both display and schedule local reminders.
+  ///
+  /// Release APKs on real devices fail here far more often than emulators:
+  /// POST_NOTIFICATIONS, exact-alarm access, and battery optimisation all
+  /// block [AlarmManager] when missing. The plugin's native permission APIs
+  /// open the correct per-app settings screens; permission_handler alone is
+  /// not always enough on OEM builds.
+  Future<bool> ensureReadyForScheduling({bool requestIfMissing = false}) async {
+    if (!Platform.isAndroid) return true;
+
+    final android = _androidPlugin;
+    if (android == null) return false;
+
+    var notificationsEnabled = await android.areNotificationsEnabled() ?? false;
+    if (!notificationsEnabled && requestIfMissing) {
+      await android.requestNotificationsPermission();
+      notificationsEnabled = await android.areNotificationsEnabled() ?? false;
+      _log('POST_NOTIFICATIONS after request: $notificationsEnabled');
+    }
+    if (!notificationsEnabled) {
+      _log('Notifications disabled — reminders cannot be shown');
+      return false;
     }
 
+    var canScheduleExact = await android.canScheduleExactNotifications() ?? false;
+    if (!canScheduleExact && requestIfMissing) {
+      await android.requestExactAlarmsPermission();
+      canScheduleExact = await android.canScheduleExactNotifications() ?? false;
+      _log('Exact alarms after request: $canScheduleExact');
+    }
+
+    if (requestIfMissing) {
+      await _requestBatteryOptimizationExemption();
+    }
+
+    // alarmClock / inexact fallbacks still schedule when exact is denied.
+    return true;
+  }
+
+  Future<void> _requestBatteryOptimizationExemption() async {
     try {
       final battery = await Permission.ignoreBatteryOptimizations.status;
       if (!battery.isGranted) {
@@ -192,7 +216,7 @@ class NotificationService {
   Future<bool> canScheduleExactAlarms() async {
     if (!Platform.isAndroid) return true;
     try {
-      return (await Permission.scheduleExactAlarm.status).isGranted;
+      return await _androidPlugin?.canScheduleExactNotifications() ?? false;
     } catch (_) {
       return false;
     }
@@ -255,15 +279,31 @@ class NotificationService {
   }) async {
     await _ensureLocalTimeZone();
 
+    final normalizedId = _normalizeNotificationId(id);
+    if (Platform.isAndroid) {
+      final ready = await ensureReadyForScheduling(requestIfMissing: true);
+      if (!ready) {
+        throw StateError(
+          'Notification permissions missing — enable notifications for Zakerly',
+        );
+      }
+    }
+
     final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
+    if (!tzDate.isAfter(tz.TZDateTime.now(tz.local))) {
+      _log('Skipped scheduling id=$normalizedId — $tzDate is not in the future');
+      return;
+    }
+
     await _zonedScheduleWithFallback(
-      id: id,
+      id: normalizedId,
       title: title,
       body: body,
       scheduledDate: tzDate,
       payload: payload,
     );
-    await _rememberFireTime(id, scheduledDate);
+    await _verifyScheduled(normalizedId);
+    await _rememberFireTime(normalizedId, scheduledDate);
 
     // Re-sync passes record different. When re-scheduling an already-known
     // reminder we skip the inbox write so repeated syncs don't duplicate rows.
@@ -272,7 +312,7 @@ class NotificationService {
     try {
       await _localDataSource.saveNotification(
         NotificationInboxModel(
-          id: id.toString(),
+          id: normalizedId.toString(),
           title: title,
           body: body,
           createdAt: scheduledDate,
@@ -288,14 +328,27 @@ class NotificationService {
     if (_localTimeZoneReady) return;
 
     try {
-      final offset = DateTime.now().timeZoneOffset;
-      final hours = offset.inHours;
-      // IANA "Etc/GMT" labels invert the sign (GMT-2 == UTC+2).
-      final etcName = hours >= 0 ? 'Etc/GMT-$hours' : 'Etc/GMT+${-hours}';
-      tz.setLocalLocation(tz.getLocation(etcName));
+      final timeZoneInfo = await FlutterTimezone.getLocalTimezone();
+      final timeZoneName = timeZoneInfo.identifier;
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+      _log('Local timezone set to $timeZoneName');
     } catch (e) {
-      _log('Could not resolve device timezone, using UTC: $e');
-      tz.setLocalLocation(tz.UTC);
+      _log('Could not resolve IANA timezone, falling back to offset: $e');
+      try {
+        final offset = DateTime.now().timeZoneOffset;
+        final totalMinutes = offset.inMinutes;
+        final hours = totalMinutes ~/ 60;
+        final minutes = totalMinutes.abs() % 60;
+        if (minutes == 0) {
+          final etcName = hours >= 0 ? 'Etc/GMT-$hours' : 'Etc/GMT+${-hours}';
+          tz.setLocalLocation(tz.getLocation(etcName));
+        } else {
+          tz.setLocalLocation(tz.UTC);
+        }
+      } catch (fallbackError) {
+        _log('Timezone fallback failed, using UTC: $fallbackError');
+        tz.setLocalLocation(tz.UTC);
+      }
     }
 
     _localTimeZoneReady = true;
@@ -334,6 +387,7 @@ class NotificationService {
           androidScheduleMode: mode,
           payload: payload,
         );
+        _log('Scheduled id=$id at $scheduledDate using $mode');
         return;
       } on PlatformException catch (e) {
         lastError = e;
@@ -345,6 +399,19 @@ class NotificationService {
     }
 
     throw lastError ?? StateError('Could not schedule notification $id');
+  }
+
+  Future<void> _verifyScheduled(int id) async {
+    if (!Platform.isAndroid) return;
+
+    final pending = await _notificationsPlugin.pendingNotificationRequests();
+    final found = pending.any((request) => request.id == id);
+    if (found) return;
+
+    _log(
+      'WARNING: id=$id not found in pendingNotificationRequests after '
+      'zonedSchedule — alarm may not fire on this device',
+    );
   }
 
   /// Dumps every notification currently registered with the OS alarm manager.
@@ -389,7 +456,7 @@ class NotificationService {
   }
 
   Future<void> cancel(int id) async {
-    await _notificationsPlugin.cancel(id: id);
+    await _notificationsPlugin.cancel(id: _normalizeNotificationId(id));
   }
 
   static Future<void> showRemoteNotification(RemoteMessage message) async {

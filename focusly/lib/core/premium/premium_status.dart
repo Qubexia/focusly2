@@ -1,52 +1,30 @@
 import '../../features/auth/presentation/bloc/auth_event_state.dart';
-
 import '../../features/subscription/data/models/subscription_model.dart';
-
-
+import '../config/platform_config.dart';
 
 /// Unified premium gate used across the app UI.
-
 bool hasPremiumAccess({
-
   required AuthState authState,
-
   SubscriptionModel? subscription,
-
 }) {
-
-  // MANUAL OVERRIDE: all premium features unlocked for free on the client.
-  // To restore real gating, delete the line below.
-  return true;
-
-  // ignore: dead_code
-  if (subscription != null) {
-
-    if (subscription.isCanceled || subscription.status == 'expired') {
-
-      return false;
-
-    }
-
-    if (subscription.isActive) {
-
-      return true;
-
-    }
-
+  if (!PlatformConfig.current.premiumGatingEnabled) {
+    return true;
   }
 
-
+  if (subscription != null) {
+    if (subscription.isCanceled || subscription.status == 'expired') {
+      return false;
+    }
+    if (subscription.isActive) {
+      return true;
+    }
+  }
 
   if (authState is AuthAuthenticated && authState.user.isPremium) {
-
     return true;
-
   }
 
-
-
   return false;
-
 }
 
 

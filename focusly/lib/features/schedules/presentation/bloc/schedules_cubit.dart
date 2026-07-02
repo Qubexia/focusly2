@@ -208,6 +208,11 @@ class SchedulesCubit extends Cubit<SchedulesState> {
   }
 
   Future<void> _syncNotifications(List<StudyScheduleModel> schedules) async {
+    final ready = await _notificationService.ensureReadyForScheduling(
+      requestIfMissing: true,
+    );
+    if (!ready) return;
+
     // Basic implementation: Schedule next occurrence for each active schedule
     for (final schedule in schedules) {
       if (!schedule.isActive || !schedule.reminderEnabled) {

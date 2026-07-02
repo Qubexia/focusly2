@@ -3,6 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { NotificationsModule } from '../notifications/notifications.module';
+import { PlatformSettingsModule } from '../platform-settings/platform-settings.module';
 
 import { AiArtifactsRepository } from './ai-artifacts.repository';
 import { AiFilesController } from './ai-files.controller';
@@ -27,6 +28,7 @@ import { AiWorker } from './workers/ai.worker';
     ]),
     CqrsModule,
     NotificationsModule,
+    PlatformSettingsModule,
   ],
   controllers: [AiController, AiFilesController],
   providers: [

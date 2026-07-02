@@ -1,11 +1,14 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 
+import { PlatformSettingsService } from '../../modules/platform-settings/platform-settings.service';
 import type { CurrentUserPayload } from '../decorators/current-user.decorator';
 import { ERROR_CODES } from '../dto/api-response';
 
 @Injectable()
 export class PremiumGuard implements CanActivate {
-  canActivate(ctx: ExecutionContext): boolean {
+  constructor(private readonly platformSettings: PlatformSettingsService) {}
+
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest<{ user?: CurrentUserPayload }>();
     const user = req.user;
     if (!user) {
@@ -15,12 +18,8 @@ export class PremiumGuard implements CanActivate {
       });
     }
 
-    // MANUAL OVERRIDE: premium gating disabled — all authenticated users get
-    // access for free (mirrors the client-side override in
-    // premium_status.dart `hasPremiumAccess`). To restore real gating, delete
-    // the two lines below.
-    const premiumGatingDisabled = true as boolean;
-    if (premiumGatingDisabled) return true;
+    const settings = await this.platformSettings.resolve();
+    if (!settings.premiumGatingEnabled) return true;
 
     if (
       user.plan === 'premium' &&

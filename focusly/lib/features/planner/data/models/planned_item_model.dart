@@ -41,6 +41,8 @@ class PlannedItemModel {
   final String? subjectId;
   final bool completed;
   final String type; // Using String to match backend but map to PlannedItemType locally
+  final int reminderMinutesBefore;
+  final bool reminderEnabled;
 
   const PlannedItemModel({
     required this.id,
@@ -51,6 +53,8 @@ class PlannedItemModel {
     this.subjectId,
     required this.completed,
     required this.type,
+    this.reminderMinutesBefore = 15,
+    this.reminderEnabled = true,
   });
 
   PlannedItemType get itemType => PlannedItemType.fromKey(type);
@@ -66,6 +70,10 @@ class PlannedItemModel {
       subjectId: _nullableString(json['subjectId'] ?? json['subject']),
       completed: _parseBool(json['completed']),
       type: _stringifyId(json['type'] ?? json['kind'] ?? 'task'),
+      reminderMinutesBefore: (json['reminderMinutesBefore'] as num?)?.toInt() ?? 15,
+      reminderEnabled: json['reminderEnabled'] is bool
+          ? json['reminderEnabled'] as bool
+          : _parseBool(json['reminderEnabled'] ?? true),
     );
   }
 

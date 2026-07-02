@@ -11,6 +11,7 @@ import type {
   BroadcastRecord,
   Paginated,
   PlannedItem,
+  PlatformSettings,
   RevenueSummary,
   Session,
   SignupSeries,
@@ -18,6 +19,7 @@ import type {
   Subscription,
   SubscriptionDetail,
   UpdateAiSettingsPayload,
+  UpdatePlatformSettingsPayload,
 } from '@/types/api';
 
 async function get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
@@ -234,5 +236,23 @@ export function useTestAiConnection() {
   return useMutation({
     mutationFn: (apiKey?: string) =>
       api.post<AiTestResult>('/admin/ai/test', { apiKey }).then((r) => r.data),
+  });
+}
+
+/* ----------------------- Platform settings ----------------------- */
+
+export function usePlatformSettings() {
+  return useQuery({
+    queryKey: ['platform-settings'],
+    queryFn: () => get<PlatformSettings>('/admin/platform/settings'),
+  });
+}
+
+export function useUpdatePlatformSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UpdatePlatformSettingsPayload) =>
+      api.patch<PlatformSettings>('/admin/platform/settings', payload).then((r) => r.data),
+    onSuccess: (data) => qc.setQueryData(['platform-settings'], data),
   });
 }

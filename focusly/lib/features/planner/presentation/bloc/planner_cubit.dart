@@ -5,41 +5,26 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:zakerly/core/localization/app_l10n.dart';
-import '../../../../core/services/notification_service.dart';
-import '../../data/datasources/planner_reminder_store.dart';
 import '../../data/models/planned_item_model.dart';
 import '../../data/repositories/planner_repository.dart';
+import '../../data/services/planner_reminder_sync.dart';
 
 part 'planner_state.dart';
 
 class PlannerCubit extends Cubit<PlannerState> {
   PlannerCubit({
     PlannerRepository? repository,
-    NotificationService? notificationService,
-    PlannerReminderStore? reminderStore,
+    PlannerReminderSync? reminderSync,
     this.subjectId,
   })  : _repository = repository ?? PlannerRepository(),
-        _notificationService = notificationService ?? NotificationService(),
-        _reminderStore = reminderStore ?? PlannerReminderStore(),
+        _reminderSync = reminderSync ?? PlannerReminderSync(),
         super(PlannerState(selectedDate: DateTime.now()));
 
   final PlannerRepository _repository;
-  final NotificationService _notificationService;
-  final PlannerReminderStore _reminderStore;
+  final PlannerReminderSync _reminderSync;
 
   /// When set, the planner only loads/creates items scoped to this subject.
   final String? subjectId;
-
-  /// Stable notification id for the "due now" alert of an item.
-  static int _dueNotificationId(String itemId) =>
-      'planner_due_$itemId'.hashCode;
-
-  /// Stable notification id for the "before due" reminder of an item.
-  static int _reminderNotificationId(String itemId) =>
-      'planner_reminder_$itemId'.hashCode;
-
-  void _log(String message) =>
-      developer.log(message, name: 'PlannerNotifications');
 
   Future<void> loadDate(DateTime date) async {
     emit(state.copyWith(selectedDate: date, isLoading: true, clearError: true));
@@ -47,7 +32,6 @@ class PlannerCubit extends Cubit<PlannerState> {
     final dateStr = _formatDate(date);
 
     try {
-      // Fetch all 4 categories in parallel
       final results = await Future.wait([
         _repository.getItems(type: PlannedItemType.task, from: dateStr, to: dateStr, subjectId: subjectId),
         _repository.getItems(type: PlannedItemType.revision, from: dateStr, to: dateStr, subjectId: subjectId),
@@ -63,10 +47,7 @@ class PlannerCubit extends Cubit<PlannerState> {
         exams: results[3],
       ));
 
-      // Re-arm "due" notifications for the loaded items. zonedSchedule survives
-      // app restarts and reboots, but re-syncing here heals any that were
-      // dropped and covers items created on another device.
-      await _syncDueNotifications([
+      await _reminderSync.syncItems([
         ...results[0],
         ...results[1],
         ...results[2],
@@ -96,28 +77,34 @@ class PlannerCubit extends Cubit<PlannerState> {
   }) async {
     emit(state.copyWith(isSaving: true));
     try {
+      final due = _composeDueDateTime(date, time);
+      final reminderEnabled = reminderMinutesBefore != null;
+
       final created = await _repository.createItem(
         type: type,
         title: title,
         notes: notes,
-        plannedAt: _toPlannedAtIso(date, time),
+        plannedAt: due.toUtc().toIso8601String(),
         subjectId: subjectId ?? this.subjectId,
+        reminderMinutesBefore: reminderMinutesBefore,
+        reminderEnabled: reminderEnabled,
       );
 
-      _log('Created item "${created.title}" (id=${created.id}, type=${type.key})');
-
-      // Reminders are best-effort: a scheduling failure on release APKs
-      // (exact-alarm permission, timezone, etc.) must not fail the create flow.
       try {
-        await _scheduleItemReminders(
+        await _reminderSync.scheduleNewItem(
           itemId: created.id,
           title: title,
           type: type,
-          due: _composeDueDateTime(date, time),
+          due: due,
           reminderMinutesBefore: reminderMinutesBefore,
+          reminderEnabled: reminderEnabled,
         );
       } catch (e, st) {
-        _log('Reminder scheduling failed after create (item persisted): $e\n$st');
+        developer.log(
+          'Reminder scheduling failed after create (item persisted): $e',
+          name: 'PlannerNotifications',
+          stackTrace: st,
+        );
       }
 
       emit(state.copyWith(
@@ -125,8 +112,7 @@ class PlannerCubit extends Cubit<PlannerState> {
         feedbackType: PlannerFeedbackType.success,
         feedbackMessage: AppL10n.current.plannerCreateSuccess,
       ));
-      
-      // Refresh list for the selected date
+
       await loadDate(state.selectedDate);
     } on DioException catch (e) {
       emit(state.copyWith(
@@ -146,11 +132,9 @@ class PlannerCubit extends Cubit<PlannerState> {
   Future<void> completeItem(PlannedItemType type, String id) async {
     try {
       await _repository.completeItem(type: type, id: id);
-      // A completed item no longer needs reminders.
-      await _cancelItemReminders(id);
-      // Refresh the date to get updated statuses and potentially points (though UI updates optimistically if we want)
+      await _reminderSync.cancelItem(id);
       await loadDate(state.selectedDate);
-      
+
       emit(state.copyWith(
         feedbackType: PlannerFeedbackType.success,
         feedbackMessage: AppL10n.current.plannerCompleteSuccess,
@@ -166,9 +150,9 @@ class PlannerCubit extends Cubit<PlannerState> {
   Future<void> deleteItem(PlannedItemType type, String id) async {
     try {
       await _repository.deleteItem(type: type, id: id);
-      await _cancelItemReminders(id);
+      await _reminderSync.cancelItem(id);
       await loadDate(state.selectedDate);
-      
+
       emit(state.copyWith(
         feedbackType: PlannerFeedbackType.success,
         feedbackMessage: AppL10n.current.plannerDeleteSuccess,
@@ -189,154 +173,31 @@ class PlannerCubit extends Cubit<PlannerState> {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  String _toPlannedAtIso(DateTime date, String? time) {
-    // Send the absolute instant in UTC ("...Z") so the backend stores the exact
-    // moment. A naive local ISO string (no offset) is misread as server-local
-    // time, shifting the stored time by the device's UTC offset and breaking
-    // the scheduled "due" notification.
-    return _composeDueDateTime(date, time).toUtc().toIso8601String();
-  }
-
-  /// Combines the chosen [date] with the optional [time] string into a single
-  /// local [DateTime]. When no time is given the item is treated as midnight.
   DateTime _composeDueDateTime(DateTime date, String? time) {
     final parsedTime = _parseTime(time);
-    return DateTime(
+    var due = DateTime(
       date.year,
       date.month,
       date.day,
-      parsedTime?.$1 ?? 0,
+      parsedTime?.$1 ?? 9,
       parsedTime?.$2 ?? 0,
     );
-  }
 
-  /// Schedules the "due now" alert and, when requested, a "before due"
-  /// reminder for a freshly created item. Cancels any prior notifications for
-  /// the same item first so re-creating/editing never stacks duplicates.
-  Future<void> _scheduleItemReminders({
-    required String itemId,
-    required String title,
-    required PlannedItemType type,
-    required DateTime due,
-    int? reminderMinutesBefore,
-  }) async {
-    if (itemId.isEmpty) {
-      _log('Skipped scheduling — item has no id (title="$title")');
-      return;
-    }
-
-    await _cancelItemReminders(itemId);
-
-    final now = DateTime.now();
-    final payload = 'planner:${type.key}:$itemId';
-
-    // Persist the offset so the re-sync on later opens can re-arm this reminder
-    // even after the app was closed. Clear it when the item has no reminder.
-    if (reminderMinutesBefore != null && reminderMinutesBefore > 0) {
-      await _reminderStore.setOffset(itemId, reminderMinutesBefore);
-    } else {
-      await _reminderStore.remove(itemId);
-    }
-
-    // "Before due" reminder.
-    if (reminderMinutesBefore != null && reminderMinutesBefore > 0) {
-      final remindAt = due.subtract(Duration(minutes: reminderMinutesBefore));
-      if (remindAt.isAfter(now)) {
-        await _notificationService.scheduleNotification(
-          id: _reminderNotificationId(itemId),
-          title: AppL10n.current.plannerReminderNotificationTitle(title),
-          body: AppL10n.current
-              .plannerReminderNotificationBody(reminderMinutesBefore),
-          scheduledDate: remindAt,
-          payload: payload,
-        );
-        _log('Scheduled REMINDER for "$title" at $remindAt '
-            '($reminderMinutesBefore min before due $due)');
-      } else {
-        _log('Skipped REMINDER for "$title" — $remindAt already passed');
+    // Tasks without an explicit time default to 09:00. If that moment already
+    // passed today, nudge to 30 minutes from now so reminders can still fire.
+    if (parsedTime == null && !due.isAfter(DateTime.now())) {
+      final now = DateTime.now();
+      if (date.year == now.year && date.month == now.month && date.day == now.day) {
+        due = now.add(const Duration(minutes: 30));
       }
     }
 
-    // "Due now" alert.
-    if (due.isAfter(now)) {
-      await _notificationService.scheduleNotification(
-        id: _dueNotificationId(itemId),
-        title: AppL10n.current.plannerDueNotificationTitle(title),
-        body: AppL10n.current.plannerDueNotificationBody,
-        scheduledDate: due,
-        payload: payload,
-      );
-      _log('Scheduled DUE alert for "$title" at $due');
-    } else {
-      _log('Skipped DUE alert for "$title" — due $due already passed');
-    }
-  }
-
-  /// Re-arms the "due now" alert for already-persisted items. Runs on every
-  /// [loadDate] so reminders heal after the OS drops them. Inbox writes are
-  /// suppressed here so repeated syncs don't pile up duplicate history rows.
-  Future<void> _syncDueNotifications(List<PlannedItemModel> items) async {
-    final now = DateTime.now();
-    for (final item in items) {
-      if (item.id.isEmpty || item.completed) continue;
-      if (!item.date.isAfter(now)) continue;
-
-      final payload = 'planner:${item.type}:${item.id}';
-      try {
-        await _notificationService.scheduleNotification(
-          id: _dueNotificationId(item.id),
-          title: AppL10n.current.plannerDueNotificationTitle(item.title),
-          body: AppL10n.current.plannerDueNotificationBody,
-          scheduledDate: item.date,
-          payload: payload,
-          recordInInbox: false,
-        );
-        _log('Re-synced DUE for "${item.title}" at ${item.date} (now=$now)');
-      } catch (e) {
-        _log('Skipped re-sync for "${item.title}": $e');
-      }
-
-      // Re-arm the "before due" reminder from the locally-stored offset, since
-      // the backend doesn't persist it. Only the DUE alert survives on its own.
-      final offset = await _reminderStore.getOffset(item.id);
-      if (offset != null && offset > 0) {
-        final remindAt = item.date.subtract(Duration(minutes: offset));
-        if (remindAt.isAfter(now)) {
-          try {
-            await _notificationService.scheduleNotification(
-              id: _reminderNotificationId(item.id),
-              title:
-                  AppL10n.current.plannerReminderNotificationTitle(item.title),
-              body: AppL10n.current.plannerReminderNotificationBody(offset),
-              scheduledDate: remindAt,
-              payload: payload,
-              recordInInbox: false,
-            );
-            _log('Re-synced REMINDER for "${item.title}" at $remindAt '
-                '($offset min before)');
-          } catch (e) {
-            _log('Skipped reminder re-sync for "${item.title}": $e');
-          }
-        }
-      }
-    }
-    _log('Re-synced due notifications for ${items.length} loaded item(s)');
-    await _notificationService.logPendingNotifications();
-  }
-
-  Future<void> _cancelItemReminders(String itemId) async {
-    if (itemId.isEmpty) return;
-    await _reminderStore.remove(itemId);
-    await _notificationService.cancel(_dueNotificationId(itemId));
-    await _notificationService.cancel(_reminderNotificationId(itemId));
+    return due;
   }
 
   (int, int)? _parseTime(String? value) {
     if (value == null || value.trim().isEmpty) return null;
 
-    // Defensive: a localized TimeOfDay string can carry Arabic-Indic digits
-    // (٠-٩) which int.tryParse rejects. Fold them back to ASCII so the value
-    // parses regardless of the device locale.
     final ascii = value.replaceAllMapped(
       RegExp('[٠-٩]'),
       (m) => '٠١٢٣٤٥٦٧٨٩'.indexOf(m[0]!).toString(),

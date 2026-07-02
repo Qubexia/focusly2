@@ -8,6 +8,7 @@ import { AuthModule } from '../auth/auth.module';
 import { AuthSession, AuthSessionSchema } from '../auth/schemas/auth-session.schema';
 import { Notification, NotificationSchema } from '../notifications/schemas/notification.schema';
 import { PlannedItem, PlannedItemSchema } from '../planned-items/schemas/planned-item.schema';
+import { PlatformSettingsModule } from '../platform-settings/platform-settings.module';
 import {
   PomodoroSession,
   PomodoroSessionSchema,
@@ -26,6 +27,7 @@ import { AdminContentController } from './admin-content.controller';
 import { AdminContentService } from './admin-content.service';
 import { AdminNotificationsController } from './admin-notifications.controller';
 import { AdminNotificationsService } from './admin-notifications.service';
+import { AdminPlatformController } from './admin-platform.controller';
 import { AdminSubscriptionsController } from './admin-subscriptions.controller';
 import { AdminSubscriptionsService } from './admin-subscriptions.service';
 import { AdminUsersController } from './admin-users.controller';
@@ -49,6 +51,7 @@ import { AdminUsersService } from './admin-users.service';
     AuthModule,
     UsersModule,
     AiModule,
+    PlatformSettingsModule,
   ],
   controllers: [
     AdminUsersController,
@@ -57,6 +60,7 @@ import { AdminUsersService } from './admin-users.service';
     AdminNotificationsController,
     AdminContentController,
     AdminAiController,
+    AdminPlatformController,
   ],
   providers: [
     AdminUsersService,

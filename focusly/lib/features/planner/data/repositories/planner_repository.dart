@@ -27,6 +27,8 @@ class PlannerRepository {
     String? notes,
     required String plannedAt,
     String? subjectId,
+    int? reminderMinutesBefore,
+    bool reminderEnabled = true,
   }) {
     return _remoteDataSource.createItem(
       type: type,
@@ -34,6 +36,8 @@ class PlannerRepository {
       notes: notes,
       plannedAt: plannedAt,
       subjectId: subjectId,
+      reminderMinutesBefore: reminderMinutesBefore,
+      reminderEnabled: reminderEnabled,
     );
   }
 

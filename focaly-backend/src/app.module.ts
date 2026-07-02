@@ -5,6 +5,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { MaintenanceGuard } from './common/guards/maintenance.guard';
+import { PremiumGuard } from './common/guards/premium.guard';
 import { ThrottlerBehindProxyGuard } from './common/guards/throttler-behind-proxy.guard';
 import { AuditLogMiddleware } from './common/middleware/audit-log.middleware';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
@@ -25,6 +27,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PlannedItemsModule } from './modules/planned-items/planned-items.module';
+import { PlatformSettingsModule } from './modules/platform-settings/platform-settings.module';
 import { PomodoroModule } from './modules/pomodoro/pomodoro.module';
 import { StreaksModule } from './modules/streaks/streaks.module';
 import { StudySchedulesModule } from './modules/study-schedules/study-schedules.module';
@@ -64,6 +67,7 @@ import { EventBusModule } from './shared/events/event-bus.module';
     AnalyticsModule,
     UploadsModule,
     AiModule,
+    PlatformSettingsModule,
     NotificationsModule,
     PomodoroModule,
     StreaksModule,
@@ -72,6 +76,8 @@ import { EventBusModule } from './shared/events/event-bus.module';
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerBehindProxyGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: MaintenanceGuard },
+    PremiumGuard,
   ],
 })
 export class AppModule implements NestModule {

@@ -16,6 +16,6 @@ import { StudySchedulesService } from './study-schedules.service';
   ],
   controllers: [StudySchedulesController],
   providers: [StudySchedulesService, StudySchedulesRepository],
-  exports: [StudySchedulesService],
+  exports: [StudySchedulesService, StudySchedulesRepository],
 })
 export class StudySchedulesModule {}

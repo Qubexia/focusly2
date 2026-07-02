@@ -90,6 +90,8 @@ class ApiEndpoints {
   static const String usersAvatar = '/v1/users/me/avatar';
   static const String usersFcmToken = '/v1/users/me/fcm-token';
 
+  static const String config = '/v1/config';
+
   // Subjects
   static const String subjects = '/v1/subjects';
 

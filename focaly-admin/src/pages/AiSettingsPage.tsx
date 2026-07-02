@@ -28,6 +28,7 @@ export function AiSettingsPage(): JSX.Element {
   const [model, setModel] = useState('');
   const [temperature, setTemperature] = useState('0.2');
   const [apiKey, setApiKey] = useState('');
+  const [baseUrl, setBaseUrl] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('');
 
   useEffect(() => {
@@ -35,6 +36,7 @@ export function AiSettingsPage(): JSX.Element {
       setEnabled(String(data.enabled));
       setModel(data.model);
       setTemperature(String(data.temperature));
+      setBaseUrl(data.baseUrl ?? '');
       setSystemPrompt(data.systemPrompt ?? '');
     }
   }, [data]);
@@ -49,6 +51,7 @@ export function AiSettingsPage(): JSX.Element {
       {
         enabled: enabled === 'true',
         model,
+        baseUrl,
         temperature: Number(temperature),
         systemPrompt,
         // Only send apiKey when the admin typed a new one (avoid clearing the stored key).
@@ -175,6 +178,16 @@ export function AiSettingsPage(): JSX.Element {
                   onChange={(e) => setTemperature(e.target.value)}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="baseUrl">API base URL (optional)</Label>
+              <Input
+                id="baseUrl"
+                value={baseUrl}
+                onChange={(e) => setBaseUrl(e.target.value)}
+                placeholder="https://api.openai.com/v1 or OpenRouter URL"
+              />
             </div>
 
             <div className="space-y-2">

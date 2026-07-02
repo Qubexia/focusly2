@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../planner/data/models/planned_item_model.dart';
 import '../../../planner/data/repositories/planner_repository.dart';
+import '../../../planner/data/services/planner_reminder_sync.dart';
 import '../../../pomodoro/data/models/pomodoro_today_model.dart';
 import '../../../pomodoro/data/repositories/pomodoro_repository.dart';
 import '../../../schedules/data/datasources/schedules_remote_datasource.dart';
@@ -32,6 +35,7 @@ class HomeCubit extends Cubit<HomeState> {
   final PomodoroRepository _pomodoroRepository;
   final SchedulesRemoteDataSource _schedulesDataSource;
   final PlannerRepository _plannerRepository;
+  final PlannerReminderSync _reminderSync = PlannerReminderSync();
 
   Future<void> loadHome() async {
     emit(state.copyWith(isLoading: true, clearError: true));
@@ -81,6 +85,11 @@ class HomeCubit extends Cubit<HomeState> {
           todayTasks: upcomingTasks.take(8).toList(),
         ),
       );
+
+      unawaited(_syncUpcomingReminders(
+        from,
+        AppDateUtils.formatDate(now.add(const Duration(days: 7))),
+      ));
     } on DioException catch (e) {
       emit(
         state.copyWith(
@@ -104,5 +113,24 @@ class HomeCubit extends Cubit<HomeState> {
       return (data['message'] as String?) ?? AppL10n.current.commonError;
     }
     return AppL10n.current.commonError;
+  }
+
+  Future<void> _syncUpcomingReminders(String from, String to) async {
+    try {
+      final results = await Future.wait([
+        _plannerRepository.getItems(type: PlannedItemType.task, from: from, to: to),
+        _plannerRepository.getItems(type: PlannedItemType.revision, from: from, to: to),
+        _plannerRepository.getItems(type: PlannedItemType.lecture, from: from, to: to),
+        _plannerRepository.getItems(type: PlannedItemType.exam, from: from, to: to),
+      ]);
+      await _reminderSync.syncItems([
+        ...results[0],
+        ...results[1],
+        ...results[2],
+        ...results[3],
+      ]);
+    } catch (_) {
+      // Reminder sync is best-effort on home load.
+    }
   }
 }

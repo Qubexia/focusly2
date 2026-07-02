@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'app/app.dart';
+import 'core/config/platform_config.dart';
+import 'core/config/platform_config_service.dart';
 import 'core/constants/api_endpoints.dart';
 import 'core/network/api_connectivity.dart';
 import 'core/services/notification_service.dart';
@@ -14,6 +16,12 @@ void main() async {
 
   debugPrint('API_BASE_URL resolved to: ${ApiEndpoints.baseUrl}');
   await ApiConnectivity.pingBackend();
+  try {
+    await PlatformConfigService().fetch();
+    debugPrint('Platform config loaded (premiumGating=${PlatformConfig.current.premiumGatingEnabled})');
+  } catch (e) {
+    debugPrint('Platform config fetch failed, using defaults: $e');
+  }
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,

@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 
+import { PlatformSettingsModule } from '../platform-settings/platform-settings.module';
+import { UsersModule } from '../users/users.module';
+
 import { ChaptersRepository } from './chapters.repository';
 import { ChaptersService } from './chapters.service';
 import { RecomputeProgressHandler } from './handlers/recompute-progress.handler';
@@ -18,6 +21,8 @@ import { SubjectsService } from './subjects.service';
       { name: Chapter.name, schema: ChapterSchema },
     ]),
     CqrsModule,
+    PlatformSettingsModule,
+    UsersModule,
   ],
   controllers: [SubjectsController],
   providers: [
