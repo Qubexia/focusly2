@@ -37,6 +37,7 @@ class PlannerRemoteDataSource {
     String? subjectId,
     int? reminderMinutesBefore,
     bool reminderEnabled = true,
+    String? recurrence,
   }) async {
     final endpoint = _getEndpoint(type);
     final response = await _dio.post(
@@ -46,6 +47,7 @@ class PlannerRemoteDataSource {
         if (notes != null) 'notes': notes,
         'plannedAt': plannedAt,
         if (subjectId != null) 'subjectId': subjectId,
+        if (recurrence != null) 'recurrence': recurrence,
         'reminderEnabled': reminderEnabled,
         if (reminderEnabled && reminderMinutesBefore != null)
           'reminderMinutesBefore': reminderMinutesBefore,

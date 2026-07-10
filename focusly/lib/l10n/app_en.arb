@@ -42,6 +42,15 @@
   "settingsProductUpdates": "Product updates",
   "settingsNotificationsSaved": "Notification preferences saved",
   "settingsFocusSection": "Focus",
+  "plannerSetDate": "Select date",
+  "plannerRecurrence": "Repeat",
+  "plannerRecurrenceOnce": "Once",
+  "plannerRecurrenceDaily": "Daily",
+  "plannerRecurrenceWeekly": "Weekly",
+  "subjectsStudyScheduleTitle": "Study schedule",
+  "subjectsAddStudySchedule": "Add study schedule",
+  "subjectsStudyScheduleEmpty": "No study schedule yet",
+  "authRememberMe": "Keep me signed in",
   "settingsFocusMode": "Focus mode",
   "settingsFocusModeSubtitle": "Reduce non-essential notifications",
   "settingsActiveDevices": "Active devices",
@@ -117,7 +126,7 @@
   "homeQuickActions": "Quick Actions",
   "homeQuickFocusLabel": "Start Focus",
   "homeQuickFocusSubtitle": "Pomodoro timer",
-  "homeQuickAddTaskLabel": "Add Task",
+  "homeQuickAddTaskLabel": "Add Study",
   "homeQuickAddTaskSubtitle": "Plan your day",
   "homeQuickScheduleLabel": "Schedule",
   "homeQuickScheduleSubtitle": "Study sessions",
@@ -370,7 +379,7 @@
   "notificationsDeleteAllMessage": "Each notification will be removed from your inbox.",
   "notificationsDeleteAllConfirm": "Delete all",
   "plannerTitle": "Daily Planner",
-  "plannerTabTasks": "Tasks",
+  "plannerTabTasks": "Study",
   "plannerTabRevisions": "Revisions",
   "plannerTabLectures": "Lectures",
   "plannerTabExams": "Exams",
@@ -430,7 +439,7 @@
     }
   },
   "plannerDueNotificationBody": "It's study time — let's go! ✨",
-  "plannerTypeTask": "Task",
+  "plannerTypeTask": "Study",
   "plannerTypeRevision": "Revision",
   "plannerTypeLecture": "Lecture",
   "plannerTypeExam": "Exam",
@@ -699,14 +708,22 @@
   "subjectsNameTooShort": "Subject name is too short",
   "subjectsColorLabel": "Color",
   "subjectsIconLabel": "Icon",
-  "subjectsDailyTarget": "Daily Target",
+  "subjectsDailyTarget": "Goal",
+  "subjectsWeeklyTargetLabel": "{minutes} min weekly goal",
+  "@subjectsWeeklyTargetLabel": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "subjectsGoalTypeLabel": "Goal type",
   "subjectsGoalDaily": "Daily",
   "subjectsGoalWeekly": "Weekly",
   "subjectsGoalTarget": "Target",
   "subjectsGoalDaysLabel": "Goal days (optional)",
   "subjectsGoalDaysHint": "Leave empty to count every day.",
-  "subjectsDailyTargetLabel": "{minutes} min daily target",
+  "subjectsDailyTargetLabel": "{minutes} min goal",
   "@subjectsDailyTargetLabel": {
     "placeholders": {
       "minutes": {

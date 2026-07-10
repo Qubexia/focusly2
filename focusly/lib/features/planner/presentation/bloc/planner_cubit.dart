@@ -74,6 +74,7 @@ class PlannerCubit extends Cubit<PlannerState> {
     String? time,
     String? subjectId,
     int? reminderMinutesBefore,
+    String? recurrence,
   }) async {
     emit(state.copyWith(isSaving: true));
     try {
@@ -88,6 +89,7 @@ class PlannerCubit extends Cubit<PlannerState> {
         subjectId: subjectId ?? this.subjectId,
         reminderMinutesBefore: reminderMinutesBefore,
         reminderEnabled: reminderEnabled,
+        recurrence: recurrence,
       );
 
       try {

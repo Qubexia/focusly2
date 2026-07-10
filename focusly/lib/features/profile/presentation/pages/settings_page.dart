@@ -35,10 +35,12 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _isLoading = true);
     try {
       final prefs = await _profileDataSource.getNotificationPreferences();
+      final focusMode = await _profileDataSource.getFocusMode();
       final sessions = await _profileDataSource.getSessions();
       if (!mounted) return;
       setState(() {
         _prefs = prefs;
+        _focusMode = focusMode;
         _sessions = sessions;
         _isLoading = false;
       });
@@ -116,7 +118,15 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _toggleFocusMode(bool value) async {
     setState(() => _focusMode = value);
-    await _profileDataSource.updateSettings(focusMode: value);
+    try {
+      await _profileDataSource.updateSettings(focusMode: value);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _focusMode = !value);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).commonError)),
+      );
+    }
   }
 
   Future<void> _revokeSession(String id) async {

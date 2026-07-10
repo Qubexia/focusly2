@@ -2,13 +2,19 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../../core/config/auth_config.dart';
 import '../../../../core/localization/app_l10n.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import 'auth_event_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: const ['email', 'profile'],
+    serverClientId: AuthConfig.googleServerClientId.isEmpty
+        ? null
+        : AuthConfig.googleServerClientId,
+  );
 
   AuthBloc({AuthRepository? authRepository})
       : _authRepository = authRepository ?? AuthRepository(),
@@ -73,6 +79,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final response = await _authRepository.login(
         email: event.email,
         password: event.password,
+        rememberMe: event.rememberMe,
       );
       emit(AuthAuthenticated(user: response.user));
     } on DioException catch (e) {

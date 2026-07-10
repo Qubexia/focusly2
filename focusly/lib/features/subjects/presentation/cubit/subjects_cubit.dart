@@ -52,6 +52,8 @@ class SubjectsCubit extends Cubit<SubjectsState> {
     String? color,
     String? icon,
     required int dailyTargetMinutes,
+    String? goalType,
+    List<int>? goalDays,
   }) async {
     emit(state.copyWith(isSaving: true, clearFeedback: true));
     try {
@@ -60,6 +62,8 @@ class SubjectsCubit extends Cubit<SubjectsState> {
         color: color,
         icon: icon,
         dailyTargetMinutes: dailyTargetMinutes,
+        goalType: goalType,
+        goalDays: goalDays,
       );
       emit(
         state.copyWith(
@@ -100,6 +104,8 @@ class SubjectsCubit extends Cubit<SubjectsState> {
     String? color,
     String? icon,
     required int dailyTargetMinutes,
+    String? goalType,
+    List<int>? goalDays,
   }) async {
     emit(state.copyWith(isSaving: true, clearFeedback: true));
     try {
@@ -109,6 +115,8 @@ class SubjectsCubit extends Cubit<SubjectsState> {
         color: color,
         icon: icon,
         dailyTargetMinutes: dailyTargetMinutes,
+        goalType: goalType,
+        goalDays: goalDays,
       );
 
       final nextSubjects = state.subjects

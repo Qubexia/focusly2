@@ -32,11 +32,16 @@ class AuthUserSynced extends AuthEvent {
 class AuthLoginRequested extends AuthEvent {
   final String email;
   final String password;
+  final bool rememberMe;
 
-  const AuthLoginRequested({required this.email, required this.password});
+  const AuthLoginRequested({
+    required this.email,
+    required this.password,
+    this.rememberMe = true,
+  });
 
   @override
-  List<Object?> get props => [email, password];
+  List<Object?> get props => [email, password, rememberMe];
 }
 
 class AuthRegisterRequested extends AuthEvent {

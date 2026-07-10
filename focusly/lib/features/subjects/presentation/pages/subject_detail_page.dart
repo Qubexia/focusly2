@@ -7,6 +7,7 @@ import 'package:zakerly/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../ai/presentation/pages/ai_artifact_viewer_page.dart';
 import '../../../planner/presentation/widgets/subject_planner_section.dart';
+import '../widgets/subject_study_schedule_section.dart';
 import '../../data/models/chapter_model.dart';
 import '../../data/models/subject_model.dart';
 import '../cubit/subject_detail_cubit.dart';
@@ -119,6 +120,13 @@ class _SubjectDetailView extends StatelessWidget {
                             ),
                             const SizedBox(height: 24),
                             SubjectPlannerSection(
+                              subjectId: subject.id,
+                              accentColor: _SubjectPalette.resolveColor(
+                                subject.color,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            SubjectStudyScheduleSection(
                               subjectId: subject.id,
                               accentColor: _SubjectPalette.resolveColor(
                                 subject.color,

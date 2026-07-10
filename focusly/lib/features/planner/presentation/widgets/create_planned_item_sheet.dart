@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:zakerly/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../subjects/data/models/subject_model.dart';
@@ -28,6 +29,7 @@ class CreatePlannedItemSheet extends StatefulWidget {
     String? time,
     String? subjectId,
     int? reminderMinutesBefore,
+    String? recurrence,
   }) onSave;
 
   @override
@@ -43,6 +45,7 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay? _selectedTime;
   String? _selectedSubjectId;
+  String _recurrence = 'once';
 
   /// Minutes-before-due to fire the reminder. `null` = no reminder, `0` = at
   /// the exact due time. Defaults to a 15-minute heads-up.
@@ -222,6 +225,37 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        _SectionLabel(label: l10n.plannerSetDate),
+                        const SizedBox(height: 8),
+                        _PickerButton(
+                          label: DateFormat.yMMMd(
+                            Localizations.localeOf(context).toString(),
+                          ).format(_selectedDate),
+                          icon: Icons.event_rounded,
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: _selectedDate,
+                              firstDate: DateTime.now().subtract(
+                                const Duration(days: 1),
+                              ),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 365 * 2),
+                              ),
+                            );
+                            if (picked != null) {
+                              setState(() => _selectedDate = picked);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         _SectionLabel(label: l10n.plannerTime),
                         const SizedBox(height: 8),
                         _PickerButton(
@@ -238,37 +272,67 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
                       ],
                     ),
                   ),
-                  if (widget.lockedSubjectId == null) ...[
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _SectionLabel(label: l10n.plannerSubject),
-                          const SizedBox(height: 8),
-                          _isLoadingSubjects
-                              ? const Center(child: LinearProgressIndicator())
-                              : DropdownButtonFormField<String?>(
-                                  initialValue: _selectedSubjectId,
-                                  decoration: const InputDecoration(
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  ),
-                                  hint: Text(l10n.plannerSubjectSelect),
-                                  items: [
-                                    DropdownMenuItem(value: null, child: Text(l10n.plannerSubjectGeneral)),
-                                    ..._subjects.map((s) => DropdownMenuItem(
-                                          value: s.id,
-                                          child: Text(s.name, overflow: TextOverflow.ellipsis),
-                                        )),
-                                  ],
-                                  onChanged: (val) => setState(() => _selectedSubjectId = val),
-                                ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ],
               ),
+              const SizedBox(height: 16),
+              _SectionLabel(label: l10n.plannerRecurrence),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _recurrence,
+                decoration: const InputDecoration(
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: 'once',
+                    child: Text(l10n.plannerRecurrenceOnce),
+                  ),
+                  DropdownMenuItem(
+                    value: 'daily',
+                    child: Text(l10n.plannerRecurrenceDaily),
+                  ),
+                  DropdownMenuItem(
+                    value: 'weekly',
+                    child: Text(l10n.plannerRecurrenceWeekly),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) setState(() => _recurrence = value);
+                },
+              ),
+              if (widget.lockedSubjectId == null) ...[
+                const SizedBox(height: 16),
+                _SectionLabel(label: l10n.plannerSubject),
+                const SizedBox(height: 8),
+                _isLoadingSubjects
+                    ? const Center(child: LinearProgressIndicator())
+                    : DropdownButtonFormField<String?>(
+                        initialValue: _selectedSubjectId,
+                        decoration: const InputDecoration(
+                          contentPadding:
+                              EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                        hint: Text(l10n.plannerSubjectSelect),
+                        items: [
+                          DropdownMenuItem(
+                            value: null,
+                            child: Text(l10n.plannerSubjectGeneral),
+                          ),
+                          ..._subjects.map(
+                            (s) => DropdownMenuItem(
+                              value: s.id,
+                              child: Text(
+                                s.name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: (val) =>
+                            setState(() => _selectedSubjectId = val),
+                      ),
+              ],
 
               const SizedBox(height: 24),
               _SectionLabel(label: l10n.plannerReminder),
@@ -322,6 +386,7 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
               '${_selectedTime!.minute.toString().padLeft(2, '0')}',
       subjectId: _selectedSubjectId,
       reminderMinutesBefore: _reminderMinutesBefore,
+      recurrence: _recurrence,
     );
   }
 
@@ -335,7 +400,7 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
 
   IconData _getIcon(PlannedItemType type) {
     switch (type) {
-      case PlannedItemType.task: return Icons.task_alt_rounded;
+      case PlannedItemType.task: return Icons.menu_book_rounded;
       case PlannedItemType.revision: return Icons.history_rounded;
       case PlannedItemType.lecture: return Icons.school_rounded;
       case PlannedItemType.exam: return Icons.assignment_late_rounded;

@@ -25,6 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _rememberMe = true;
 
   @override
   void dispose() {
@@ -39,6 +40,7 @@ class _LoginPageState extends State<LoginPage> {
       AuthLoginRequested(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        rememberMe: _rememberMe,
       ),
     );
   }
@@ -212,7 +214,21 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ).animate(delay: 400.ms).fadeIn(duration: 400.ms),
 
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 8),
+
+                      CheckboxListTile(
+                        value: _rememberMe,
+                        onChanged: (value) =>
+                            setState(() => _rememberMe = value ?? true),
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        title: Text(
+                          l10n.authRememberMe,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ).animate(delay: 420.ms).fadeIn(duration: 400.ms),
+
+                      const SizedBox(height: 24),
 
                       // Login Button
                       BlocBuilder<AuthBloc, AuthState>(

@@ -61,6 +61,7 @@ class _SubjectPlannerViewState extends State<_SubjectPlannerView> {
           subjectId,
           time,
           reminderMinutesBefore,
+          recurrence,
         }) async {
           await cubit.createItem(
             type: type,
@@ -70,6 +71,7 @@ class _SubjectPlannerViewState extends State<_SubjectPlannerView> {
             time: time,
             subjectId: subjectId,
             reminderMinutesBefore: reminderMinutesBefore,
+            recurrence: recurrence,
           );
           if (sheetContext.mounted) Navigator.pop(sheetContext);
         },
@@ -119,7 +121,7 @@ class _SubjectPlannerViewState extends State<_SubjectPlannerView> {
   IconData _categoryIcon(PlannedItemType type) {
     switch (type) {
       case PlannedItemType.task:
-        return Icons.task_alt_rounded;
+        return Icons.menu_book_rounded;
       case PlannedItemType.revision:
         return Icons.history_rounded;
       case PlannedItemType.lecture:

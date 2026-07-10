@@ -9,6 +9,7 @@ import '../../../subjects/data/repositories/subjects_repository.dart';
 import '../../data/models/pomodoro_session_model.dart';
 import '../../data/models/pomodoro_today_model.dart';
 import '../../data/repositories/pomodoro_repository.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/dnd_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/schedule_focus_bus.dart';
@@ -294,6 +295,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
       _restartTickerIfNeeded();
       // Premium perk: silence the whole device for the focus session.
       if (silenceNotifications) {
+        await ApiClient.refreshSessionTokensIfNeeded();
         await _dndService.enableFocusSilence();
       }
     } on DioException catch (e) {
@@ -395,6 +397,7 @@ class PomodoroCubit extends Cubit<PomodoroState> {
     if (session == null) return;
     emit(state.copyWith(isSaving: true, clearFeedback: true));
     try {
+      await ApiClient.refreshSessionTokensIfNeeded();
       await _repository.completeSession(session.id);
       _stopTicker();
       _resetAnchors(running: false);
@@ -415,11 +418,21 @@ class PomodoroCubit extends Cubit<PomodoroState> {
       await _markLinkedScheduleDone();
       await _refreshTodaySafely();
     } on DioException catch (e) {
+      _autoCompleting = false;
       emit(
         state.copyWith(
           isSaving: false,
           feedbackType: PomodoroFeedbackType.error,
           feedbackMessage: _extractMessage(e),
+        ),
+      );
+    } catch (_) {
+      _autoCompleting = false;
+      emit(
+        state.copyWith(
+          isSaving: false,
+          feedbackType: PomodoroFeedbackType.error,
+          feedbackMessage: AppL10n.current.commonError,
         ),
       );
     }

@@ -40,6 +40,8 @@ class DeepLinkService {
         _handlePaymentReturn(router, uri);
       case 'verify-email':
         _handleVerifyEmail(router, uri);
+      case 'reset-password':
+        _handleResetPassword(router, uri);
       default:
         break;
     }
@@ -49,6 +51,12 @@ class DeepLinkService {
     final token = uri.queryParameters['token'] ?? '';
     if (token.isEmpty) return;
     router.go('/verify-email?token=${Uri.encodeQueryComponent(token)}');
+  }
+
+  void _handleResetPassword(GoRouter router, Uri uri) {
+    final token = uri.queryParameters['token'] ?? '';
+    if (token.isEmpty) return;
+    router.go('/reset-password?token=${Uri.encodeQueryComponent(token)}');
   }
 
   void _handlePaymentReturn(GoRouter router, Uri uri) {

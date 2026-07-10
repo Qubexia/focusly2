@@ -126,6 +126,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsFocusSection => 'Focus';
 
   @override
+  String get plannerSetDate => 'Select date';
+
+  @override
+  String get plannerRecurrence => 'Repeat';
+
+  @override
+  String get plannerRecurrenceOnce => 'Once';
+
+  @override
+  String get plannerRecurrenceDaily => 'Daily';
+
+  @override
+  String get plannerRecurrenceWeekly => 'Weekly';
+
+  @override
+  String get subjectsStudyScheduleTitle => 'Study schedule';
+
+  @override
+  String get subjectsAddStudySchedule => 'Add study schedule';
+
+  @override
+  String get subjectsStudyScheduleEmpty => 'No study schedule yet';
+
+  @override
+  String get authRememberMe => 'Keep me signed in';
+
+  @override
   String get settingsFocusMode => 'Focus mode';
 
   @override
@@ -274,7 +301,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeQuickFocusSubtitle => 'Pomodoro timer';
 
   @override
-  String get homeQuickAddTaskLabel => 'Add Task';
+  String get homeQuickAddTaskLabel => 'Add Study';
 
   @override
   String get homeQuickAddTaskSubtitle => 'Plan your day';
@@ -783,7 +810,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get plannerTitle => 'Daily Planner';
 
   @override
-  String get plannerTabTasks => 'Tasks';
+  String get plannerTabTasks => 'Study';
 
   @override
   String get plannerTabRevisions => 'Revisions';
@@ -899,7 +926,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get plannerDueNotificationBody => 'It\'s study time — let\'s go! ✨';
 
   @override
-  String get plannerTypeTask => 'Task';
+  String get plannerTypeTask => 'Study';
 
   @override
   String get plannerTypeRevision => 'Revision';
@@ -1435,7 +1462,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subjectsIconLabel => 'Icon';
 
   @override
-  String get subjectsDailyTarget => 'Daily Target';
+  String get subjectsDailyTarget => 'Goal';
+
+  @override
+  String subjectsWeeklyTargetLabel(int minutes) {
+    return '$minutes min weekly goal';
+  }
 
   @override
   String get subjectsGoalTypeLabel => 'Goal type';
@@ -1457,7 +1489,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String subjectsDailyTargetLabel(int minutes) {
-    return '$minutes min daily target';
+    return '$minutes min goal';
   }
 
   @override

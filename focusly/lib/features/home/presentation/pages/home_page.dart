@@ -54,10 +54,12 @@ class _HomeContent extends StatelessWidget {
         builder: (context, homeState) {
           final subjects = homeState.subjects;
           final averageProgress = _averageProgress(subjects);
-          final totalDailyTarget = subjects.fold<int>(
-            0,
-            (sum, subject) => sum + subject.dailyTargetMinutes,
-          );
+          final totalDailyTarget = subjects
+            .where((subject) => subject.goalType == 'daily')
+            .fold<int>(
+              0,
+              (sum, subject) => sum + subject.dailyTargetMinutes,
+            );
           final completedSubjects = subjects
               .where((subject) => subject.progressPercent >= 100)
               .length;
@@ -130,8 +132,6 @@ class _HomeContent extends StatelessWidget {
                       _UpcomingTodaySection(
                         schedules: homeState.todaySchedules,
                         tasks: homeState.todayTasks,
-                        onOpenPlanner: () => context.push('/subjects'),
-                        onOpenSchedule: () => context.go('/home?tab=1'),
                       ).animate().fadeIn(delay: 380.ms, duration: 500.ms),
                     ],
                     const SizedBox(height: 28),
@@ -742,14 +742,18 @@ class _UpcomingTodaySection extends StatelessWidget {
   const _UpcomingTodaySection({
     required this.schedules,
     required this.tasks,
-    required this.onOpenPlanner,
-    required this.onOpenSchedule,
   });
 
   final List<StudyScheduleModel> schedules;
   final List<PlannedItemModel> tasks;
-  final VoidCallback onOpenPlanner;
-  final VoidCallback onOpenSchedule;
+
+  void _openSubject(BuildContext context, String? subjectId) {
+    if (subjectId != null && subjectId.isNotEmpty) {
+      context.push('/subjects/$subjectId');
+      return;
+    }
+    context.push('/subjects');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -762,7 +766,7 @@ class _UpcomingTodaySection extends StatelessWidget {
           actionLabel: tasks.isNotEmpty
               ? l10n.homeNavPlanner
               : l10n.homeNavSchedule,
-          onAction: tasks.isNotEmpty ? onOpenPlanner : onOpenSchedule,
+          onAction: () => context.go('/home?tab=1'),
         ),
         const SizedBox(height: 12),
         SizedBox(
@@ -779,7 +783,7 @@ class _UpcomingTodaySection extends StatelessWidget {
                   subtitle: _formatTime(schedule.startAt),
                   icon: Icons.event_rounded,
                   color: AppColors.secondary,
-                  onTap: onOpenSchedule,
+                  onTap: () => _openSubject(context, schedule.subjectId),
                 );
               }
               final task = tasks[index - schedules.length];
@@ -788,7 +792,7 @@ class _UpcomingTodaySection extends StatelessWidget {
                 subtitle: task.time ?? l10n.homeToday,
                 icon: Icons.task_alt_rounded,
                 color: AppColors.primary,
-                onTap: onOpenPlanner,
+                onTap: () => _openSubject(context, task.subjectId),
               );
             },
           ),
@@ -1095,8 +1099,9 @@ class _SubjectPreviewCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    AppLocalizations.of(context)
-                        .homeSubjectTargetMinutes(subject.dailyTargetMinutes),
+                    AppLocalizations.of(context).homeSubjectTargetMinutes(
+                      subject.dailyTargetMinutes,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(

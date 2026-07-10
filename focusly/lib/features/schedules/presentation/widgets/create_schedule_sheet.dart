@@ -13,10 +13,14 @@ class CreateScheduleSheet extends StatefulWidget {
     required this.onSave,
     this.isSaving = false,
     this.initialSchedule,
+    this.lockedSubjectId,
   });
 
   final DateTime selectedDate;
   final bool isSaving;
+
+  /// When set, the sheet is scoped to this subject and hides the subject picker.
+  final String? lockedSubjectId;
 
   /// When provided, the sheet opens in edit mode and pre-fills its fields from
   /// this schedule. The [onSave] callback should then perform an update.
@@ -59,8 +63,13 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
   void initState() {
     super.initState();
     _selectedDate = _dateOnly(widget.selectedDate);
+    _selectedSubjectId = widget.lockedSubjectId;
     _prefillFromInitial();
-    _loadSubjects();
+    if (widget.lockedSubjectId == null) {
+      _loadSubjects();
+    } else {
+      _isLoadingSubjects = false;
+    }
   }
 
   void _prefillFromInitial() {
@@ -224,30 +233,32 @@ class _CreateScheduleSheetState extends State<CreateScheduleSheet> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                _SectionLabel(label: l10n.schedulesSubjectLabel),
-                const SizedBox(height: 12),
-                _isLoadingSubjects
-                    ? const Center(child: LinearProgressIndicator())
-                    : DropdownButtonFormField<String>(
-                        initialValue: _selectedSubjectId,
-                        decoration: const InputDecoration(
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                if (widget.lockedSubjectId == null) ...[
+                  _SectionLabel(label: l10n.schedulesSubjectLabel),
+                  const SizedBox(height: 12),
+                  _isLoadingSubjects
+                      ? const Center(child: LinearProgressIndicator())
+                      : DropdownButtonFormField<String>(
+                          initialValue: _selectedSubjectId,
+                          decoration: const InputDecoration(
+                            contentPadding:
+                                EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                          hint: Text(l10n.schedulesSelectSubjectHint),
+                          items: _subjects
+                              .map((s) => DropdownMenuItem(
+                                    value: s.id,
+                                    child: Text(s.name,
+                                        overflow: TextOverflow.ellipsis),
+                                  ))
+                              .toList(),
+                          onChanged: (val) =>
+                              setState(() => _selectedSubjectId = val),
+                          validator: (val) =>
+                              val == null ? l10n.schedulesFieldRequired : null,
                         ),
-                        hint: Text(l10n.schedulesSelectSubjectHint),
-                        items: _subjects
-                            .map((s) => DropdownMenuItem(
-                                  value: s.id,
-                                  child: Text(s.name,
-                                      overflow: TextOverflow.ellipsis),
-                                ))
-                            .toList(),
-                        onChanged: (val) =>
-                            setState(() => _selectedSubjectId = val),
-                        validator: (val) =>
-                            val == null ? l10n.schedulesFieldRequired : null,
-                      ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
+                ],
                 _SectionLabel(label: l10n.schedulesBlockTitleLabel),
                 const SizedBox(height: 12),
                 TextFormField(

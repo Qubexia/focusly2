@@ -29,6 +29,7 @@ class PlannerRepository {
     String? subjectId,
     int? reminderMinutesBefore,
     bool reminderEnabled = true,
+    String? recurrence,
   }) {
     return _remoteDataSource.createItem(
       type: type,
@@ -38,6 +39,7 @@ class PlannerRepository {
       subjectId: subjectId,
       reminderMinutesBefore: reminderMinutesBefore,
       reminderEnabled: reminderEnabled,
+      recurrence: recurrence,
     );
   }
 

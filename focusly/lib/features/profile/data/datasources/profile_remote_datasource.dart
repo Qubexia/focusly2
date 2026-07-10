@@ -77,6 +77,13 @@ class ProfileRemoteDataSource {
     );
   }
 
+  Future<bool> getFocusMode() async {
+    final response = await _dio.get(ApiEndpoints.usersMe);
+    final data = response.data as Map<String, dynamic>?;
+    final settings = data?['settings'] as Map<String, dynamic>?;
+    return (settings?['focusMode'] ?? false) as bool;
+  }
+
   Future<void> updateSettings({
     String? locale,
     String? timezone,

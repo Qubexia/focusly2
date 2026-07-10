@@ -16,6 +16,8 @@ export default registerAs('app', () => ({
   // Empty -> falls back to http://localhost:<port>/v1/auth/verify-email.
   // Dev (device): set to your PC LAN IP. Prod: your public HTTPS host.
   verifyEmailUrl: process.env.APP_VERIFY_EMAIL_URL ?? '',
+  // Deep link or web URL for password-reset emails.
+  resetPasswordUrl: process.env.APP_RESET_PASSWORD_URL ?? '',
   // Deep link used by the "Open the app" button on the verification result page.
   appOpenUrl: process.env.APP_OPEN_URL ?? 'zakerly://login',
 }));

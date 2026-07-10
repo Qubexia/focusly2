@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 
@@ -62,6 +64,10 @@ class ApiClient {
     _dio?.close();
     _dio = null;
   }
+
+  /// Proactively refresh tokens (e.g. before a long focus session completes).
+  static Future<bool> refreshSessionTokensIfNeeded() =>
+      _AuthInterceptor.refreshTokens();
 }
 
 /// Interceptor that:
@@ -73,7 +79,7 @@ class _AuthInterceptor extends Interceptor {
   _AuthInterceptor(this._dio);
 
   final Dio _dio;
-  bool _isRefreshing = false;
+  static Completer<bool>? _refreshCompleter;
 
   @override
   void onRequest(
@@ -102,7 +108,7 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response?.statusCode == 401 && !_isRefreshing) {
+    if (err.response?.statusCode == 401) {
       final resolved = await _refreshAndRetry(err, handler);
       if (resolved) return;
     }
@@ -127,18 +133,38 @@ class _AuthInterceptor extends Interceptor {
     return data['code'] == 'PREMIUM_REQUIRED';
   }
 
+  static Future<bool> refreshTokens() async {
+    if (_refreshCompleter != null) {
+      return _refreshCompleter!.future;
+    }
+
+    _refreshCompleter = Completer<bool>();
+    try {
+      final refreshed = await _attemptRefresh();
+      _refreshCompleter!.complete(refreshed);
+      return refreshed;
+    } catch (_) {
+      _refreshCompleter!.complete(false);
+      return false;
+    } finally {
+      _refreshCompleter = null;
+    }
+  }
+
   Future<bool> _refreshAndRetry(
     DioException err,
     ErrorInterceptorHandler handler, {
     bool markPremiumRetried = false,
   }) async {
-    if (_isRefreshing) return false;
+    final refreshed = await refreshTokens();
+    if (!refreshed) {
+      if (err.response?.statusCode == 401) {
+        await SecureStorage.clearTokens();
+      }
+      return false;
+    }
 
-    _isRefreshing = true;
     try {
-      final refreshed = await _attemptRefresh();
-      if (!refreshed) return false;
-
       final token = await SecureStorage.getAccessToken();
       final retryOptions = err.requestOptions;
       if (markPremiumRetried) {
@@ -156,12 +182,10 @@ class _AuthInterceptor extends Interceptor {
         await SecureStorage.clearTokens();
       }
       return false;
-    } finally {
-      _isRefreshing = false;
     }
   }
 
-  Future<bool> _attemptRefresh() async {
+  static Future<bool> _attemptRefresh() async {
     final refreshToken = await SecureStorage.getRefreshToken();
     final deviceId = await SecureStorage.getDeviceId();
     if (refreshToken == null || deviceId == null) return false;

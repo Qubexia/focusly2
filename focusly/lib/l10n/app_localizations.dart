@@ -332,6 +332,60 @@ abstract class AppLocalizations {
   /// **'Focus'**
   String get settingsFocusSection;
 
+  /// No description provided for @plannerSetDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date'**
+  String get plannerSetDate;
+
+  /// No description provided for @plannerRecurrence.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get plannerRecurrence;
+
+  /// No description provided for @plannerRecurrenceOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Once'**
+  String get plannerRecurrenceOnce;
+
+  /// No description provided for @plannerRecurrenceDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get plannerRecurrenceDaily;
+
+  /// No description provided for @plannerRecurrenceWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get plannerRecurrenceWeekly;
+
+  /// No description provided for @subjectsStudyScheduleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Study schedule'**
+  String get subjectsStudyScheduleTitle;
+
+  /// No description provided for @subjectsAddStudySchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Add study schedule'**
+  String get subjectsAddStudySchedule;
+
+  /// No description provided for @subjectsStudyScheduleEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No study schedule yet'**
+  String get subjectsStudyScheduleEmpty;
+
+  /// No description provided for @authRememberMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep me signed in'**
+  String get authRememberMe;
+
   /// No description provided for @settingsFocusMode.
   ///
   /// In en, this message translates to:
@@ -599,7 +653,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeQuickAddTaskLabel.
   ///
   /// In en, this message translates to:
-  /// **'Add Task'**
+  /// **'Add Study'**
   String get homeQuickAddTaskLabel;
 
   /// No description provided for @homeQuickAddTaskSubtitle.
@@ -1487,7 +1541,7 @@ abstract class AppLocalizations {
   /// No description provided for @plannerTabTasks.
   ///
   /// In en, this message translates to:
-  /// **'Tasks'**
+  /// **'Study'**
   String get plannerTabTasks;
 
   /// No description provided for @plannerTabRevisions.
@@ -1679,7 +1733,7 @@ abstract class AppLocalizations {
   /// No description provided for @plannerTypeTask.
   ///
   /// In en, this message translates to:
-  /// **'Task'**
+  /// **'Study'**
   String get plannerTypeTask;
 
   /// No description provided for @plannerTypeRevision.
@@ -2585,8 +2639,14 @@ abstract class AppLocalizations {
   /// No description provided for @subjectsDailyTarget.
   ///
   /// In en, this message translates to:
-  /// **'Daily Target'**
+  /// **'Goal'**
   String get subjectsDailyTarget;
+
+  /// No description provided for @subjectsWeeklyTargetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min weekly goal'**
+  String subjectsWeeklyTargetLabel(int minutes);
 
   /// No description provided for @subjectsGoalTypeLabel.
   ///
@@ -2627,7 +2687,7 @@ abstract class AppLocalizations {
   /// No description provided for @subjectsDailyTargetLabel.
   ///
   /// In en, this message translates to:
-  /// **'{minutes} min daily target'**
+  /// **'{minutes} min goal'**
   String subjectsDailyTargetLabel(int minutes);
 
   /// No description provided for @subjectsMinutesValue.

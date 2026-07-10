@@ -28,6 +28,8 @@ class SubjectsRemoteDataSource {
     String? color,
     String? icon,
     required int dailyTargetMinutes,
+    String? goalType,
+    List<int>? goalDays,
   }) async {
     final response = await _dio.post(
       ApiEndpoints.subjects,
@@ -36,6 +38,8 @@ class SubjectsRemoteDataSource {
         if (color != null) 'color': color,
         if (icon != null) 'icon': icon,
         'dailyTargetMinutes': dailyTargetMinutes,
+        if (goalType != null) 'goalType': goalType,
+        if (goalDays != null) 'goalDays': goalDays,
       },
     );
 

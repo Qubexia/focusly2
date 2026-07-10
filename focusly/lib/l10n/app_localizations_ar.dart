@@ -127,6 +127,33 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsFocusSection => 'التركيز';
 
   @override
+  String get plannerSetDate => 'تحديد التاريخ';
+
+  @override
+  String get plannerRecurrence => 'التكرار';
+
+  @override
+  String get plannerRecurrenceOnce => 'مرة واحدة';
+
+  @override
+  String get plannerRecurrenceDaily => 'يومياً';
+
+  @override
+  String get plannerRecurrenceWeekly => 'أسبوعياً';
+
+  @override
+  String get subjectsStudyScheduleTitle => 'جدول المذاكرة';
+
+  @override
+  String get subjectsAddStudySchedule => 'إضافة جدول مذاكرة';
+
+  @override
+  String get subjectsStudyScheduleEmpty => 'لا يوجد جدول مذاكرة بعد';
+
+  @override
+  String get authRememberMe => 'الإبقاء على تسجيل الدخول';
+
+  @override
   String get settingsFocusMode => 'وضع التركيز';
 
   @override
@@ -279,7 +306,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeQuickFocusSubtitle => 'مؤقّت بومودورو';
 
   @override
-  String get homeQuickAddTaskLabel => 'إضافة مهمة';
+  String get homeQuickAddTaskLabel => 'إضافة مذاكرة';
 
   @override
   String get homeQuickAddTaskSubtitle => 'خطّط ليومك';
@@ -798,7 +825,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get plannerTitle => 'المخطط اليومي';
 
   @override
-  String get plannerTabTasks => 'المهام';
+  String get plannerTabTasks => 'المذاكرة';
 
   @override
   String get plannerTabRevisions => 'المراجعات';
@@ -920,7 +947,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get plannerDueNotificationBody => 'حان وقت مذاكرتك، يلا نبدأ! ✨';
 
   @override
-  String get plannerTypeTask => 'مهمة';
+  String get plannerTypeTask => 'مذاكرة';
 
   @override
   String get plannerTypeRevision => 'مراجعة';
@@ -1474,7 +1501,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get subjectsIconLabel => 'الأيقونة';
 
   @override
-  String get subjectsDailyTarget => 'الهدف اليومي';
+  String get subjectsDailyTarget => 'الهدف';
+
+  @override
+  String subjectsWeeklyTargetLabel(int minutes) {
+    return 'هدف أسبوعي $minutes دقيقة';
+  }
 
   @override
   String get subjectsGoalTypeLabel => 'نوع الهدف';
@@ -1496,7 +1528,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String subjectsDailyTargetLabel(int minutes) {
-    return 'هدف يومي $minutes دقيقة';
+    return 'هدف $minutes دقيقة';
   }
 
   @override

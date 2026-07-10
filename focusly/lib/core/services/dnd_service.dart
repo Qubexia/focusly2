@@ -15,10 +15,6 @@ class DndService {
 
   static const MethodChannel _channel = MethodChannel('focusly/dnd');
 
-  // Remembers that we already nudged the user to the system settings, so we
-  // never hijack the screen on every session start.
-  static const String _promptedKey = 'dnd_permission_prompted';
-
   // Tracks that *we* turned silence on, so disabling only ever reverses our own
   // change and never overrides a Do-Not-Disturb the user set manually.
   static const String _engagedKey = 'dnd_engaged_by_focus';
@@ -34,11 +30,11 @@ class DndService {
     }
   }
 
-  /// Silence the whole device for the duration of a focus session. If the
-  /// system permission has not been granted yet, opens the settings screen once
-  /// so the user can enable it; the session continues silenced or not either way.
-  Future<void> enableFocusSilence() async {
-    if (!_supported) return;
+  /// Silence the whole device for the duration of a focus session.
+  /// Returns true when DND was enabled; false when permission is missing or
+  /// the platform call failed.
+  Future<bool> enableFocusSilence() async {
+    if (!_supported) return false;
     try {
       if (await _isPermissionGranted()) {
         final ok =
@@ -48,16 +44,14 @@ class DndService {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool(_engagedKey, true);
         }
-        return;
+        return ok;
       }
 
-      // Permission missing: guide the user to grant it, but only the first time.
-      final prefs = await SharedPreferences.getInstance();
-      if (prefs.getBool(_promptedKey) ?? false) return;
-      await prefs.setBool(_promptedKey, true);
+      // Permission missing: open system settings so the user can grant access.
       await _channel.invokeMethod('openPermissionSettings');
+      return false;
     } on PlatformException {
-      // Best-effort: never let a DND failure break the focus session.
+      return false;
     }
   }
 

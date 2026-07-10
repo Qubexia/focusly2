@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../datasources/auth_remote_datasource.dart';
@@ -10,6 +12,7 @@ import '../models/user_model.dart';
 class AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final NotificationService _notificationService = NotificationService();
+  static const String _rememberMeKey = 'auth_remember_me';
 
   AuthRepository({AuthRemoteDataSource? remoteDataSource})
       : _remoteDataSource = remoteDataSource ?? AuthRemoteDataSource();
@@ -46,6 +49,7 @@ class AuthRepository {
   Future<AuthResponse> login({
     required String email,
     required String password,
+    bool rememberMe = true,
   }) async {
     final deviceId = await _getOrCreateDeviceId();
     final fcmToken = await _notificationService.getFcmToken();
@@ -56,6 +60,8 @@ class AuthRepository {
       fcmToken: fcmToken,
     );
     await _persistTokens(response);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_rememberMeKey, rememberMe);
     await _syncFcmToken();
     return response;
   }
@@ -105,6 +111,14 @@ class AuthRepository {
   }
 
   Future<UserModel?> tryAutoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final remembered = prefs.getBool(_rememberMeKey) ?? true;
+    if (!remembered) {
+      await SecureStorage.clearTokens();
+      await prefs.remove(_rememberMeKey);
+      return null;
+    }
+
     final token = await SecureStorage.getAccessToken();
     if (token == null) return null;
     try {
@@ -112,7 +126,15 @@ class AuthRepository {
       await _syncFcmToken();
       return user;
     } catch (_) {
-      return null;
+      final refreshed = await refreshSessionTokens();
+      if (!refreshed) return null;
+      try {
+        final user = await fetchCurrentUser();
+        await _syncFcmToken();
+        return user;
+      } catch (_) {
+        return null;
+      }
     }
   }
 

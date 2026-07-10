@@ -288,7 +288,7 @@ export class AuthService {
     }
 
     const token = await this.sendEmailToken(getDocumentId(user), user.email, 'reset-password');
-    await this.mailer.send(buildPasswordResetEmail(user.email, token));
+    await this.mailer.send(buildPasswordResetEmail(user.email, this.buildResetPasswordUrl(token)));
   }
 
   async resetPassword(dto: ResetPasswordDto): Promise<void> {
@@ -460,6 +460,15 @@ export class AuthService {
     const base = explicit || `http://localhost:${port}/v1/auth/verify-email`;
     const separator = base.includes('?') ? '&' : '?';
     return `${base}${separator}token=${encodeURIComponent(token)}`;
+  }
+
+  private buildResetPasswordUrl(token: string): string {
+    const explicit = this.config.get<string>('app.resetPasswordUrl') ?? '';
+    if (explicit) {
+      const separator = explicit.includes('?') ? '&' : '?';
+      return `${explicit}${separator}token=${encodeURIComponent(token)}`;
+    }
+    return `zakerly://reset-password?token=${encodeURIComponent(token)}`;
   }
 
   private unauthorized(message: string): UnauthorizedException {

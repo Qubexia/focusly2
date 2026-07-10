@@ -18,12 +18,16 @@ class SubjectsRepository {
     String? color,
     String? icon,
     required int dailyTargetMinutes,
+    String? goalType,
+    List<int>? goalDays,
   }) {
     return _remoteDataSource.createSubject(
       name: name,
       color: color,
       icon: icon,
       dailyTargetMinutes: dailyTargetMinutes,
+      goalType: goalType,
+      goalDays: goalDays,
     );
   }
 

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../analytics/data/datasources/analytics_remote_datasource.dart';
 import '../../../auth/data/models/user_model.dart';
 import '../../../auth/data/repositories/auth_repository_impl.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -83,10 +84,8 @@ class ProfilePage extends StatelessWidget {
                           );
                         },
                       ),
-                      _InfoTile(
-                        icon: Icons.timer_outlined,
+                      _FocusSessionsTile(
                         title: l10n.profileFocusSessions,
-                        value: '24',
                         color: AppColors.primary,
                       ),
                       _InfoTile(
@@ -701,6 +700,54 @@ class _InfoActionTile extends StatelessWidget {
       ),
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,
+    );
+  }
+}
+
+class _FocusSessionsTile extends StatefulWidget {
+  const _FocusSessionsTile({
+    required this.title,
+    required this.color,
+  });
+
+  final String title;
+  final Color color;
+
+  @override
+  State<_FocusSessionsTile> createState() => _FocusSessionsTileState();
+}
+
+class _FocusSessionsTileState extends State<_FocusSessionsTile> {
+  String _value = '0';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final now = DateTime.now();
+      final from = now.subtract(const Duration(days: 30));
+      final summary = await AnalyticsRemoteDataSource().getSummary(
+        from: from.toIso8601String(),
+        to: now.toIso8601String(),
+      );
+      if (!mounted) return;
+      setState(() => _value = '${summary.totalSessions}');
+    } catch (_) {
+      // Keep the default zero when analytics is unavailable.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _InfoTile(
+      icon: Icons.timer_outlined,
+      title: widget.title,
+      value: _value,
+      color: widget.color,
     );
   }
 }
