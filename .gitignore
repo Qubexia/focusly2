@@ -1,3 +1,9 @@
+# Dependencies
+node_modules/
+
+# Temp artifacts
+.tmp_pdf_pages/
+
 # Secrets & credentials
 focusly-9ac6a-firebase-adminsdk-fbsvc-45f5494b8f.json
 *-firebase-adminsdk-*.json
