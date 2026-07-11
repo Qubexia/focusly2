@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zakerly/core/localization/app_l10n.dart';
+import '../../data/models/analytics_performance_model.dart';
 import '../../data/models/analytics_summary_model.dart';
 import '../../data/repositories/analytics_repository.dart';
 import 'analytics_state.dart';
@@ -44,11 +45,20 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
         _repository.getPerformance(from: fromStr, to: toStr),
       ]);
 
+      final summary = results[0] as AnalyticsSummaryModel;
+      final performance =
+          (results[2] as AnalyticsPerformanceModel).mergeWithSummary(
+        focusMinutes: summary.totalFocusMinutes,
+        sessions: summary.totalSessions,
+        tasksCompleted: summary.totalTasksCompleted,
+        streakDays: summary.streak,
+      );
+
       emit(state.copyWith(
         isLoading: false,
-        summary: results[0] as dynamic,
+        summary: summary,
         bySubject: results[1] as dynamic,
-        performance: results[2] as dynamic,
+        performance: performance,
       ));
     } on DioException catch (e) {
       final message = _extractMessage(e);
@@ -153,14 +163,23 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
         _repository.getPerformance(from: fromStr, to: toStr),
       ]);
 
+      final summary = results[0] as AnalyticsSummaryModel;
+      final performance =
+          (results[2] as AnalyticsPerformanceModel).mergeWithSummary(
+        focusMinutes: summary.totalFocusMinutes,
+        sessions: summary.totalSessions,
+        tasksCompleted: summary.totalTasksCompleted,
+        streakDays: summary.streak,
+      );
+
       emit(state.copyWith(
         isLoading: false,
         dateRange: AnalyticsDateRange.week,
         fromDate: fromDate,
         toDate: toDate,
-        summary: results[0] as dynamic,
+        summary: summary,
         bySubject: results[1] as dynamic,
-        performance: results[2] as dynamic,
+        performance: performance,
         errorMessage: upgradeMessage,
       ));
     } on DioException catch (fallbackError) {

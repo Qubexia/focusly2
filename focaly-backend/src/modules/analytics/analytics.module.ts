@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 
+import { PlannedItem, PlannedItemSchema } from '../planned-items/schemas/planned-item.schema';
 import {
   PomodoroSession,
   PomodoroSessionSchema,
@@ -20,6 +21,7 @@ import { AnalyticsDaily, AnalyticsDailySchema } from './schemas/analytics-daily.
     MongooseModule.forFeature([
       { name: AnalyticsDaily.name, schema: AnalyticsDailySchema },
       { name: PomodoroSession.name, schema: PomodoroSessionSchema },
+      { name: PlannedItem.name, schema: PlannedItemSchema },
     ]),
   ],
   controllers: [AnalyticsController],

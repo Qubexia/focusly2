@@ -15,15 +15,23 @@ class AnalyticsSummaryModel {
 
   factory AnalyticsSummaryModel.fromJson(Map<String, dynamic> json) {
     return AnalyticsSummaryModel(
-      totalFocusMinutes: json['totalFocusMinutes'] as int? ?? 0,
-      totalSessions: json['totalSessions'] as int? ?? 0,
-      totalTasksCompleted: json['totalTasksCompleted'] as int? ?? 0,
-      streak: json['streak'] as int? ?? 0,
+      totalFocusMinutes: _asInt(json['totalFocusMinutes']),
+      totalSessions: _asInt(json['totalSessions']),
+      totalTasksCompleted: _asInt(
+        json['totalTasksCompleted'] ?? json['totalPlannedItems'],
+      ),
+      streak: _asInt(json['streak'] ?? json['streakDays']),
       dailyFocus: (json['dailyFocus'] as List<dynamic>?)
               ?.map((e) => DailyFocusModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );
+  }
+
+  static int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return 0;
   }
 }
 
@@ -39,7 +47,13 @@ class DailyFocusModel {
   factory DailyFocusModel.fromJson(Map<String, dynamic> json) {
     return DailyFocusModel(
       date: json['date'] as String? ?? '',
-      minutes: json['minutes'] as int? ?? 0,
+      minutes: _asInt(json['minutes']),
     );
+  }
+
+  static int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return 0;
   }
 }
