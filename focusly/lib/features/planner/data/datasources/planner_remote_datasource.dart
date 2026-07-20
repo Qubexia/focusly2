@@ -38,6 +38,8 @@ class PlannerRemoteDataSource {
     int? reminderMinutesBefore,
     bool reminderEnabled = true,
     String? recurrence,
+    List<int>? daysOfWeek,
+    String? recurrenceEndAt,
   }) async {
     final endpoint = _getEndpoint(type);
     final response = await _dio.post(
@@ -48,6 +50,8 @@ class PlannerRemoteDataSource {
         'plannedAt': plannedAt,
         if (subjectId != null) 'subjectId': subjectId,
         if (recurrence != null) 'recurrence': recurrence,
+        if (daysOfWeek != null && daysOfWeek.isNotEmpty) 'daysOfWeek': daysOfWeek,
+        if (recurrenceEndAt != null) 'recurrenceEndAt': recurrenceEndAt,
         'reminderEnabled': reminderEnabled,
         if (reminderEnabled && reminderMinutesBefore != null)
           'reminderMinutesBefore': reminderMinutesBefore,
@@ -84,9 +88,17 @@ class PlannerRemoteDataSource {
   Future<PlannedItemModel> completeItem({
     required PlannedItemType type,
     required String id,
+    String? occurrenceDate,
   }) async {
     final endpoint = _getCompleteEndpoint(type, id);
-    final response = await _dio.post(endpoint);
+    final response = await _dio.post(
+      endpoint,
+      // Recurring items are completed one day at a time; the server keys the
+      // tick by the date the client actually rendered.
+      queryParameters: {
+        if (occurrenceDate != null) 'date': occurrenceDate,
+      },
+    );
     return PlannedItemModel.fromJson(response.data as Map<String, dynamic>);
   }
 

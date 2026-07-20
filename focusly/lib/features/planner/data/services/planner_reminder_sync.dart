@@ -33,8 +33,11 @@ class PlannerReminderSync {
 
     final now = DateTime.now();
     for (final item in items) {
+      // Recurring items key their notifications per occurrence, so scheduling
+      // next Saturday's reminder cannot cancel this Saturday's.
+      final key = item.notificationKey;
       if (item.id.isEmpty || item.completed || !item.reminderEnabled) {
-        await cancelItem(item.id);
+        await cancelItem(key);
         continue;
       }
       if (!item.date.isAfter(now)) continue;
@@ -47,7 +50,7 @@ class PlannerReminderSync {
         if (remindAt.isAfter(now)) {
           try {
             await _notificationService.scheduleNotification(
-              id: reminderNotificationId(item.id),
+              id: reminderNotificationId(key),
               title: AppL10n.current.plannerReminderNotificationTitle(item.title),
               body: AppL10n.current.plannerReminderNotificationBody(offset),
               scheduledDate: remindAt,
@@ -63,7 +66,7 @@ class PlannerReminderSync {
 
       try {
         await _notificationService.scheduleNotification(
-          id: dueNotificationId(item.id),
+          id: dueNotificationId(key),
           title: AppL10n.current.plannerDueNotificationTitle(item.title),
           body: AppL10n.current.plannerDueNotificationBody,
           scheduledDate: item.date,

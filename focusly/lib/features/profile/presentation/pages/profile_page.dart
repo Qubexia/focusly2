@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../analytics/data/datasources/analytics_remote_datasource.dart';
+import '../../../analytics/data/repositories/analytics_repository.dart';
 import '../../../auth/data/models/user_model.dart';
 import '../../../auth/data/repositories/auth_repository_impl.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -15,8 +15,49 @@ import '../../../streaks/presentation/cubit/streak_state.dart';
 import '../../../subscription/presentation/subscription_actions.dart';
 import '../widgets/edit_profile_sheet.dart';
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key, this.isActive = true});
+
+  /// Whether this tab is the one currently on screen. The shell keeps every tab
+  /// alive, so the overview stats would otherwise never be re-fetched.
+  final bool isActive;
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final GlobalKey<_FocusSessionsTileState> _focusSessionsKey =
+      GlobalKey<_FocusSessionsTileState>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isActive) _scheduleRefresh();
+  }
+
+  @override
+  void didUpdateWidget(ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) _scheduleRefresh();
+  }
+
+  void _scheduleRefresh() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _refresh();
+    });
+  }
+
+  Future<void> _refresh() async {
+    if (context.read<AuthBloc>().state is! AuthAuthenticated) return;
+    // Points live on the user document, the streak on its own endpoint, and the
+    // session count in analytics — all three need their own round trip.
+    context.read<AuthBloc>().add(const AuthRefreshUser());
+    await Future.wait([
+      context.read<StreakCubit>().loadStreak(),
+      _focusSessionsKey.currentState?.reload() ?? Future<void>.value(),
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,163 +94,181 @@ class ProfilePage extends StatelessWidget {
             ],
           ),
           body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _ProfileHeroCard(user: user),
-                  const SizedBox(height: 20),
-                  _SectionTitle(
-                    title: l10n.profileOverviewTitle,
-                    subtitle: l10n.profileOverviewSubtitle,
-                  ),
-                  const SizedBox(height: 14),
-                  _InfoListCard(
-                    children: [
-                      _InfoTile(
-                        icon: Icons.workspace_premium_rounded,
-                        title: l10n.profileTotalPoints,
-                        value: '${user?.totalPoints ?? 0}',
-                        color: AppColors.premium,
-                      ),
-                      BlocBuilder<StreakCubit, StreakState>(
-                        builder: (context, streakState) {
-                          final streakDays = streakState.current;
-                          return _InfoTile(
-                            icon: Icons.local_fire_department_rounded,
-                            title: l10n.profileCurrentStreak,
-                            value: l10n.profileStreakDays(streakDays),
-                            color: AppColors.primary,
-                          );
-                        },
-                      ),
-                      _FocusSessionsTile(
-                        title: l10n.profileFocusSessions,
-                        color: AppColors.primary,
-                      ),
-                      _InfoTile(
-                        icon: Icons.verified_rounded,
-                        title: l10n.profilePlanStatus,
-                        value: user?.isPremium == true
-                            ? l10n.profilePremium
-                            : l10n.profileFree,
-                        color: user?.isPremium == true
-                            ? AppColors.premium
-                            : AppColors.secondary,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  _SectionTitle(
-                    title: l10n.profileAccountTitle,
-                    subtitle: l10n.profileAccountSubtitle,
-                  ),
-                  const SizedBox(height: 14),
-                  _InfoListCard(
-                    children: [
-                      _InfoTile(
-                        icon: Icons.alternate_email_rounded,
-                        title: l10n.profileEmailAddress,
-                        value: user?.email ?? l10n.profileNoEmail,
-                      ),
-                      _VerificationTile(
-                        verified: user?.emailVerified ?? false,
-                      ),
-                      _InfoTile(
-                        icon: Icons.star_outline_rounded,
-                        title: l10n.profileCurrentPlan,
-                        value: _planLabel(context, user),
-                      ),
-                      _InfoActionTile(
-                        icon: Icons.checklist_rounded,
-                        title: l10n.profileDailyPlanner,
-                        subtitle: l10n.profileDailyPlannerSubtitle,
-                        onTap: () => context.push('/subjects'),
-                      ),
-                      _InfoActionTile(
-                        icon: Icons.auto_awesome_rounded,
-                        title: l10n.profileAiNotes,
-                        subtitle: l10n.profileAiNotesSubtitle,
-                        onTap: () => context.push('/ai-notes'),
-                      ),
-                      _InfoActionTile(
-                        icon: Icons.workspace_premium_rounded,
-                        title: l10n.profilePremium,
-                        subtitle: _planLabel(context, user),
-                        onTap: () => context.push('/premium'),
-                      ),
-                      if (user?.isPremium == true)
+            child: RefreshIndicator(
+              onRefresh: _refresh,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ProfileHeroCard(user: user),
+                    const SizedBox(height: 20),
+                    _SectionTitle(
+                      title: l10n.profileOverviewTitle,
+                      subtitle: l10n.profileOverviewSubtitle,
+                    ),
+                    const SizedBox(height: 14),
+                    _InfoListCard(
+                      children: [
+                        BlocBuilder<StreakCubit, StreakState>(
+                          builder: (context, streakState) {
+                            // Points accrue in two places on the backend: planned
+                            // items credit `user.totalPoints`, streak milestones
+                            // credit `streak.points`.
+                            final points =
+                                (user?.totalPoints ?? 0) +
+                                (streakState.streak?.points ?? 0);
+                            return _InfoTile(
+                              icon: Icons.workspace_premium_rounded,
+                              title: l10n.profileTotalPoints,
+                              value: '$points',
+                              color: AppColors.premium,
+                            );
+                          },
+                        ),
+                        BlocBuilder<StreakCubit, StreakState>(
+                          builder: (context, streakState) {
+                            final streakDays = streakState.current;
+                            return _InfoTile(
+                              icon: Icons.local_fire_department_rounded,
+                              title: l10n.profileCurrentStreak,
+                              value: l10n.profileStreakDays(streakDays),
+                              color: AppColors.primary,
+                            );
+                          },
+                        ),
+                        _FocusSessionsTile(
+                          key: _focusSessionsKey,
+                          title: l10n.profileFocusSessions,
+                          color: AppColors.primary,
+                        ),
+                        _InfoTile(
+                          icon: Icons.verified_rounded,
+                          title: l10n.profilePlanStatus,
+                          value: user?.isPremium == true
+                              ? l10n.profilePremium
+                              : l10n.profileFree,
+                          color: user?.isPremium == true
+                              ? AppColors.premium
+                              : AppColors.secondary,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _SectionTitle(
+                      title: l10n.profileAccountTitle,
+                      subtitle: l10n.profileAccountSubtitle,
+                    ),
+                    const SizedBox(height: 14),
+                    _InfoListCard(
+                      children: [
+                        _InfoTile(
+                          icon: Icons.alternate_email_rounded,
+                          title: l10n.profileEmailAddress,
+                          value: user?.email ?? l10n.profileNoEmail,
+                        ),
+                        _VerificationTile(
+                          verified: user?.emailVerified ?? false,
+                        ),
+                        _InfoTile(
+                          icon: Icons.star_outline_rounded,
+                          title: l10n.profileCurrentPlan,
+                          value: _planLabel(context, user),
+                        ),
                         _InfoActionTile(
-                          icon: Icons.cancel_outlined,
-                          title: l10n.profileCancelSubscription,
-                          subtitle: l10n.profileCancelSubscriptionSubtitle,
-                          onTap: () => SubscriptionActions.cancelFromContext(context),
+                          icon: Icons.checklist_rounded,
+                          title: l10n.profileDailyPlanner,
+                          subtitle: l10n.profileDailyPlannerSubtitle,
+                          onTap: () => context.push('/subjects'),
                         ),
-                      _InfoActionTile(
-                        icon: Icons.settings_outlined,
-                        title: l10n.profileSettings,
-                        subtitle: l10n.profileSettingsSubtitle,
-                        onTap: () => context.push('/profile/settings'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Material(
-                    color: isDark ? AppColors.surfaceDark : Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    clipBehavior: Clip.antiAlias,
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: isDark
-                              ? AppColors.borderDark
-                              : AppColors.borderLight,
+                        _InfoActionTile(
+                          icon: Icons.auto_awesome_rounded,
+                          title: l10n.profileAiNotes,
+                          subtitle: l10n.profileAiNotesSubtitle,
+                          onTap: () => context.push('/ai-notes'),
                         ),
-                      ),
-                      child: Column(
-                        children: [
-                          ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 6,
-                            ),
-                            leading: Container(
-                              height: 42,
-                              width: 42,
-                              decoration: BoxDecoration(
-                                color: AppColors.error.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: const Icon(
-                                Icons.logout_rounded,
-                                color: AppColors.error,
-                              ),
-                            ),
-                            title: Text(
-                              l10n.profileLogout,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            subtitle: Text(
-                              l10n.profileLogoutSubtitle,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: isDark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondaryLight,
-                              ),
-                            ),
-                            trailing: const Icon(Icons.chevron_right_rounded),
-                            onTap: () => _confirmLogout(context),
+                        _InfoActionTile(
+                          icon: Icons.workspace_premium_rounded,
+                          title: l10n.profilePremium,
+                          subtitle: _planLabel(context, user),
+                          onTap: () => context.push('/premium'),
+                        ),
+                        if (user?.isPremium == true)
+                          _InfoActionTile(
+                            icon: Icons.cancel_outlined,
+                            title: l10n.profileCancelSubscription,
+                            subtitle: l10n.profileCancelSubscriptionSubtitle,
+                            onTap: () =>
+                                SubscriptionActions.cancelFromContext(context),
                           ),
-                        ],
+                        _InfoActionTile(
+                          icon: Icons.settings_outlined,
+                          title: l10n.profileSettings,
+                          subtitle: l10n.profileSettingsSubtitle,
+                          onTap: () => context.push('/profile/settings'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Material(
+                      color: isDark ? AppColors.surfaceDark : Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      clipBehavior: Clip.antiAlias,
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: isDark
+                                ? AppColors.borderDark
+                                : AppColors.borderLight,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 6,
+                              ),
+                              leading: Container(
+                                height: 42,
+                                width: 42,
+                                decoration: BoxDecoration(
+                                  color: AppColors.error.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: const Icon(
+                                  Icons.logout_rounded,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                              title: Text(
+                                l10n.profileLogout,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              subtitle: Text(
+                                l10n.profileLogoutSubtitle,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: isDark
+                                      ? AppColors.textSecondaryDark
+                                      : AppColors.textSecondaryLight,
+                                ),
+                              ),
+                              trailing: const Icon(Icons.chevron_right_rounded),
+                              onTap: () => _confirmLogout(context),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -394,11 +453,7 @@ class _ProfileAvatar extends StatelessWidget {
         backgroundImage: hasAvatar ? NetworkImage(user!.avatarUrl!) : null,
         child: hasAvatar
             ? null
-            : const Icon(
-                Icons.person_rounded,
-                color: Colors.white,
-                size: 30,
-              ),
+            : const Icon(Icons.person_rounded, color: Colors.white, size: 30),
       ),
     );
   }
@@ -470,7 +525,6 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-
 class _InfoListCard extends StatelessWidget {
   const _InfoListCard({required this.children});
 
@@ -517,10 +571,7 @@ class _VerificationTileState extends State<_VerificationTile> {
     try {
       await _authRepository.resendVerificationEmail();
       if (!mounted) return;
-      _showSnack(
-        l10n.profileVerificationEmailSent,
-        AppColors.secondary,
-      );
+      _showSnack(l10n.profileVerificationEmailSent, AppColors.secondary);
     } on DioException catch (e) {
       if (!mounted) return;
       _showSnack(
@@ -529,10 +580,7 @@ class _VerificationTileState extends State<_VerificationTile> {
       );
     } catch (_) {
       if (!mounted) return;
-      _showSnack(
-        l10n.profileVerificationEmailError,
-        AppColors.error,
-      );
+      _showSnack(l10n.profileVerificationEmailError, AppColors.error);
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -596,15 +644,12 @@ class _VerificationTileState extends State<_VerificationTile> {
       trailing: verified
           ? null
           : _sending
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : TextButton(
-                  onPressed: _resend,
-                  child: Text(l10n.profileResend),
-                ),
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : TextButton(onPressed: _resend, child: Text(l10n.profileResend)),
     );
   }
 }
@@ -706,6 +751,7 @@ class _InfoActionTile extends StatelessWidget {
 
 class _FocusSessionsTile extends StatefulWidget {
   const _FocusSessionsTile({
+    super.key,
     required this.title,
     required this.color,
   });
@@ -718,6 +764,7 @@ class _FocusSessionsTile extends StatefulWidget {
 }
 
 class _FocusSessionsTileState extends State<_FocusSessionsTile> {
+  final AnalyticsRepository _repository = AnalyticsRepository();
   String _value = '0';
 
   @override
@@ -726,19 +773,56 @@ class _FocusSessionsTileState extends State<_FocusSessionsTile> {
     _load();
   }
 
+  Future<void> reload() => _load();
+
   Future<void> _load() async {
+    final now = DateTime.now().toUtc();
+    // `/analytics/performance` merges the nightly rollup with live Pomodoro
+    // data, so sessions logged today count. `/analytics/summary` falls back to
+    // the rollup alone for ranges over a week and reports them as zero.
     try {
-      final now = DateTime.now();
-      final from = now.subtract(const Duration(days: 30));
-      final summary = await AnalyticsRemoteDataSource().getSummary(
-        from: from.toIso8601String(),
-        to: now.toIso8601String(),
+      final totals = await _repository.getPerformance(
+        from: _formatDate(now.subtract(const Duration(days: 365))),
+        to: _formatDate(now),
       );
-      if (!mounted) return;
-      setState(() => _value = '${summary.totalSessions}');
+      _emit(totals.totalSessions);
+    } on DioException catch (e) {
+      // Free plans are capped to the current week server-side.
+      if (!_isPremiumError(e)) return;
+      try {
+        final totals = await _repository.getPerformance(
+          from: _formatDate(_startOfWeek(now)),
+          to: _formatDate(now),
+        );
+        _emit(totals.totalSessions);
+      } catch (_) {
+        // Keep the default zero when analytics is unavailable.
+      }
     } catch (_) {
       // Keep the default zero when analytics is unavailable.
     }
+  }
+
+  void _emit(int sessions) {
+    if (!mounted) return;
+    setState(() => _value = '$sessions');
+  }
+
+  DateTime _startOfWeek(DateTime date) {
+    final startOfDay = DateTime.utc(date.year, date.month, date.day);
+    return startOfDay.subtract(Duration(days: startOfDay.weekday % 7));
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  bool _isPremiumError(DioException e) {
+    final data = e.response?.data;
+    if (data is! Map<String, dynamic>) return false;
+    if (data['code'] == 'PREMIUM_REQUIRED') return true;
+    final message = data['message'];
+    return message is String && message.toLowerCase().contains('premium');
   }
 
   @override

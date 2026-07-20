@@ -35,6 +35,25 @@ export class PlannedItem {
   @Prop({ type: String, enum: ['daily', 'weekly', 'once'], default: 'once' })
   recurrence!: 'daily' | 'weekly' | 'once';
 
+  /**
+   * Weekdays a `weekly` item repeats on, Sun=0..Sat=6. Empty falls back to the
+   * weekday of `plannedAt`. Ignored for `daily` and `once`.
+   */
+  @Prop({ type: [Number], default: [] })
+  daysOfWeek!: number[];
+
+  /** Last day the recurrence yields occurrences. Null repeats indefinitely. */
+  @Prop({ type: Date, default: null })
+  recurrenceEndAt!: Date | null;
+
+  /**
+   * `YYYY-MM-DD` of each occurrence the user ticked off. Recurring items are
+   * completed per day, so the flat `completed` flag stays false for them and is
+   * only authoritative for one-off items.
+   */
+  @Prop({ type: [String], default: [] })
+  completedDates!: string[];
+
   @Prop({ type: Number, default: 15 })
   reminderMinutesBefore!: number;
 

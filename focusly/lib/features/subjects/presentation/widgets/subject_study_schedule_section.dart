@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:zakerly/l10n/app_localizations.dart';
 
+import '../../../../core/services/schedule_focus_bus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../schedules/data/datasources/schedules_remote_datasource.dart';
 import '../../../schedules/data/models/schedule_model.dart';
@@ -30,10 +31,29 @@ class _SubjectStudyScheduleSectionState
   bool _isLoading = true;
   bool _isSaving = false;
 
+  /// Guards against reacting to the bus bump this section itself published.
+  late int _lastSeenRevision;
+
   @override
   void initState() {
     super.initState();
+    _lastSeenRevision = ScheduleFocusBus.instance.revision.value;
+    ScheduleFocusBus.instance.revision.addListener(_onSchedulesChangedElsewhere);
     _load();
+  }
+
+  @override
+  void dispose() {
+    ScheduleFocusBus.instance.revision
+        .removeListener(_onSchedulesChangedElsewhere);
+    super.dispose();
+  }
+
+  void _onSchedulesChangedElsewhere() {
+    final revision = ScheduleFocusBus.instance.revision.value;
+    if (revision == _lastSeenRevision) return;
+    _lastSeenRevision = revision;
+    if (mounted) _load();
   }
 
   Future<void> _load() async {
@@ -85,6 +105,10 @@ class _SubjectStudyScheduleSectionState
               reminderEnabled: reminderEnabled,
             );
             if (sheetContext.mounted) Navigator.pop(sheetContext);
+            // Claim the next revision before publishing so our own listener
+            // skips it and only the global Schedules tab reloads.
+            _lastSeenRevision = ScheduleFocusBus.instance.revision.value + 1;
+            ScheduleFocusBus.instance.notifySchedulesChanged();
             await _load();
           } finally {
             if (mounted) setState(() => _isSaving = false);

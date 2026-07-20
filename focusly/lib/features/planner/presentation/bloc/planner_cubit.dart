@@ -39,19 +39,26 @@ class PlannerCubit extends Cubit<PlannerState> {
         _repository.getItems(type: PlannedItemType.exam, from: dateStr, to: dateStr, subjectId: subjectId),
       ]);
 
+      // The API returns recurring items as rules, not occurrences, so they are
+      // expanded here against the viewer's own calendar.
+      final tasks = _occurrencesOn(results[0], date);
+      final revisions = _occurrencesOn(results[1], date);
+      final lectures = _occurrencesOn(results[2], date);
+      final exams = _occurrencesOn(results[3], date);
+
       emit(state.copyWith(
         isLoading: false,
-        tasks: results[0],
-        revisions: results[1],
-        lectures: results[2],
-        exams: results[3],
+        tasks: tasks,
+        revisions: revisions,
+        lectures: lectures,
+        exams: exams,
       ));
 
       await _reminderSync.syncItems([
-        ...results[0],
-        ...results[1],
-        ...results[2],
-        ...results[3],
+        ...tasks,
+        ...revisions,
+        ...lectures,
+        ...exams,
       ]);
     } on DioException catch (e) {
       emit(state.copyWith(
@@ -75,6 +82,8 @@ class PlannerCubit extends Cubit<PlannerState> {
     String? subjectId,
     int? reminderMinutesBefore,
     String? recurrence,
+    List<int>? daysOfWeek,
+    DateTime? recurrenceEndAt,
   }) async {
     emit(state.copyWith(isSaving: true));
     try {
@@ -90,6 +99,8 @@ class PlannerCubit extends Cubit<PlannerState> {
         reminderMinutesBefore: reminderMinutesBefore,
         reminderEnabled: reminderEnabled,
         recurrence: recurrence,
+        daysOfWeek: daysOfWeek,
+        recurrenceEndAt: recurrenceEndAt?.toUtc().toIso8601String(),
       );
 
       try {
@@ -131,10 +142,14 @@ class PlannerCubit extends Cubit<PlannerState> {
     }
   }
 
-  Future<void> completeItem(PlannedItemType type, String id) async {
+  Future<void> completeItem(PlannedItemType type, PlannedItemModel item) async {
     try {
-      await _repository.completeItem(type: type, id: id);
-      await _reminderSync.cancelItem(id);
+      await _repository.completeItem(
+        type: type,
+        id: item.id,
+        occurrenceDate: item.occurrenceDate,
+      );
+      await _reminderSync.cancelItem(item.notificationKey);
       await loadDate(state.selectedDate);
 
       emit(state.copyWith(
@@ -169,6 +184,17 @@ class PlannerCubit extends Cubit<PlannerState> {
 
   void clearFeedback() {
     emit(state.copyWith(clearFeedback: true));
+  }
+
+  /// This day's items, with recurring rules expanded and the occurrences the
+  /// user already ticked off dropped.
+  List<PlannedItemModel> _occurrencesOn(
+    List<PlannedItemModel> items,
+    DateTime day,
+  ) {
+    return expandPlannedOccurrences(items, from: day, to: day)
+        .where((item) => !item.completed)
+        .toList();
   }
 
   String _formatDate(DateTime date) {

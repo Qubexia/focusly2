@@ -142,6 +142,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get plannerRecurrenceWeekly => 'أسبوعياً';
 
   @override
+  String get plannerRecurrenceDaysLabel => 'أيام التكرار';
+
+  @override
+  String get plannerRecurrenceEndLabel => 'يتكرر حتى';
+
+  @override
+  String get plannerRecurrenceEndNever => 'بدون نهاية';
+
+  @override
+  String get plannerRecurrenceEndClear => 'إزالة تاريخ النهاية';
+
+  @override
   String get subjectsStudyScheduleTitle => 'جدول المذاكرة';
 
   @override

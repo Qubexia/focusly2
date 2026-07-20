@@ -49,6 +49,13 @@ class ScheduleFocusBus {
   final ValueNotifier<ScheduleCompletion?> completed =
       ValueNotifier<ScheduleCompletion?>(null);
 
+  /// Bumped whenever a study schedule is created, edited or deleted from any
+  /// screen. The Schedules tab and the subject-scoped section both listen so a
+  /// change made in one place shows up in the other without a manual refresh.
+  final ValueNotifier<int> revision = ValueNotifier<int>(0);
+
+  void notifySchedulesChanged() => revision.value++;
+
   void requestLaunch(ScheduleFocusLaunch request) => launch.value = request;
 
   void consumeLaunch() => launch.value = null;

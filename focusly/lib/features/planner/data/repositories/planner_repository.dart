@@ -30,6 +30,8 @@ class PlannerRepository {
     int? reminderMinutesBefore,
     bool reminderEnabled = true,
     String? recurrence,
+    List<int>? daysOfWeek,
+    String? recurrenceEndAt,
   }) {
     return _remoteDataSource.createItem(
       type: type,
@@ -40,6 +42,8 @@ class PlannerRepository {
       reminderMinutesBefore: reminderMinutesBefore,
       reminderEnabled: reminderEnabled,
       recurrence: recurrence,
+      daysOfWeek: daysOfWeek,
+      recurrenceEndAt: recurrenceEndAt,
     );
   }
 
@@ -66,8 +70,13 @@ class PlannerRepository {
   Future<PlannedItemModel> completeItem({
     required PlannedItemType type,
     required String id,
+    String? occurrenceDate,
   }) {
-    return _remoteDataSource.completeItem(type: type, id: id);
+    return _remoteDataSource.completeItem(
+      type: type,
+      id: id,
+      occurrenceDate: occurrenceDate,
+    );
   }
 
   Future<void> deleteItem({

@@ -26,12 +26,14 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   final Set<int> _loadedTabs = {0};
 
-  final List<Widget Function()> _viewBuilders = [
-    () => const HomeView(),
-    () => const SchedulesPage(),
-    () => const PomodoroPage(),
-    () => const AnalyticsPage(),
-    () => const ProfilePage(),
+  /// Tabs stay alive inside the [IndexedStack], so a tab that shows remote
+  /// stats needs to know when it becomes visible again to re-fetch them.
+  final List<Widget Function(bool isActive)> _viewBuilders = [
+    (_) => const HomeView(),
+    (_) => const SchedulesPage(),
+    (_) => const PomodoroPage(),
+    (_) => const AnalyticsPage(),
+    (isActive) => ProfilePage(isActive: isActive),
   ];
 
   int _selectedIndexFromRoute(BuildContext context) {
@@ -75,7 +77,7 @@ class _MainShellState extends State<MainShell> {
               if (!_loadedTabs.contains(index)) {
                 return const SizedBox.shrink();
               }
-              return _viewBuilders[index]();
+              return _viewBuilders[index](index == selectedIndex);
             }),
           ),
           bottomNavigationBar: _FloatingBottomNavBar(

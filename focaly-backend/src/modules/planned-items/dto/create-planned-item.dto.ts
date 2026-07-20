@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class CreatePlannedItemDto {
   @ApiProperty({ example: 'Review Chapter 3' })
@@ -28,8 +38,24 @@ export class CreatePlannedItemDto {
 
   @ApiPropertyOptional({ example: 'once', enum: ['daily', 'weekly', 'once'] })
   @IsOptional()
-  @IsString()
+  @IsIn(['daily', 'weekly', 'once'])
   recurrence?: string;
+
+  @ApiPropertyOptional({
+    example: [0, 3],
+    description: 'Weekdays a weekly recurrence repeats on, Sun=0..Sat=6.',
+  })
+  @IsOptional()
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @Min(0, { each: true })
+  @Max(6, { each: true })
+  daysOfWeek?: number[];
+
+  @ApiPropertyOptional({ example: '2026-12-31T00:00:00Z' })
+  @IsOptional()
+  @IsDateString()
+  recurrenceEndAt?: string;
 
   @ApiPropertyOptional({ example: 15 })
   @IsOptional()

@@ -362,6 +362,30 @@ abstract class AppLocalizations {
   /// **'Weekly'**
   String get plannerRecurrenceWeekly;
 
+  /// No description provided for @plannerRecurrenceDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat on'**
+  String get plannerRecurrenceDaysLabel;
+
+  /// No description provided for @plannerRecurrenceEndLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat until'**
+  String get plannerRecurrenceEndLabel;
+
+  /// No description provided for @plannerRecurrenceEndNever.
+  ///
+  /// In en, this message translates to:
+  /// **'No end date'**
+  String get plannerRecurrenceEndNever;
+
+  /// No description provided for @plannerRecurrenceEndClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear end date'**
+  String get plannerRecurrenceEndClear;
+
   /// No description provided for @subjectsStudyScheduleTitle.
   ///
   /// In en, this message translates to:

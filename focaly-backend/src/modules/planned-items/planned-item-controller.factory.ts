@@ -65,8 +65,12 @@ export function createPlannedItemController(
     }
 
     @Post(':id/complete')
-    complete(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
-      return this.service.complete(user.id, kind, id);
+    complete(
+      @CurrentUser() user: CurrentUserPayload,
+      @Param('id') id: string,
+      @Query('date') date?: string,
+    ) {
+      return this.service.complete(user.id, kind, id, date);
     }
 
     @Delete(':id')

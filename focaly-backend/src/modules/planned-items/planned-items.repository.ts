@@ -13,6 +13,8 @@ export interface CreatePlannedItemInput {
   plannedAt: Date;
   durationMinutes?: number | null;
   recurrence?: 'daily' | 'weekly' | 'once';
+  daysOfWeek?: number[];
+  recurrenceEndAt?: Date | null;
   reminderMinutesBefore?: number;
   reminderEnabled?: boolean;
   rewardPoints?: number;
@@ -65,9 +67,29 @@ export class PlannedItemsRepository {
       plannedAt.$lte = new Date(`${options.to}T23:59:59.999`);
     }
     if (plannedAt.$gte || plannedAt.$lte) {
-      filter.plannedAt = plannedAt;
+      // A recurring item is a rule, not an occurrence: its `plannedAt` is only
+      // the series start, so a date filter would hide it on every later day.
+      // Return the rule whenever it can still yield an occurrence in the range
+      // and let the client expand it against the viewer's own timezone.
+      const recurring: FilterQuery<PlannedItemDocument> = {
+        recurrence: { $ne: 'once' },
+      };
+      if (plannedAt.$lte) {
+        recurring.plannedAt = { $lte: plannedAt.$lte };
+      }
+      if (plannedAt.$gte) {
+        recurring.$or = [{ recurrenceEndAt: null }, { recurrenceEndAt: { $gte: plannedAt.$gte } }];
+      }
+      filter.$or = [{ recurrence: 'once', plannedAt }, recurring];
     }
     return this.model.find(filter).sort({ plannedAt: -1 }).exec();
+  }
+
+  /** Marks a single occurrence of a recurring item done, keyed by `YYYY-MM-DD`. */
+  completeOccurrence(id: string, date: string): Promise<PlannedItemDocument | null> {
+    return this.model
+      .findByIdAndUpdate(id, { $addToSet: { completedDates: date } }, { new: true })
+      .exec();
   }
 
   updateById(

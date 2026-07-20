@@ -62,6 +62,8 @@ class _SubjectPlannerViewState extends State<_SubjectPlannerView> {
           time,
           reminderMinutesBefore,
           recurrence,
+          daysOfWeek,
+          recurrenceEndAt,
         }) async {
           await cubit.createItem(
             type: type,
@@ -72,6 +74,8 @@ class _SubjectPlannerViewState extends State<_SubjectPlannerView> {
             subjectId: subjectId,
             reminderMinutesBefore: reminderMinutesBefore,
             recurrence: recurrence,
+            daysOfWeek: daysOfWeek,
+            recurrenceEndAt: recurrenceEndAt,
           );
           if (sheetContext.mounted) Navigator.pop(sheetContext);
         },
@@ -256,7 +260,7 @@ class _SubjectPlannerViewState extends State<_SubjectPlannerView> {
                     item: item,
                     onComplete: () => context
                         .read<PlannerCubit>()
-                        .completeItem(_selectedCategory, item.id),
+                        .completeItem(_selectedCategory, item),
                     onDelete: () => context
                         .read<PlannerCubit>()
                         .deleteItem(_selectedCategory, item.id),

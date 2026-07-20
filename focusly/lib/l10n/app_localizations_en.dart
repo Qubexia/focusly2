@@ -141,6 +141,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get plannerRecurrenceWeekly => 'Weekly';
 
   @override
+  String get plannerRecurrenceDaysLabel => 'Repeat on';
+
+  @override
+  String get plannerRecurrenceEndLabel => 'Repeat until';
+
+  @override
+  String get plannerRecurrenceEndNever => 'No end date';
+
+  @override
+  String get plannerRecurrenceEndClear => 'Clear end date';
+
+  @override
   String get subjectsStudyScheduleTitle => 'Study schedule';
 
   @override

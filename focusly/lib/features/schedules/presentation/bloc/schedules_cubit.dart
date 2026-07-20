@@ -4,21 +4,57 @@ import 'package:zakerly/core/localization/app_l10n.dart';
 import '../../data/datasources/schedules_remote_datasource.dart';
 import 'schedules_state.dart';
 import '../../../../core/services/notification_service.dart';
+import '../../../../core/services/schedule_focus_bus.dart';
 import '../../data/models/schedule_model.dart';
 
 class SchedulesCubit extends Cubit<SchedulesState> {
-  SchedulesCubit() : super(SchedulesState(focusedDay: _dateOnly(DateTime.now())));
+  SchedulesCubit()
+      : super(SchedulesState(focusedDay: _dateOnly(DateTime.now()))) {
+    _lastSeenRevision = ScheduleFocusBus.instance.revision.value;
+    ScheduleFocusBus.instance.revision.addListener(_onSchedulesChangedElsewhere);
+  }
 
   final SchedulesRemoteDataSource _dataSource = SchedulesRemoteDataSource();
   final NotificationService _notificationService = NotificationService();
 
+  /// Guards against reacting to the bus bump this cubit itself published.
+  int _lastSeenRevision = 0;
+
+  /// Occurrence window the currently loaded [SchedulesState.completedKeys] came
+  /// from, so browsing the calendar only re-fetches when it leaves that range.
+  DateTime? _completionsFrom;
+  DateTime? _completionsTo;
+
+  @override
+  Future<void> close() {
+    ScheduleFocusBus.instance.revision
+        .removeListener(_onSchedulesChangedElsewhere);
+    return super.close();
+  }
+
+  void _onSchedulesChangedElsewhere() {
+    final revision = ScheduleFocusBus.instance.revision.value;
+    if (revision == _lastSeenRevision) return;
+    _lastSeenRevision = revision;
+    loadSchedules();
+  }
+
+  void _publishChange() {
+    // Claim the next revision before publishing so our own listener skips it.
+    _lastSeenRevision = ScheduleFocusBus.instance.revision.value + 1;
+    ScheduleFocusBus.instance.notifySchedulesChanged();
+  }
+
   Future<void> loadSchedules({DateTime? from, DateTime? to}) async {
-    final start = from ??
-        DateTime(state.focusedDay.year, state.focusedDay.month,
-            state.focusedDay.day - 7);
-    final end = to ??
-        DateTime(state.focusedDay.year, state.focusedDay.month,
-            state.focusedDay.day + 7);
+    // Schedules recur weekly and the list filters by weekday, so a row must be
+    // fetched even when its start date sits far outside the focused week.
+    final today = _dateOnly(DateTime.now());
+    final start = from ?? today.subtract(const Duration(days: 90));
+    final end = to ?? today.add(const Duration(days: 365));
+
+    // Completions are per-occurrence, so they stay scoped to the focused week.
+    final completionsFrom = state.focusedDay.subtract(const Duration(days: 45));
+    final completionsTo = state.focusedDay.add(const Duration(days: 45));
 
     emit(state.copyWith(isLoading: true, clearError: true));
 
@@ -26,7 +62,12 @@ class SchedulesCubit extends Cubit<SchedulesState> {
       final schedules = await _dataSource.getSchedules(from: start, to: end);
       Set<String> completedKeys = state.completedKeys;
       try {
-        completedKeys = await _dataSource.getCompletions(from: start, to: end);
+        completedKeys = await _dataSource.getCompletions(
+          from: completionsFrom,
+          to: completionsTo,
+        );
+        _completionsFrom = completionsFrom;
+        _completionsTo = completionsTo;
       } catch (_) {
         // Keep schedules usable even if completion markers fail to load.
       }
@@ -96,6 +137,7 @@ class SchedulesCubit extends Cubit<SchedulesState> {
         feedbackMessage: AppL10n.current.schedulesCreateSuccess,
       ));
 
+      _publishChange();
       await loadSchedules();
     } on DioException catch (e) {
       emit(state.copyWith(
@@ -141,6 +183,7 @@ class SchedulesCubit extends Cubit<SchedulesState> {
         feedbackMessage: AppL10n.current.schedulesEditSuccess,
       ));
 
+      _publishChange();
       await loadSchedules();
     } on DioException catch (e) {
       emit(state.copyWith(
@@ -165,6 +208,7 @@ class SchedulesCubit extends Cubit<SchedulesState> {
         feedbackType: SchedulesFeedbackType.success,
         feedbackMessage: AppL10n.current.schedulesDeleteSuccess,
       ));
+      _publishChange();
       await loadSchedules();
       return true;
     } catch (e) {
@@ -177,7 +221,15 @@ class SchedulesCubit extends Cubit<SchedulesState> {
   }
 
   void updateFocusedDay(DateTime day) {
-    emit(state.copyWith(focusedDay: _dateOnly(day)));
+    final focused = _dateOnly(day);
+    emit(state.copyWith(focusedDay: focused));
+
+    final from = _completionsFrom;
+    final to = _completionsTo;
+    if (from == null || to == null) return;
+    if (focused.isBefore(from) || focused.isAfter(to)) {
+      loadSchedules();
+    }
   }
 
   void clearFeedback() {

@@ -29,6 +29,8 @@ export class PlannedItemsService {
       plannedAt: new Date(dto.plannedAt),
       durationMinutes: dto.durationMinutes ?? null,
       recurrence: (dto.recurrence as 'daily' | 'weekly' | 'once' | undefined) ?? 'once',
+      daysOfWeek: dto.daysOfWeek ?? [],
+      recurrenceEndAt: dto.recurrenceEndAt ? new Date(dto.recurrenceEndAt) : null,
       reminderMinutesBefore: dto.reminderMinutesBefore ?? 15,
       reminderEnabled: dto.reminderEnabled ?? true,
       rewardPoints: dto.rewardPoints ?? 0,
@@ -84,6 +86,9 @@ export class PlannedItemsService {
     if (dto.plannedAt !== undefined) update.plannedAt = new Date(dto.plannedAt);
     if (dto.durationMinutes !== undefined) update.durationMinutes = dto.durationMinutes;
     if (dto.recurrence !== undefined) update.recurrence = dto.recurrence;
+    if (dto.daysOfWeek !== undefined) update.daysOfWeek = dto.daysOfWeek;
+    if (dto.recurrenceEndAt !== undefined)
+      update.recurrenceEndAt = dto.recurrenceEndAt ? new Date(dto.recurrenceEndAt) : null;
     if (dto.reminderMinutesBefore !== undefined)
       update.reminderMinutesBefore = dto.reminderMinutesBefore;
     if (dto.reminderEnabled !== undefined) update.reminderEnabled = dto.reminderEnabled;
@@ -102,7 +107,7 @@ export class PlannedItemsService {
     return updated;
   }
 
-  async complete(userId: string, kind: PlannedItemKind, id: string) {
+  async complete(userId: string, kind: PlannedItemKind, id: string, date?: string) {
     const item = await this.repository.findById(id);
     if (!item || item.userId.toString() !== userId || item.kind !== kind) {
       throw new NotFoundException({
@@ -111,20 +116,39 @@ export class PlannedItemsService {
       });
     }
 
+    // A recurring item is completed one occurrence at a time, so ticking off
+    // this Saturday leaves next Saturday's occurrence outstanding.
+    if (item.recurrence !== 'once') {
+      const occurrenceDate = normalizeOccurrenceDate(date);
+      if (item.completedDates?.includes(occurrenceDate)) return item;
+
+      const updated = await this.repository.completeOccurrence(id, occurrenceDate);
+      await this.awardPoints(userId, kind, id, item.rewardPoints || 0);
+      return updated;
+    }
+
     if (item.completed) return item;
 
     const updated = await this.repository.updateById(id, {
       $set: { completed: true, completedAt: new Date() },
     });
 
-    const points = item.rewardPoints || 0;
+    await this.awardPoints(userId, kind, id, item.rewardPoints || 0);
+
+    return updated;
+  }
+
+  private async awardPoints(
+    userId: string,
+    kind: PlannedItemKind,
+    id: string,
+    points: number,
+  ): Promise<void> {
     if (points > 0) {
       await this.usersRepository.updateOne({ _id: userId }, { $inc: { totalPoints: points } });
     }
 
     this.eventBus.publish(new PlannedItemCompletedEvent(userId, id, kind, points));
-
-    return updated;
   }
 
   async remove(userId: string, kind: PlannedItemKind, id: string) {
@@ -140,4 +164,14 @@ export class PlannedItemsService {
 
     this.eventBus.publish(new PlannedItemDeletedEvent(userId, id, kind));
   }
+}
+
+/**
+ * Occurrence keys are plain `YYYY-MM-DD` in the viewer's own calendar, so the
+ * client sends the date it rendered rather than letting the server guess it
+ * from a UTC timestamp.
+ */
+function normalizeOccurrenceDate(date?: string): string {
+  if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+  return new Date().toISOString().slice(0, 10);
 }

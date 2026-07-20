@@ -30,6 +30,8 @@ class CreatePlannedItemSheet extends StatefulWidget {
     String? subjectId,
     int? reminderMinutesBefore,
     String? recurrence,
+    List<int>? daysOfWeek,
+    DateTime? recurrenceEndAt,
   }) onSave;
 
   @override
@@ -46,6 +48,12 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
   TimeOfDay? _selectedTime;
   String? _selectedSubjectId;
   String _recurrence = 'once';
+
+  /// Weekdays a weekly rule fires on, Sun=0..Sat=6 to match the API.
+  List<int> _selectedDays = [];
+
+  /// Optional last day of the recurrence. Null repeats indefinitely.
+  DateTime? _recurrenceEndDate;
 
   /// Minutes-before-due to fire the reminder. `null` = no reminder, `0` = at
   /// the exact due time. Defaults to a 15-minute heads-up.
@@ -67,6 +75,30 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
     } else {
       _isLoadingSubjects = false;
     }
+  }
+
+  /// Dart's Mon=1..Sun=7 mapped to the API's Sun=0..Sat=6.
+  int _apiWeekday(DateTime date) => date.weekday % 7;
+
+  void _toggleDay(int day) {
+    setState(() {
+      if (_selectedDays.contains(day)) {
+        // A weekly rule with no day would never fire.
+        if (_selectedDays.length > 1) _selectedDays.remove(day);
+      } else {
+        _selectedDays = [..._selectedDays, day]..sort();
+      }
+    });
+  }
+
+  Future<void> _pickRecurrenceEnd() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _recurrenceEndDate ?? _selectedDate,
+      firstDate: _selectedDate,
+      lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
+    );
+    if (picked != null) setState(() => _recurrenceEndDate = picked);
   }
 
   Future<void> _loadSubjects() async {
@@ -298,9 +330,50 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
                   ),
                 ],
                 onChanged: (value) {
-                  if (value != null) setState(() => _recurrence = value);
+                  if (value == null) return;
+                  setState(() {
+                    _recurrence = value;
+                    // Seed a weekly rule with the day the user already picked,
+                    // so "أسبوعياً" alone still repeats on that weekday.
+                    if (value == 'weekly' && _selectedDays.isEmpty) {
+                      _selectedDays = [_apiWeekday(_selectedDate)];
+                    }
+                  });
                 },
               ),
+              if (_recurrence == 'weekly') ...[
+                const SizedBox(height: 16),
+                _SectionLabel(label: l10n.plannerRecurrenceDaysLabel),
+                const SizedBox(height: 8),
+                _DaysPicker(
+                  selectedDays: _selectedDays,
+                  onToggle: _toggleDay,
+                ),
+              ],
+              if (_recurrence != 'once') ...[
+                const SizedBox(height: 16),
+                _SectionLabel(label: l10n.plannerRecurrenceEndLabel),
+                const SizedBox(height: 8),
+                _PickerButton(
+                  label: _recurrenceEndDate == null
+                      ? l10n.plannerRecurrenceEndNever
+                      : DateFormat.yMMMd(
+                          Localizations.localeOf(context).toString(),
+                        ).format(_recurrenceEndDate!),
+                  icon: Icons.event_repeat_rounded,
+                  onTap: _pickRecurrenceEnd,
+                ),
+                if (_recurrenceEndDate != null)
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: TextButton.icon(
+                      onPressed: () =>
+                          setState(() => _recurrenceEndDate = null),
+                      icon: const Icon(Icons.close_rounded, size: 16),
+                      label: Text(l10n.plannerRecurrenceEndClear),
+                    ),
+                  ),
+              ],
               if (widget.lockedSubjectId == null) ...[
                 const SizedBox(height: 16),
                 _SectionLabel(label: l10n.plannerSubject),
@@ -387,6 +460,8 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
       subjectId: _selectedSubjectId,
       reminderMinutesBefore: _reminderMinutesBefore,
       recurrence: _recurrence,
+      daysOfWeek: _recurrence == 'weekly' ? _selectedDays : null,
+      recurrenceEndAt: _recurrence == 'once' ? null : _recurrenceEndDate,
     );
   }
 
@@ -418,6 +493,67 @@ class _CreatePlannedItemSheetState extends State<CreatePlannedItemSheet> {
       case PlannedItemType.exam:
         return l10n.plannerTypeExam;
     }
+  }
+}
+
+/// Weekday toggles for a weekly rule. Indexed in the API's Sun=0..Sat=6 space
+/// so no conversion is needed between here and the request body.
+class _DaysPicker extends StatelessWidget {
+  const _DaysPicker({required this.selectedDays, required this.onToggle});
+
+  final List<int> selectedDays;
+  final ValueChanged<int> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context).toString();
+    final narrowWeekday = DateFormat('EEEEE', locale);
+    // 2024-01-07 is a Sunday; offsetting by index yields Sun..Sat (day 0..6).
+    final labels = List.generate(
+      7,
+      (index) => narrowWeekday.format(DateTime(2024, 1, 7 + index)),
+    );
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(7, (day) {
+        final isSelected = selectedDays.contains(day);
+        return GestureDetector(
+          onTap: () => onToggle(day),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppColors.primary
+                  : (isDark ? AppColors.surfaceDark : Colors.white),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected
+                    ? AppColors.primary
+                    : (isDark ? AppColors.borderDark : AppColors.borderLight),
+              ),
+            ),
+            child: Center(
+              child: Text(
+                labels[day],
+                style: TextStyle(
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
   }
 }
 

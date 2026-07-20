@@ -63,9 +63,11 @@ class HomeCubit extends Cubit<HomeState> {
       final schedules = results[2] as List<StudyScheduleModel>;
       final tasks = results[3] as List<PlannedItemModel>;
 
-      final upcomingTasks = tasks
-          .where((t) => !t.completed)
-          .toList()
+      final upcomingTasks = expandPlannedOccurrences(
+        tasks,
+        from: startOfDay,
+        to: endOfDay,
+      ).where((t) => !t.completed).toList()
         ..sort((a, b) => a.date.compareTo(b.date));
 
       emit(
@@ -86,9 +88,12 @@ class HomeCubit extends Cubit<HomeState> {
         ),
       );
 
+      final reminderHorizon = now.add(const Duration(days: 7));
       unawaited(_syncUpcomingReminders(
         from,
-        AppDateUtils.formatDate(now.add(const Duration(days: 7))),
+        AppDateUtils.formatDate(reminderHorizon),
+        startOfDay,
+        reminderHorizon,
       ));
     } on DioException catch (e) {
       emit(
@@ -115,7 +120,12 @@ class HomeCubit extends Cubit<HomeState> {
     return AppL10n.current.commonError;
   }
 
-  Future<void> _syncUpcomingReminders(String from, String to) async {
+  Future<void> _syncUpcomingReminders(
+    String from,
+    String to,
+    DateTime fromDate,
+    DateTime toDate,
+  ) async {
     try {
       final results = await Future.wait([
         _plannerRepository.getItems(type: PlannedItemType.task, from: from, to: to),
@@ -123,12 +133,15 @@ class HomeCubit extends Cubit<HomeState> {
         _plannerRepository.getItems(type: PlannedItemType.lecture, from: from, to: to),
         _plannerRepository.getItems(type: PlannedItemType.exam, from: from, to: to),
       ]);
-      await _reminderSync.syncItems([
-        ...results[0],
-        ...results[1],
-        ...results[2],
-        ...results[3],
-      ]);
+      // Each occurrence carries its own notification key, so a recurring item
+      // gets a reminder on every day it fires rather than only on day one.
+      await _reminderSync.syncItems(
+        expandPlannedOccurrences(
+          [...results[0], ...results[1], ...results[2], ...results[3]],
+          from: fromDate,
+          to: toDate,
+        ),
+      );
     } catch (_) {
       // Reminder sync is best-effort on home load.
     }
