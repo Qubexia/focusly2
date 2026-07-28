@@ -43,8 +43,12 @@ class HomeCubit extends Cubit<HomeState> {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
+    // Dart's Mon=1..Sun=7 mapped to the API's Sun=0..Sat=6.
+    final todayApiWeekday = now.weekday % 7;
+    // The planner API treats `to` as inclusive of that whole day, so asking for
+    // `endOfDay` would drag tomorrow's items into "Upcoming today".
     final from = AppDateUtils.formatDate(startOfDay);
-    final to = AppDateUtils.formatDate(endOfDay);
+    final to = from;
 
     try {
       final results = await Future.wait([
@@ -63,11 +67,19 @@ class HomeCubit extends Cubit<HomeState> {
       final schedules = results[2] as List<StudyScheduleModel>;
       final tasks = results[3] as List<PlannedItemModel>;
 
+      // `to` is inclusive here too — expanding up to `endOfDay` would surface
+      // tomorrow's occurrence of a recurring rule as if it were due today.
       final upcomingTasks = expandPlannedOccurrences(
         tasks,
         from: startOfDay,
-        to: endOfDay,
-      ).where((t) => !t.completed).toList()
+        to: startOfDay,
+      ).where((t) {
+        if (t.completed) return false;
+        // Same "upcoming" rule the schedules below use: a task with a slot drops
+        // off once that slot passes, while an untimed one stays all day.
+        if (t.time == null) return true;
+        return t.date.isAfter(now);
+      }).toList()
         ..sort((a, b) => a.date.compareTo(b.date));
 
       emit(
@@ -79,6 +91,9 @@ class HomeCubit extends Cubit<HomeState> {
           // keep an item only while its end time-of-day is still ahead of now.
           todaySchedules: schedules.where((s) {
             if (!s.isActive) return false;
+            // The API returns every schedule overlapping the range regardless of
+            // weekday, so a Sunday session would otherwise show up on Saturday.
+            if (!s.daysOfWeek.contains(todayApiWeekday)) return false;
             final end = s.endAt ?? s.startAt;
             final endToday =
                 DateTime(now.year, now.month, now.day, end.hour, end.minute);

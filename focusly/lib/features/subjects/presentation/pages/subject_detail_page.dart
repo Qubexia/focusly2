@@ -400,9 +400,13 @@ class _SubjectOverviewCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      l10n.subjectsMinutesPlannedDaily(
-                        subject.dailyTargetMinutes,
-                      ),
+                      subject.goalType == 'weekly'
+                          ? l10n.subjectsMinutesPlannedWeekly(
+                              subject.dailyTargetMinutes,
+                            )
+                          : l10n.subjectsMinutesPlannedDaily(
+                              subject.dailyTargetMinutes,
+                            ),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: isDark
                                 ? AppColors.textSecondaryDark

@@ -1100,9 +1100,15 @@ class _SubjectPreviewCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    AppLocalizations.of(context).homeSubjectTargetMinutes(
-                      subject.dailyTargetMinutes,
-                    ),
+                    subject.goalType == 'weekly'
+                        ? AppLocalizations.of(context)
+                            .homeSubjectTargetMinutesWeekly(
+                            subject.dailyTargetMinutes,
+                          )
+                        : AppLocalizations.of(context)
+                            .homeSubjectTargetMinutesDaily(
+                            subject.dailyTargetMinutes,
+                          ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(

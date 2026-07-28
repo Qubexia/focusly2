@@ -251,8 +251,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeCreateSubject => 'إنشاء مادة';
 
   @override
-  String homeSubjectTargetMinutes(int minutes) {
-    return '· هدف $minutes د';
+  String homeSubjectTargetMinutesDaily(int minutes) {
+    return '· $minutes د/يوم';
+  }
+
+  @override
+  String homeSubjectTargetMinutesWeekly(int minutes) {
+    return '· $minutes د/أسبوع';
   }
 
   @override
@@ -1551,6 +1556,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String subjectsMinutesPlannedDaily(int minutes) {
     return '$minutes دقيقة مخطّطة كل يوم';
+  }
+
+  @override
+  String subjectsMinutesPlannedWeekly(int minutes) {
+    return '$minutes دقيقة مخطّطة كل أسبوع';
   }
 
   @override

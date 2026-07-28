@@ -89,8 +89,16 @@
   "homeNoSubjectsTitle": "No subjects yet",
   "homeNoSubjectsSubtitle": "Create your first subject to make the home screen useful and alive.",
   "homeCreateSubject": "Create Subject",
-  "homeSubjectTargetMinutes": "· {minutes}m target",
-  "@homeSubjectTargetMinutes": {
+  "homeSubjectTargetMinutesDaily": "· {minutes}m/day",
+  "@homeSubjectTargetMinutesDaily": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "homeSubjectTargetMinutesWeekly": "· {minutes}m/week",
+  "@homeSubjectTargetMinutesWeekly": {
     "placeholders": {
       "minutes": {
         "type": "int"
@@ -745,6 +753,14 @@
   },
   "subjectsMinutesPlannedDaily": "{minutes} minutes planned every day",
   "@subjectsMinutesPlannedDaily": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "subjectsMinutesPlannedWeekly": "{minutes} minutes planned every week",
+  "@subjectsMinutesPlannedWeekly": {
     "placeholders": {
       "minutes": {
         "type": "int"

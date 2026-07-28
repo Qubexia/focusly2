@@ -512,7 +512,7 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
     _selectedColorHex =
         widget.subject?.color ?? SubjectPalette.options.first.hex;
     _selectedIconKey = widget.subject?.icon ?? SubjectIconCatalog.options.first.key;
-    _goalType = widget.subject?.goalType == 'daily' ? 'daily' : 'weekly';
+    _goalType = widget.subject?.goalType == 'weekly' ? 'weekly' : 'daily';
     _goalDays = List<int>.from(widget.subject?.goalDays ?? const []);
   }
 

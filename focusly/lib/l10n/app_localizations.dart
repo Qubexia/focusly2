@@ -572,11 +572,17 @@ abstract class AppLocalizations {
   /// **'Create Subject'**
   String get homeCreateSubject;
 
-  /// No description provided for @homeSubjectTargetMinutes.
+  /// No description provided for @homeSubjectTargetMinutesDaily.
   ///
   /// In en, this message translates to:
-  /// **'· {minutes}m target'**
-  String homeSubjectTargetMinutes(int minutes);
+  /// **'· {minutes}m/day'**
+  String homeSubjectTargetMinutesDaily(int minutes);
+
+  /// No description provided for @homeSubjectTargetMinutesWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'· {minutes}m/week'**
+  String homeSubjectTargetMinutesWeekly(int minutes);
 
   /// No description provided for @homeStudyOverview.
   ///
@@ -2725,6 +2731,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{minutes} minutes planned every day'**
   String subjectsMinutesPlannedDaily(int minutes);
+
+  /// No description provided for @subjectsMinutesPlannedWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} minutes planned every week'**
+  String subjectsMinutesPlannedWeekly(int minutes);
 
   /// No description provided for @subjectsProgressLabel.
   ///

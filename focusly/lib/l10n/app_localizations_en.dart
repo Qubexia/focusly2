@@ -250,8 +250,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeCreateSubject => 'Create Subject';
 
   @override
-  String homeSubjectTargetMinutes(int minutes) {
-    return '· ${minutes}m target';
+  String homeSubjectTargetMinutesDaily(int minutes) {
+    return '· ${minutes}m/day';
+  }
+
+  @override
+  String homeSubjectTargetMinutesWeekly(int minutes) {
+    return '· ${minutes}m/week';
   }
 
   @override
@@ -1512,6 +1517,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String subjectsMinutesPlannedDaily(int minutes) {
     return '$minutes minutes planned every day';
+  }
+
+  @override
+  String subjectsMinutesPlannedWeekly(int minutes) {
+    return '$minutes minutes planned every week';
   }
 
   @override
