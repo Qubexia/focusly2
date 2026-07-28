@@ -7,7 +7,9 @@ import {
 import { EventBus } from '@nestjs/cqrs';
 
 import { ERROR_CODES } from '../../common/dto/api-response';
+import { localDayRange, resolveTimezone } from '../../common/utils/day.util';
 import { PomodoroCompletedEvent } from '../../shared/events/pomodoro-completed.event';
+import { UsersRepository } from '../users/users.repository';
 
 import { PomodoroRepository } from './pomodoro.repository';
 import { computeFocusStats } from './pomodoro.util';
@@ -21,6 +23,7 @@ import {
 export class PomodoroService {
   constructor(
     private readonly repository: PomodoroRepository,
+    private readonly usersRepository: UsersRepository,
     private readonly eventBus: EventBus,
   ) {}
 
@@ -126,11 +129,11 @@ export class PomodoroService {
   }
 
   async today(userId: string) {
-    const now = new Date();
-    const startOfDay = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-    );
-    const endOfDay = new Date(startOfDay.getTime() + 86_400_000);
+    // "Today" is the user's calendar day. On UTC boundaries a 1am session would
+    // otherwise be filed under yesterday and today's total would start wrong.
+    const user = await this.usersRepository.findActiveById(userId);
+    const tz = resolveTimezone(user?.settings?.timezone);
+    const { start: startOfDay, end: endOfDay } = localDayRange(new Date(), tz);
 
     const sessions = await this.repository.findTodayByUser(userId, startOfDay, endOfDay);
     const activeSession = await this.repository.findActiveByUser(userId);

@@ -1,7 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:dio/dio.dart';
+
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../datasources/auth_remote_datasource.dart';
@@ -13,6 +18,10 @@ class AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final NotificationService _notificationService = NotificationService();
   static const String _rememberMeKey = 'auth_remember_me';
+
+  /// Last profile fetched from the server, so a launch with no connectivity can
+  /// restore the session instead of dumping the user on the login screen.
+  static const String _cachedUserKey = 'auth_cached_user';
 
   AuthRepository({AuthRemoteDataSource? remoteDataSource})
       : _remoteDataSource = remoteDataSource ?? AuthRemoteDataSource();
@@ -107,58 +116,49 @@ class AuthRepository {
     } catch (_) {
       // Still clear local tokens even if API fails
     }
-    await SecureStorage.clearTokens();
+    await _endSession(await SharedPreferences.getInstance());
   }
 
   Future<UserModel?> tryAutoLogin() async {
     final prefs = await SharedPreferences.getInstance();
     final remembered = prefs.getBool(_rememberMeKey) ?? true;
     if (!remembered) {
-      await SecureStorage.clearTokens();
+      await _endSession(prefs);
       await prefs.remove(_rememberMeKey);
       return null;
     }
 
     final token = await SecureStorage.getAccessToken();
     if (token == null) return null;
+
     try {
+      // A 401 here is refreshed and retried by the API client's interceptor,
+      // so reaching the catch means the session is gone or the server is not
+      // reachable — two cases that must be handled very differently.
       final user = await fetchCurrentUser();
+      await _cacheUser(prefs, user);
       await _syncFcmToken();
       return user;
-    } catch (_) {
-      final refreshed = await refreshSessionTokens();
-      if (!refreshed) return null;
-      try {
-        final user = await fetchCurrentUser();
-        await _syncFcmToken();
-        return user;
-      } catch (_) {
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        await _endSession(prefs);
         return null;
       }
+      // Server unreachable, timed out, or erroring: the session is still valid,
+      // so honour "keep me signed in" and carry on with the cached profile.
+      return _readCachedUser(prefs);
+    } catch (_) {
+      return _readCachedUser(prefs);
     }
   }
 
   Future<UserModel> fetchCurrentUser() => _remoteDataSource.getMe();
 
-  Future<bool> refreshSessionTokens() async {
-    final refreshToken = await SecureStorage.getRefreshToken();
-    final deviceId = await SecureStorage.getDeviceId();
-    if (refreshToken == null || deviceId == null) return false;
-
-    try {
-      final data = await _remoteDataSource.refreshSession(
-        refreshToken: refreshToken,
-        deviceId: deviceId,
-      );
-      await SecureStorage.saveTokens(
-        accessToken: data['accessToken'] as String,
-        refreshToken: data['refreshToken'] as String,
-      );
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
+  /// Rotates the token pair. Delegates to the API client so this shares the
+  /// single-flight guard with the interceptor's own refresh — two rotations at
+  /// once look like a stolen token to the server and kill the whole session.
+  Future<bool> refreshSessionTokens() =>
+      ApiClient.refreshSessionTokensIfNeeded();
 
   Future<bool> hasToken() async {
     final token = await SecureStorage.getAccessToken();
@@ -181,6 +181,27 @@ class AuthRepository {
       accessToken: response.tokens.accessToken,
       refreshToken: response.tokens.refreshToken,
     );
+    await _cacheUser(await SharedPreferences.getInstance(), response.user);
+  }
+
+  Future<void> _cacheUser(SharedPreferences prefs, UserModel user) async {
+    await prefs.setString(_cachedUserKey, jsonEncode(user.toJson()));
+  }
+
+  UserModel? _readCachedUser(SharedPreferences prefs) {
+    final raw = prefs.getString(_cachedUserKey);
+    if (raw == null) return null;
+    try {
+      return UserModel.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Wipes every trace of the signed-in user.
+  Future<void> _endSession(SharedPreferences prefs) async {
+    await SecureStorage.clearTokens();
+    await prefs.remove(_cachedUserKey);
   }
 
   Future<void> _syncFcmToken() async {

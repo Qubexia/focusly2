@@ -50,10 +50,4 @@ class SubscriptionRemoteDataSource {
     if (data is Map<String, dynamic>) return data;
     return const {};
   }
-
-  Future<String> createStripeCheckoutSession() async {
-    final response = await _dio.post(ApiEndpoints.subscriptionStripeCheckout);
-    final data = response.data as Map<String, dynamic>;
-    return (data['url'] as String?) ?? '';
-  }
 }

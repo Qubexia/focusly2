@@ -22,6 +22,11 @@ class StudyScheduleModel {
     required this.isActive,
   });
 
+  /// Minutes past midnight of [startAt]. A schedule is a weekly rule, so its
+  /// date part is whenever the rule was created — only the time of day orders
+  /// the sessions of a single day.
+  int get startMinuteOfDay => startAt.hour * 60 + startAt.minute;
+
   factory StudyScheduleModel.fromJson(Map<String, dynamic> json) {
     return StudyScheduleModel(
       id: _stringifyId(json['id'] ?? json['_id']),

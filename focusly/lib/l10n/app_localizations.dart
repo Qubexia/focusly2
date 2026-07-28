@@ -3008,12 +3008,6 @@ abstract class AppLocalizations {
   /// **'Enter your card details to complete the payment securely.'**
   String get subscriptionPaymobNote;
 
-  /// No description provided for @subscriptionPayStripe.
-  ///
-  /// In en, this message translates to:
-  /// **'International card (Stripe)'**
-  String get subscriptionPayStripe;
-
   /// No description provided for @subscriptionPremiumActiveTitle.
   ///
   /// In en, this message translates to:
@@ -3511,30 +3505,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not start Paymob checkout.'**
   String get subscriptionCheckoutFailed;
-
-  /// No description provided for @subscriptionStripeUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Card payments are temporarily unavailable. Please try another method or try again later.'**
-  String get subscriptionStripeUnavailable;
-
-  /// No description provided for @subscriptionStripeBrowserPrompt.
-  ///
-  /// In en, this message translates to:
-  /// **'Complete payment in the browser, then return and tap Refresh.'**
-  String get subscriptionStripeBrowserPrompt;
-
-  /// No description provided for @subscriptionPaymentPageFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not open the payment page.'**
-  String get subscriptionPaymentPageFailed;
-
-  /// No description provided for @subscriptionCardCheckoutFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not start card checkout.'**
-  String get subscriptionCardCheckoutFailed;
 
   /// No description provided for @subscriptionCanceledEnded.
   ///

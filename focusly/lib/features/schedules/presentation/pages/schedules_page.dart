@@ -562,7 +562,11 @@ class _ScheduleTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${_formatTime(schedule.startAt)} - ${_formatTime(schedule.endAt)}',
+                    _timeRange,
+                    // Arabic reorders the range around the neutral dash and the
+                    // session reads back to front ("23:40 - 22:40"). The clock
+                    // range itself is always left-to-right.
+                    textDirection: TextDirection.ltr,
                     style: TextStyle(
                       fontSize: 13,
                       color: isDark
@@ -641,8 +645,14 @@ class _ScheduleTile extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime? time) {
-    if (time == null) return '--:--';
+  /// `start - end`, or just the start when the session has no end time.
+  String get _timeRange {
+    final start = _formatTime(schedule.startAt);
+    final end = schedule.endAt;
+    return end == null ? start : '$start - ${_formatTime(end)}';
+  }
+
+  String _formatTime(DateTime time) {
     final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute';

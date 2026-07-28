@@ -83,7 +83,8 @@ class HomeCubit extends Cubit<HomeState> {
             final endToday =
                 DateTime(now.year, now.month, now.day, end.hour, end.minute);
             return endToday.isAfter(now);
-          }).toList(),
+          }).toList()
+            ..sort((a, b) => a.startMinuteOfDay.compareTo(b.startMinuteOfDay)),
           todayTasks: upcomingTasks.take(8).toList(),
         ),
       );

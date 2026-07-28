@@ -103,23 +103,25 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
       return (from, to);
     }
 
-    final nowUtc = DateTime.now().toUtc();
-    final end = DateTime(nowUtc.year, nowUtc.month, nowUtc.day);
+    // Ranges are the user's own calendar days — converting to UTC first would
+    // shift "today" by a day for anyone east of Greenwich late at night.
+    final now = DateTime.now();
+    final end = DateTime(now.year, now.month, now.day);
 
     switch (range) {
       case AnalyticsDateRange.week:
-        return (_startOfCurrentWeekUtc(end), end);
+        return (_startOfCurrentWeek(end), end);
       case AnalyticsDateRange.month:
-        return (DateTime.utc(end.year, end.month, 1), end);
+        return (DateTime(end.year, end.month, 1), end);
       case AnalyticsDateRange.year:
-        return (DateTime.utc(end.year, 1, 1), end);
+        return (DateTime(end.year, 1, 1), end);
       case AnalyticsDateRange.custom:
-        return (from ?? _startOfCurrentWeekUtc(end), to ?? end);
+        return (from ?? _startOfCurrentWeek(end), to ?? end);
     }
   }
 
-  DateTime _startOfCurrentWeekUtc(DateTime date) {
-    final startOfDay = DateTime.utc(date.year, date.month, date.day);
+  DateTime _startOfCurrentWeek(DateTime date) {
+    final startOfDay = DateTime(date.year, date.month, date.day);
     final daysSinceSunday = startOfDay.weekday % 7;
     return startOfDay.subtract(Duration(days: daysSinceSunday));
   }

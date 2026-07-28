@@ -105,24 +105,9 @@ class AuthRemoteDataSource {
     return UserModel.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<Map<String, dynamic>> refreshSession({
-    required String refreshToken,
-    required String deviceId,
-  }) async {
-    final response = await Dio(
-      BaseOptions(baseUrl: ApiEndpoints.baseUrl),
-    ).post(
-      ApiEndpoints.refresh,
-      data: {
-        'refreshToken': refreshToken,
-        'deviceId': deviceId,
-      },
-      options: Options(
-        headers: {'Authorization': 'Bearer $refreshToken'},
-      ),
-    );
-    return response.data as Map<String, dynamic>;
-  }
+  // Refreshing lives in ApiClient alone: the server rotates the refresh token
+  // on every call and revokes the session if the old one is replayed, so there
+  // must be exactly one code path able to rotate it.
 
   Future<void> updateFcmToken({required String fcmToken}) async {
     await _dio.post(

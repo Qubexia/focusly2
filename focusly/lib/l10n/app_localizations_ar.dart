@@ -1706,9 +1706,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get subscriptionPaymobNote => 'أدخل بيانات بطاقتك لإتمام الدفع بأمان.';
 
   @override
-  String get subscriptionPayStripe => 'بطاقة دولية (Stripe)';
-
-  @override
   String get subscriptionPremiumActiveTitle => 'بريميوم مفعّل';
 
   @override
@@ -1993,20 +1990,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get subscriptionCheckoutFailed => 'تعذّر بدء الدفع عبر Paymob.';
-
-  @override
-  String get subscriptionStripeUnavailable =>
-      'الدفع بالبطاقة غير متاح مؤقتاً. جرّب طريقة أخرى أو حاول لاحقاً.';
-
-  @override
-  String get subscriptionStripeBrowserPrompt =>
-      'أكمل الدفع في المتصفح، ثم عُد واضغط على تحديث.';
-
-  @override
-  String get subscriptionPaymentPageFailed => 'تعذّر فتح صفحة الدفع.';
-
-  @override
-  String get subscriptionCardCheckoutFailed => 'تعذّر بدء الدفع بالبطاقة.';
 
   @override
   String get subscriptionCanceledEnded =>

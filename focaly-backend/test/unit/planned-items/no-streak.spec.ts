@@ -35,6 +35,7 @@ describe('PlannedItem complete - no streak advance (FR-024)', () => {
 
     usersRepo = {
       updateOne: jest.fn(),
+      findActiveById: jest.fn().mockResolvedValue({ settings: { timezone: 'Africa/Cairo' } }),
     } as unknown as jest.Mocked<UsersRepository>;
 
     eventBus = { publish: jest.fn() } as unknown as jest.Mocked<EventBus>;
@@ -44,22 +45,24 @@ describe('PlannedItem complete - no streak advance (FR-024)', () => {
 
   it('completes a task and awards points without touching streak', async () => {
     repo.findById.mockResolvedValue(mockItem() as never);
-    repo.updateById.mockResolvedValue(mockItem({ completed: true, completedAt: new Date() }) as never);
+    repo.updateById.mockResolvedValue(
+      mockItem({ completed: true, completedAt: new Date() }) as never,
+    );
 
     await service.complete('user-1', 'task', 'item-1');
 
     expect(repo.findById).toHaveBeenCalledWith('item-1');
     expect(repo.updateById).toHaveBeenCalledWith(
       'item-1',
-      expect.objectContaining({ $set: expect.objectContaining({ completed: true }) }),
+      expect.objectContaining({
+        $set: expect.objectContaining({ completed: true }) as unknown,
+      }),
     );
     expect(usersRepo.updateOne).toHaveBeenCalledWith(
       { _id: 'user-1' },
       { $inc: { totalPoints: 10 } },
     );
-    expect(eventBus.publish).toHaveBeenCalledWith(
-      expect.objectContaining({ rewardPoints: 10 }),
-    );
+    expect(eventBus.publish).toHaveBeenCalledWith(expect.objectContaining({ rewardPoints: 10 }));
   });
 
   it('does nothing if already completed', async () => {
@@ -72,14 +75,16 @@ describe('PlannedItem complete - no streak advance (FR-024)', () => {
     expect(eventBus.publish).not.toHaveBeenCalled();
   });
 
-  it("does not call any streak service when completing a task", async () => {
+  it('does not call any streak service when completing a task', async () => {
     repo.findById.mockResolvedValue(mockItem() as never);
     repo.updateById.mockResolvedValue(mockItem({ completed: true }) as never);
 
     await service.complete('user-1', 'task', 'item-1');
 
     const publishCalls = (eventBus.publish as jest.Mock).mock.calls;
-    const publishedEvents = publishCalls.map((c: unknown[]) => (c[0] as { constructor: { name: string } }).constructor.name);
+    const publishedEvents = publishCalls.map(
+      (c: unknown[]) => (c[0] as { constructor: { name: string } }).constructor.name,
+    );
     expect(publishedEvents).not.toContain(expect.stringMatching(/Streak/i));
   });
 });

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:paymob/paymob.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/localization/app_l10n.dart';
 import '../../../../core/premium/premium_status.dart';
@@ -48,16 +47,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           clientSecret.startsWith('egy_csk_') ||
           clientSecret.startsWith('csk_');
 
-      // TEMP DIAGNOSTIC: shows which branch decides the Paymob flow on-device.
-      debugPrint(
-        '[Paymob] checkout keys=${checkout.keys.toList()} '
-        'publicKeyLen=${publicKey.length} '
-        'clientSecretPrefix=${clientSecret.isEmpty ? "<empty>" : clientSecret.substring(0, clientSecret.length < 8 ? clientSecret.length : 8)} '
-        'canUseNativeSdk=$canUseNativeSdk',
-      );
-
       if (publicKey.isEmpty || clientSecret.isEmpty) {
-        debugPrint('[Paymob] ABORT: session incomplete (missing key/secret)');
         emit(
           state.copyWith(
             isPurchasing: false,
@@ -69,7 +59,6 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       }
 
       if (!canUseNativeSdk) {
-        debugPrint('[Paymob] ABORT: canUseNativeSdk=false (backend not flagged + secret prefix unrecognized)');
         emit(
           state.copyWith(
             isPurchasing: false,
@@ -79,8 +68,6 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         );
         return;
       }
-
-      debugPrint('[Paymob] opening native SDK sheet...');
 
       final PaymobPaymentResult result;
       try {
@@ -170,55 +157,6 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           isPurchasing: false,
           feedbackType: SubscriptionFeedbackType.error,
           feedbackMessage: AppL10n.current.subscriptionCheckoutFailed,
-        ),
-      );
-    }
-  }
-
-  Future<void> payWithStripe() async {
-    emit(state.copyWith(isPurchasing: true, clearFeedback: true));
-    try {
-      final checkoutUrl = await _repository.createStripeCheckoutSession();
-      if (checkoutUrl.isEmpty) {
-        emit(
-          state.copyWith(
-            isPurchasing: false,
-            feedbackType: SubscriptionFeedbackType.error,
-            feedbackMessage: AppL10n.current.subscriptionStripeUnavailable,
-          ),
-        );
-        return;
-      }
-      final uri = Uri.parse(checkoutUrl);
-      final launched = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
-      emit(
-        state.copyWith(
-          isPurchasing: false,
-          feedbackType: launched
-              ? SubscriptionFeedbackType.success
-              : SubscriptionFeedbackType.error,
-          feedbackMessage: launched
-              ? AppL10n.current.subscriptionStripeBrowserPrompt
-              : AppL10n.current.subscriptionPaymentPageFailed,
-        ),
-      );
-    } on DioException catch (e) {
-      emit(
-        state.copyWith(
-          isPurchasing: false,
-          feedbackType: SubscriptionFeedbackType.error,
-          feedbackMessage: _extractMessage(e),
-        ),
-      );
-    } catch (_) {
-      emit(
-        state.copyWith(
-          isPurchasing: false,
-          feedbackType: SubscriptionFeedbackType.error,
-          feedbackMessage: AppL10n.current.subscriptionCardCheckoutFailed,
         ),
       );
     }

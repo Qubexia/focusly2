@@ -66,20 +66,29 @@ class ApiClient {
   }
 
   /// Proactively refresh tokens (e.g. before a long focus session completes).
-  static Future<bool> refreshSessionTokensIfNeeded() =>
-      _AuthInterceptor.refreshTokens();
+  ///
+  /// This is the only entry point that may rotate the refresh token — see
+  /// [_AuthInterceptor.refreshTokens].
+  static Future<bool> refreshSessionTokensIfNeeded() async =>
+      await _AuthInterceptor.refreshTokens() == RefreshOutcome.success;
 }
+
+/// Why a refresh attempt ended, because the two failures mean opposite things:
+/// [rejected] is the server saying the session is gone, [unavailable] is the
+/// network being unreachable while the session is still perfectly valid.
+enum RefreshOutcome { success, rejected, unavailable }
 
 /// Interceptor that:
 /// 1. Attaches Bearer token to every request
 /// 2. On 401: attempts token refresh, retries original request
 /// 3. On 403 PREMIUM_REQUIRED: refreshes JWT (updates plan claim) and retries once
-/// 4. On refresh failure after 401: clears tokens
+/// 4. On the server rejecting the refresh token: clears tokens. A refresh that
+///    merely failed to reach the server leaves the session intact.
 class _AuthInterceptor extends Interceptor {
   _AuthInterceptor(this._dio);
 
   final Dio _dio;
-  static Completer<bool>? _refreshCompleter;
+  static Completer<RefreshOutcome>? _refreshCompleter;
 
   @override
   void onRequest(
@@ -108,7 +117,8 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response?.statusCode == 401) {
+    if (err.response?.statusCode == 401 &&
+        err.requestOptions.extra['authRetried'] != true) {
       final resolved = await _refreshAndRetry(err, handler);
       if (resolved) return;
     }
@@ -133,22 +143,32 @@ class _AuthInterceptor extends Interceptor {
     return data['code'] == 'PREMIUM_REQUIRED';
   }
 
-  static Future<bool> refreshTokens() async {
-    if (_refreshCompleter != null) {
-      return _refreshCompleter!.future;
-    }
+  /// Single-flight refresh. The server rotates the refresh token on every call
+  /// and treats a second use of the old one as a stolen token — it revokes the
+  /// whole session family, which signs the user out for good. So two refreshes
+  /// must never be in flight at once, and every caller in the app funnels
+  /// through here.
+  static Future<RefreshOutcome> refreshTokens() {
+    final inFlight = _refreshCompleter;
+    if (inFlight != null) return inFlight.future;
 
-    _refreshCompleter = Completer<bool>();
-    try {
-      final refreshed = await _attemptRefresh();
-      _refreshCompleter!.complete(refreshed);
-      return refreshed;
-    } catch (_) {
-      _refreshCompleter!.complete(false);
-      return false;
-    } finally {
+    final completer = Completer<RefreshOutcome>();
+    _refreshCompleter = completer;
+
+    unawaited(() async {
+      RefreshOutcome outcome;
+      try {
+        outcome = await _attemptRefresh();
+      } catch (_) {
+        outcome = RefreshOutcome.unavailable;
+      }
+      // Clear the slot before completing so a waiter that resumes immediately
+      // starts a fresh attempt instead of reusing a completed completer.
       _refreshCompleter = null;
-    }
+      completer.complete(outcome);
+    }());
+
+    return completer.future;
   }
 
   Future<bool> _refreshAndRetry(
@@ -156,9 +176,13 @@ class _AuthInterceptor extends Interceptor {
     ErrorInterceptorHandler handler, {
     bool markPremiumRetried = false,
   }) async {
-    final refreshed = await refreshTokens();
-    if (!refreshed) {
-      if (err.response?.statusCode == 401) {
+    final outcome = await refreshTokens();
+    if (outcome != RefreshOutcome.success) {
+      // Only drop the session when the server itself rejected the refresh
+      // token. Wiping tokens because the network was down would sign the user
+      // out over a dropped connection.
+      if (outcome == RefreshOutcome.rejected &&
+          err.response?.statusCode == 401) {
         await SecureStorage.clearTokens();
       }
       return false;
@@ -170,6 +194,9 @@ class _AuthInterceptor extends Interceptor {
       if (markPremiumRetried) {
         retryOptions.extra['premiumRetried'] = true;
       }
+      // The retry runs through this interceptor again, so mark it to stop a
+      // still-401 response from looping back into another refresh forever.
+      retryOptions.extra['authRetried'] = true;
       retryOptions.headers['Authorization'] = 'Bearer $token';
       if (retryOptions.data is FormData) {
         retryOptions.data = (retryOptions.data as FormData).clone();
@@ -178,17 +205,16 @@ class _AuthInterceptor extends Interceptor {
       handler.resolve(response);
       return true;
     } catch (_) {
-      if (err.response?.statusCode == 401) {
-        await SecureStorage.clearTokens();
-      }
       return false;
     }
   }
 
-  static Future<bool> _attemptRefresh() async {
+  static Future<RefreshOutcome> _attemptRefresh() async {
     final refreshToken = await SecureStorage.getRefreshToken();
     final deviceId = await SecureStorage.getDeviceId();
-    if (refreshToken == null || deviceId == null) return false;
+    if (refreshToken == null || deviceId == null) {
+      return RefreshOutcome.rejected;
+    }
 
     try {
       final freshDio = Dio(BaseOptions(baseUrl: ApiEndpoints.baseUrl));
@@ -208,9 +234,14 @@ class _AuthInterceptor extends Interceptor {
         accessToken: data['accessToken'] as String,
         refreshToken: data['refreshToken'] as String,
       );
-      return true;
+      return RefreshOutcome.success;
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      return status == 401 || status == 403
+          ? RefreshOutcome.rejected
+          : RefreshOutcome.unavailable;
     } catch (_) {
-      return false;
+      return RefreshOutcome.unavailable;
     }
   }
 }

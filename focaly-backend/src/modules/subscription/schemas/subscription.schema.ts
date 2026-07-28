@@ -2,7 +2,8 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, SchemaTypes } from 'mongoose';
 
 export type SubscriptionDocument = HydratedDocument<Subscription>;
-export type Provider = 'stripe' | 'google_play' | 'app_store' | 'paymob';
+/** `stripe` is legacy-only: the integration was removed, kept so existing rows stay readable. */
+export type Provider = 'paymob' | 'google_play' | 'app_store' | 'stripe';
 export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired';
 
 @Schema({ timestamps: true, collection: 'subscriptions' })
@@ -13,7 +14,7 @@ export class Subscription {
   @Prop({
     type: String,
     required: true,
-    enum: ['stripe', 'google_play', 'app_store', 'paymob'],
+    enum: ['paymob', 'google_play', 'app_store', 'stripe'],
   })
   provider!: Provider;
 

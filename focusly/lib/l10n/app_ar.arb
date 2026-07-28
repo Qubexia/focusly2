@@ -492,7 +492,6 @@
   "subscriptionPayPaymobMonthly": "ادفع بالبطاقة — شهري (ج.م)",
   "subscriptionPayPaymobYearly": "ادفع بالبطاقة — سنوي (ج.م)",
   "subscriptionPaymobNote": "أدخل بيانات بطاقتك لإتمام الدفع بأمان.",
-  "subscriptionPayStripe": "بطاقة دولية (Stripe)",
   "subscriptionPremiumActiveTitle": "بريميوم مفعّل",
   "subscriptionPremiumCanceling": "بريميوم (قيد الإلغاء)",
   "subscriptionStatusLabel": "الحالة: {status}",
@@ -576,9 +575,5 @@
   "subscriptionPaymentRejected": "تم رفض الدفع.",
   "subscriptionPaymentFailed": "تعذّر إتمام الدفع.",
   "subscriptionCheckoutFailed": "تعذّر بدء الدفع عبر Paymob.",
-  "subscriptionStripeUnavailable": "الدفع بالبطاقة غير متاح مؤقتاً. جرّب طريقة أخرى أو حاول لاحقاً.",
-  "subscriptionStripeBrowserPrompt": "أكمل الدفع في المتصفح، ثم عُد واضغط على تحديث.",
-  "subscriptionPaymentPageFailed": "تعذّر فتح صفحة الدفع.",
-  "subscriptionCardCheckoutFailed": "تعذّر بدء الدفع بالبطاقة.",
   "subscriptionCanceledEnded": "تم إلغاء الاشتراك. انتهى وصول بريميوم."
 }

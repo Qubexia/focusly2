@@ -156,8 +156,6 @@ class ApiEndpoints {
 
   // Subscription
   static const String subscriptionMe = '/v1/subscription/me';
-  static const String subscriptionStripeCheckout =
-      '/v1/subscription/stripe/checkout';
   static const String subscriptionCancel = '/v1/subscription/cancel';
   static const String subscriptionPaymobCheckout =
       '/v1/subscription/paymob/checkout';

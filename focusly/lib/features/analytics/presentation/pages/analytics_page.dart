@@ -92,11 +92,7 @@ class _AnalyticsView extends StatelessWidget {
             if (state.performance != null)
               _QuickStats(
                 tasksCompleted: state.performance!.totalTasksCompleted,
-                avgDailyMinutes: state.summary!.dailyFocus.isNotEmpty
-                    ? (state.summary!.totalFocusMinutes /
-                            state.summary!.dailyFocus.length)
-                        .round()
-                    : 0,
+                avgDailyMinutes: state.summary!.averageDailyMinutes,
                 score: (state.performance!.completionScore * 100).round(),
                 isDark: isDark,
               ),

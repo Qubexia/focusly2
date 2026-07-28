@@ -1667,9 +1667,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter your card details to complete the payment securely.';
 
   @override
-  String get subscriptionPayStripe => 'International card (Stripe)';
-
-  @override
   String get subscriptionPremiumActiveTitle => 'Premium active';
 
   @override
@@ -1951,21 +1948,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subscriptionCheckoutFailed => 'Could not start Paymob checkout.';
-
-  @override
-  String get subscriptionStripeUnavailable =>
-      'Card payments are temporarily unavailable. Please try another method or try again later.';
-
-  @override
-  String get subscriptionStripeBrowserPrompt =>
-      'Complete payment in the browser, then return and tap Refresh.';
-
-  @override
-  String get subscriptionPaymentPageFailed =>
-      'Could not open the payment page.';
-
-  @override
-  String get subscriptionCardCheckoutFailed => 'Could not start card checkout.';
 
   @override
   String get subscriptionCanceledEnded =>

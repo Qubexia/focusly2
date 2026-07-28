@@ -812,7 +812,6 @@
   "subscriptionPayPaymobMonthly": "Pay with card — Monthly (EGP)",
   "subscriptionPayPaymobYearly": "Pay with card — Yearly (EGP)",
   "subscriptionPaymobNote": "Enter your card details to complete the payment securely.",
-  "subscriptionPayStripe": "International card (Stripe)",
   "subscriptionPremiumActiveTitle": "Premium active",
   "subscriptionPremiumCanceling": "Premium (canceling)",
   "subscriptionStatusLabel": "Status: {status}",
@@ -945,9 +944,5 @@
   "subscriptionPaymentRejected": "Payment was rejected.",
   "subscriptionPaymentFailed": "Could not complete the payment.",
   "subscriptionCheckoutFailed": "Could not start Paymob checkout.",
-  "subscriptionStripeUnavailable": "Card payments are temporarily unavailable. Please try another method or try again later.",
-  "subscriptionStripeBrowserPrompt": "Complete payment in the browser, then return and tap Refresh.",
-  "subscriptionPaymentPageFailed": "Could not open the payment page.",
-  "subscriptionCardCheckoutFailed": "Could not start card checkout.",
   "subscriptionCanceledEnded": "Subscription canceled. Premium access has ended."
 }

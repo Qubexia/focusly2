@@ -23,3 +23,6 @@ Thumbs.db
 .idea/
 
 docs/openapi.json
+
+# Local tooling cache
+.impeccable/

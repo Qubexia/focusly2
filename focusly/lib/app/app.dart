@@ -9,6 +9,7 @@ import '../core/localization/locale_cubit.dart';
 import '../core/services/deep_link_service.dart';
 import '../core/services/notification_service.dart';
 import '../core/services/premium_refresh_service.dart';
+import '../core/services/timezone_sync_service.dart';
 import '../core/theme/app_theme.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
 import '../features/auth/presentation/bloc/auth_event_state.dart';
@@ -62,6 +63,9 @@ class _ZakerlyAppState extends State<ZakerlyApp> with WidgetsBindingObserver {
     if (authBloc == null) return;
     if (authBloc.state is! AuthAuthenticated) return;
     PremiumRefreshService.instance.refreshOnce(authBloc);
+    // Catches a timezone that changed while the app was backgrounded (travel,
+    // DST, a manual clock change).
+    TimezoneSyncService.instance.syncIfNeeded();
     _subscriptionCubit?.load();
   }
 
@@ -69,6 +73,11 @@ class _ZakerlyAppState extends State<ZakerlyApp> with WidgetsBindingObserver {
     if (state is AuthAuthenticated) {
       context.read<SubscriptionCubit>().load();
       PremiumRefreshService.instance.refreshOnce(context.read<AuthBloc>());
+      // The server files sessions, streaks and tasks by the user's calendar
+      // day, so it needs to know which calendar that is.
+      TimezoneSyncService.instance.syncIfNeeded();
+    } else if (state is AuthUnauthenticated) {
+      TimezoneSyncService.instance.reset();
     }
   }
 

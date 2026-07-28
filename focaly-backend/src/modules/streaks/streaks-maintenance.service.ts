@@ -1,14 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
 
+import { resolveTimezone, todayKey, yesterdayKey } from '../../common/utils/day.util';
 import { UsersRepository } from '../users/users.repository';
-import { StreaksRepository } from './streaks.repository';
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
+import { StreaksRepository } from './streaks.repository';
 
 @Injectable()
 export class StreaksMaintenanceService {
@@ -30,11 +26,11 @@ export class StreaksMaintenanceService {
       const userRecord = await this.usersRepository.findActiveById(streak.userId.toString());
       if (!userRecord) continue;
 
-      const tz = userRecord.settings?.timezone || 'UTC';
-      const todayLocal = dayjs().tz(tz).format('YYYY-MM-DD');
+      const tz = resolveTimezone(userRecord.settings?.timezone);
+      const todayLocal = todayKey(tz);
 
       if (streak.lastActiveDate && streak.lastActiveDate < todayLocal) {
-        const yesterdayLocal = dayjs().tz(tz).subtract(1, 'day').format('YYYY-MM-DD');
+        const yesterdayLocal = yesterdayKey(tz);
         if (streak.lastActiveDate !== yesterdayLocal) {
           await this.streaksRepository.resetStreak(streak.userId.toString());
           resetCount++;

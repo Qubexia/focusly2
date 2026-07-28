@@ -60,7 +60,7 @@ focaly-backend/
 │   │       ├── jwt.config.ts
 │   │       ├── fcm.config.ts
 │   │       ├── openai.config.ts
-│   │       └── stripe.config.ts
+│   │       └── paymob.config.ts
 │   │
 │   ├── common/                       # cross-cutting
 │   │   ├── decorators/               # @CurrentUser, @Public, @Roles, @Premium
@@ -337,7 +337,7 @@ class NotificationJob {
 @Schema({ timestamps: true })
 class Subscription {
   @Prop({ unique: true }) userId;
-  @Prop({ enum: ['stripe','google_play','app_store'], required: true }) provider;
+  @Prop({ enum: ['paymob','google_play','app_store'], required: true }) provider;
   @Prop({ required: true }) providerSubId: string;
   @Prop({ enum: ['active','past_due','canceled','expired','trialing'] }) status;
   @Prop() currentPeriodEnd: Date;
@@ -612,9 +612,9 @@ Backed by daily rollups (`analytics_daily` materialized collection) populated by
 | Method | Path |
 |---|---|
 | GET | `/subscription/me` |
-| POST | `/subscription/stripe/checkout` | returns Checkout URL |
-| POST | `/subscription/stripe/portal` | manage |
-| POST | `/subscription/webhook/stripe` | raw body, signature verified |
+| POST | `/subscription/paymob/checkout` | returns Paymob checkout session |
+| POST | `/subscription/paymob/confirm-sdk` | activate after native SDK payment |
+| POST | `/subscription/paymob/webhook` | HMAC verified |
 | POST | `/subscription/iap/google/verify` | purchase token |
 | POST | `/subscription/iap/apple/verify` | receipt |
 | POST | `/subscription/cancel` | mark cancel-at-period-end |
@@ -642,7 +642,7 @@ Presigned S3 PUT URLs only; the API never proxies file bytes.
 
 ### 4.13 `health`
 
-`GET /health` (liveness), `GET /health/ready` (Mongo + Redis + Stripe + FCM pings).
+`GET /health` (liveness), `GET /health/ready` (Mongo + Redis + FCM pings).
 
 ---
 
@@ -764,7 +764,7 @@ Used as `@UseGuards(JwtAuthGuard, PremiumGuard)` on AI/Analytics/Focus endpoints
 
 ### 7.3 Providers
 
-- **Stripe** (web/admin): Checkout + Customer Portal + webhook (`checkout.session.completed`, `customer.subscription.updated/deleted`, `invoice.payment_failed`).
+- **Paymob** (mobile): native SDK payment sheet (Intention API) + `transaction processed` webhook and `transaction response` redirect, both HMAC verified.
 - **Google Play Billing**: purchase token verified via Play Developer API; subscription notifications via Pub/Sub → webhook.
 - **App Store**: receipt verification via App Store Server API + server notifications v2 webhook.
 
@@ -965,7 +965,7 @@ Indexed on `{ userId: 1, date: -1 }`. Heatmap = one indexed scan.
 
 Coverage target: **≥ 80%** lines on services, **≥ 90%** on guards/auth.
 
-**Mocking strategy:** external boundaries only (FCM, OpenAI, Stripe). Internal modules use real implementations via the test module to catch wiring bugs.
+**Mocking strategy:** external boundaries only (FCM, OpenAI, Paymob). Internal modules use real implementations via the test module to catch wiring bugs.
 
 ---
 
@@ -1057,7 +1057,7 @@ For every endpoint a developer adds:
 - `auth` (email + Google), `users`, `subjects` (with 3-cap), `study-schedules`, `pomodoro`, `streaks`, `tasks/revisions/lectures/exams` via PlannedItem, basic `notifications` (FCM + scheduling), `health`.
 
 ### V1 (Weeks 6–8)
-- `subscription` (Stripe + IAP), `PremiumGuard`, basic `analytics` (weekly), `uploads` (presigned), audit logs, rate limiting hardening, E2E test suite, deploy to Render.
+- `subscription` (Paymob + IAP), `PremiumGuard`, basic `analytics` (weekly), `uploads` (presigned), audit logs, rate limiting hardening, E2E test suite, deploy to Render.
 
 ### V2 (Weeks 9–12)
 - `ai` (Notes Assistant, flashcards, questions), full analytics (date-range, heatmap, per-subject), Focus Mode logic, advanced reminders (RRULE), notification preferences UI, leaderboard (friends), admin dashboard.
@@ -1081,7 +1081,7 @@ For every endpoint a developer adds:
 `passport`, `passport-jwt`, `passport-google-oauth20`, `google-auth-library`,
 `mongoose`, `class-validator`, `class-transformer`,
 `bullmq`, `ioredis`,
-`firebase-admin`, `stripe`,
+`firebase-admin`,
 `nestjs-pino`, `pino-pretty`, `@sentry/node`, `@opentelemetry/*`,
 `helmet`, `compression`, `cookie-parser`,
 `argon2`, `nanoid`, `dayjs`, `rrule`, `zod`,
@@ -1159,7 +1159,7 @@ dev: `jest`, `@nestjs/testing`, `supertest`, `mongodb-memory-server`, `eslint`, 
 4. **Free-plan guard (in Swagger)**: as a free user, `POST /v1/subjects` three times → 201 each; the 4th → 403 with `code: SUBJECT_LIMIT_REACHED`. The error envelope renders directly under "Try it out".
 5. **Notification scheduling (in Swagger)**: `POST /v1/subjects/:id/schedules` with `startAt = now + 16min, reminderMinutesBefore: 15` → confirm a `notification_jobs` row exists with `scheduledAt = startAt - 15m` → within ~1 min a BullMQ delayed job is scheduled (visible in Bull-board) → at fire time FCM is called and `GET /v1/notifications` shows the new inbox row.
 6. **Pomodoro → streak → analytics (in Swagger)**: `POST /v1/pomodoro/start` → `POST /v1/pomodoro/:id/complete` with `cycles: 3` → `GET /v1/streaks/me` shows `current` incremented → `GET /v1/analytics/summary?from=&to=` reflects the minutes (premium account).
-7. **Premium gate (in Swagger)**: as a free user, `GET /v1/analytics/summary` → 403 `PREMIUM_REQUIRED`. Trigger Stripe test webhook (`stripe trigger checkout.session.completed`) → re-call same endpoint → 200.
+7. **Premium gate (in Swagger)**: as a free user, `GET /v1/analytics/summary` → 403 `PREMIUM_REQUIRED`. Post a successful Paymob test transaction to `/v1/subscription/paymob/webhook` → re-call same endpoint → 200.
 8. **AI flow (in Swagger, premium)**: `POST /v1/uploads/presign` → upload image to returned URL → `POST /v1/ai/notes/jobs` returns `jobId` → poll `GET /v1/ai/notes/jobs/:id` from Swagger until `status: completed` → artifacts contain summary + flashcards + questions matching the documented JSON schemas.
 9. **Multipart upload via Swagger**: `POST /v1/users/me/avatar` with the file picker that Swagger renders thanks to `@ApiConsumes('multipart/form-data')` → 200 with updated avatar URL.
 10. **Error shapes**: deliberately submit invalid bodies (missing required fields, wrong enum) → Swagger shows the documented 400/422 envelope, matching the response example.

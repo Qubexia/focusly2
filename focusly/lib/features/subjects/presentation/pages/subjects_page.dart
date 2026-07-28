@@ -7,11 +7,13 @@ import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/config/platform_config.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/subject_style.dart';
 import '../../../../core/widgets/premium_gate_sheet.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
 import '../../data/models/subject_model.dart';
 import '../cubit/subjects_cubit.dart';
+import '../widgets/subject_style_pickers.dart';
 
 class SubjectsPage extends StatelessWidget {
   const SubjectsPage({super.key});
@@ -289,7 +291,7 @@ class _SubjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = _SubjectPalette.resolveColor(subject.color);
+    final accentColor = SubjectPalette.resolveColor(subject.color);
 
     return Material(
       color: Colors.transparent,
@@ -319,7 +321,7 @@ class _SubjectCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Icon(
-                        _SubjectIconCatalog.iconForKey(subject.icon),
+                        SubjectIconCatalog.iconForKey(subject.icon),
                         color: accentColor,
                       ),
                     ),
@@ -508,8 +510,8 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
     _nameController = TextEditingController(text: widget.subject?.name ?? '');
     _dailyTargetMinutes = (widget.subject?.dailyTargetMinutes ?? 60).toDouble();
     _selectedColorHex =
-        widget.subject?.color ?? _SubjectPalette.options.first.hex;
-    _selectedIconKey = widget.subject?.icon ?? _SubjectIconCatalog.options.first.key;
+        widget.subject?.color ?? SubjectPalette.options.first.hex;
+    _selectedIconKey = widget.subject?.icon ?? SubjectIconCatalog.options.first.key;
     _goalType = widget.subject?.goalType == 'daily' ? 'daily' : 'weekly';
     _goalDays = List<int>.from(widget.subject?.goalDays ?? const []);
   }
@@ -595,37 +597,9 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: _SubjectPalette.options.map((option) {
-                    final isSelected = option.hex == _selectedColorHex;
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedColorHex = option.hex),
-                      child: Container(
-                        height: 42,
-                        width: 42,
-                        decoration: BoxDecoration(
-                          color: option.color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected
-                                ? (isDark ? Colors.white : AppColors.textPrimaryLight)
-                                : Colors.transparent,
-                            width: 3,
-                          ),
-                        ),
-                        child: isSelected
-                            ? Icon(
-                                Icons.check_rounded,
-                                color: option.color.computeLuminance() > 0.55
-                                    ? AppColors.textPrimaryLight
-                                    : Colors.white,
-                              )
-                            : null,
-                      ),
-                    );
-                  }).toList(),
+                SubjectColorPicker(
+                  selectedHex: _selectedColorHex,
+                  onSelected: (hex) => setState(() => _selectedColorHex = hex),
                 ),
                 const SizedBox(height: 20),
                 Text(
@@ -635,40 +609,9 @@ class _SubjectEditorSheetState extends State<_SubjectEditorSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: _SubjectIconCatalog.options.map((option) {
-                    final isSelected = option.key == _selectedIconKey;
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedIconKey = option.key),
-                      child: Container(
-                        width: 64,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary.withValues(alpha: 0.14)
-                              : (isDark ? AppColors.surfaceDark : Colors.white),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.primary
-                                : (isDark
-                                      ? AppColors.borderDark
-                                      : AppColors.borderLight),
-                          ),
-                        ),
-                        child: Icon(
-                          option.icon,
-                          color: isSelected
-                              ? AppColors.primary
-                              : (isDark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondaryLight),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                SubjectIconPicker(
+                  selectedKey: _selectedIconKey,
+                  onSelected: (key) => setState(() => _selectedIconKey = key),
                 ),
                 const SizedBox(height: 20),
                 _GoalTypeToggle(
@@ -889,60 +832,3 @@ class _GoalDaysPicker extends StatelessWidget {
   }
 }
 
-class _SubjectColorOption {
-  const _SubjectColorOption({required this.hex, required this.color});
-
-  final String hex;
-  final Color color;
-}
-
-class _SubjectPalette {
-  static final List<_SubjectColorOption> options = [
-    ...AppColors.subjectColors.map(
-      (color) => _SubjectColorOption(
-        hex: _toHex(color),
-        color: color,
-      ),
-    ),
-  ];
-
-  static Color resolveColor(String? hex) {
-    for (final option in options) {
-      if (option.hex == hex) return option.color;
-    }
-    return AppColors.primary;
-  }
-
-  static String _toHex(Color color) {
-    final value = color.toARGB32() & 0x00FFFFFF;
-    return '#${value.toRadixString(16).padLeft(6, '0').toUpperCase()}';
-  }
-}
-
-class _SubjectIconOption {
-  const _SubjectIconOption({
-    required this.key,
-    required this.icon,
-  });
-
-  final String key;
-  final IconData icon;
-}
-
-class _SubjectIconCatalog {
-  static const List<_SubjectIconOption> options = [
-    _SubjectIconOption(key: 'book', icon: Icons.menu_book_rounded),
-    _SubjectIconOption(key: 'calculate', icon: Icons.calculate_rounded),
-    _SubjectIconOption(key: 'science', icon: Icons.science_rounded),
-    _SubjectIconOption(key: 'language', icon: Icons.language_rounded),
-    _SubjectIconOption(key: 'palette', icon: Icons.palette_outlined),
-    _SubjectIconOption(key: 'code', icon: Icons.code_rounded),
-  ];
-
-  static IconData iconForKey(String? key) {
-    for (final option in options) {
-      if (option.key == key) return option.icon;
-    }
-    return Icons.menu_book_rounded;
-  }
-}

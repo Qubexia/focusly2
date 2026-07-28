@@ -94,7 +94,6 @@ export function SubscriptionsPage(): JSX.Element {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All providers</SelectItem>
-                <SelectItem value="stripe">Stripe</SelectItem>
                 <SelectItem value="paymob">Paymob</SelectItem>
                 <SelectItem value="google_play">Google Play</SelectItem>
                 <SelectItem value="app_store">App Store</SelectItem>

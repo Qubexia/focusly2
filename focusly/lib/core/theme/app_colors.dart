@@ -41,18 +41,27 @@ class AppColors {
   static const Color dividerDark = Color(0xFF243B5C);
   static const Color borderDark = Color(0xFF2D4A6F);
 
-  // Subject picker colors (blue family)
+  // Subject picker colors: a few brand blues plus a wide, distinguishable range
+  // so subjects can be told apart at a glance.
   static const List<Color> subjectColors = [
-    Color(0xFF0088FF),
-    Color(0xFF0066CC),
-    Color(0xFF4DA6FF),
-    Color(0xFF0055AA),
-    Color(0xFF66B8FF),
-    Color(0xFF0077DD),
-    Color(0xFF99CCFF),
-    Color(0xFF003D7A),
-    Color(0xFF33A3FF),
-    Color(0xFFE6F4FF),
+    Color(0xFF0088FF), // blue (brand)
+    Color(0xFF0055AA), // deep blue
+    Color(0xFF4DA6FF), // sky
+    Color(0xFF00B8D9), // cyan
+    Color(0xFF0FB5A4), // teal
+    Color(0xFF12B76A), // green
+    Color(0xFF2E7D32), // forest
+    Color(0xFF7CB342), // lime
+    Color(0xFFF5B301), // yellow
+    Color(0xFFFF9500), // orange
+    Color(0xFFFF6B35), // coral
+    Color(0xFFE5484D), // red
+    Color(0xFFC2185B), // crimson
+    Color(0xFFFF4D8D), // pink
+    Color(0xFFA855F7), // purple
+    Color(0xFF6C4CF1), // violet
+    Color(0xFF8D6E63), // brown
+    Color(0xFF64748B), // slate
   ];
 
   static const LinearGradient primaryGradient = LinearGradient(

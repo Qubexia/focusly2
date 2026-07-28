@@ -38,10 +38,19 @@ class UserModel {
     );
   }
 
-  // MANUAL OVERRIDE: all premium features unlocked for free on the client.
-  // To restore real subscription gating, revert to the original check below.
-  bool get isPremium => true;
-  // bool get isPremium =>
-  //     plan == 'premium' &&
-  //     (premiumUntil == null || premiumUntil!.isAfter(DateTime.now()));
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'email': email,
+        'name': name,
+        'avatarUrl': avatarUrl,
+        'emailVerified': emailVerified,
+        'role': role,
+        'plan': plan,
+        'premiumUntil': premiumUntil?.toIso8601String(),
+        'totalPoints': totalPoints,
+      };
+
+  bool get isPremium =>
+      plan == 'premium' &&
+      (premiumUntil == null || premiumUntil!.isAfter(DateTime.now()));
 }
