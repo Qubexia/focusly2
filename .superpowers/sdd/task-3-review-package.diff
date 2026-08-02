@@ -1,0 +1,196 @@
+﻿diff --git a/focusly/lib/features/auth/presentation/bloc/auth_bloc.dart b/focusly/lib/features/auth/presentation/bloc/auth_bloc.dart
+index 76149a9..902402f 100644
+--- a/focusly/lib/features/auth/presentation/bloc/auth_bloc.dart
++++ b/focusly/lib/features/auth/presentation/bloc/auth_bloc.dart
+@@ -106,20 +106,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
+     } catch (e) {
+       emit(AuthError(message: e.toString()));
+     }
+   }
+ 
+   Future<void> _onGoogleLogin(
+     AuthGoogleLoginRequested event,
+     Emitter<AuthState> emit,
+   ) async {
+     emit(const AuthLoading());
++    if (AuthConfig.googleServerClientId.isEmpty) {
++      emit(AuthError(message: AppL10n.current.authGoogleNotConfigured));
++      return;
++    }
+     try {
+       final googleUser = await _googleSignIn.signIn();
+       if (googleUser == null) {
+         emit(const AuthUnauthenticated());
+         return;
+       }
+ 
+       final googleAuth = await googleUser.authentication;
+       final idToken = googleAuth.idToken;
+       if (idToken == null) {
+@@ -149,20 +153,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
+     } catch (e) {
+       emit(AuthError(message: e.toString()));
+     }
+   }
+ 
+   Future<void> _onLogout(
+     AuthLogoutRequested event,
+     Emitter<AuthState> emit,
+   ) async {
+     await _authRepository.logout();
++    try {
++      await _googleSignIn.signOut();
++    } catch (_) {
++      // Local session already cleared; ignore Google SDK errors.
++    }
+     emit(const AuthUnauthenticated());
+   }
+ 
+   Future<void> _onProfileUpdate(
+     AuthProfileUpdateRequested event,
+     Emitter<AuthState> emit,
+   ) async {
+     final currentState = state;
+     if (currentState is! AuthAuthenticated) return;
+ 
+diff --git a/focusly/lib/l10n/app_ar.arb b/focusly/lib/l10n/app_ar.arb
+index e467c7d..dba41dc 100644
+--- a/focusly/lib/l10n/app_ar.arb
++++ b/focusly/lib/l10n/app_ar.arb
+@@ -511,20 +511,21 @@
+   "subscriptionPaymentNotCompleted": "┘ä┘à ┘è┘â╪¬┘à┘ä ╪º┘ä╪»┘ü╪╣.",
+   "subscriptionPremiumActive": "╪¿╪▒┘è┘à┘è┘ê┘à ┘à┘ü╪╣┘æ┘ä ╪º┘ä╪ó┘å. ╪º╪│╪¬┘à╪¬╪╣ ╪¿┘à╪│╪º╪▒ ╪»╪▒╪º╪│╪¬┘â ╪º┘ä┘à╪╖┘ê┘æ╪▒.",
+   "subscriptionPaymentReceived": "╪¬┘à ╪º╪│╪¬┘ä╪º┘à ╪º┘ä╪»┘ü╪╣. ┘é╪» ┘è╪│╪¬╪║╪▒┘é ╪¬┘ü╪╣┘è┘ä ╪¿╪▒┘è┘à┘è┘ê┘à ┘ä╪¡╪╕╪º╪¬.",
+   "aiLoadSubjectsFailed": "╪¬╪╣╪░┘æ╪▒ ╪¬╪¡┘à┘è┘ä ╪º┘ä┘à┘ê╪º╪».",
+   "aiStudyPackDeleted": "╪¬┘à ╪¡╪░┘ü ╪¡╪▓┘à╪⌐ ╪º┘ä┘à╪░╪º┘â╪▒╪⌐.",
+   "aiDeleteStudyPackFailed": "╪¬╪╣╪░┘æ╪▒ ╪¡╪░┘ü ╪¡╪▓┘à╪⌐ ╪º┘ä┘à╪░╪º┘â╪▒╪⌐.",
+   "aiRateLimitReached": "╪¬┘à ╪¿┘ä┘ê╪║ ╪º┘ä╪¡╪» ╪º┘ä╪ú┘é╪╡┘ë ┘ä╪º╪│╪¬╪«╪»╪º┘à ╪º┘ä╪░┘â╪º╪í ╪º┘ä╪º╪╡╪╖┘å╪º╪╣┘è. ╪¡╪º┘ê┘ä ┘ä╪º╪¡┘é┘ï╪º.",
+   "analyticsLoadFailed": "╪¬╪╣╪░┘æ╪▒ ╪¬╪¡┘à┘è┘ä ╪¿┘è╪º┘å╪º╪¬ ╪º┘ä╪Ñ╪¡╪╡╪º╪ª┘è╪º╪¬.",
+   "authGoogleTokenFailed": "╪¬╪╣╪░┘æ╪▒ ╪º┘ä╪¡╪╡┘ê┘ä ╪╣┘ä┘ë ╪▒┘à╪▓ ╪¬╪│╪¼┘è┘ä ╪º┘ä╪»╪«┘ê┘ä ╪╣╪¿╪▒ Google. ╪¡╪º┘ê┘ä ┘à╪▒╪⌐ ╪ú╪«╪▒┘ë.",
+   "authGoogleSignInFailed": "┘ü╪┤┘ä ╪¬╪│╪¼┘è┘ä ╪º┘ä╪»╪«┘ê┘ä ╪╣╪¿╪▒ Google. ╪¡╪º┘ê┘ä ┘à╪▒╪⌐ ╪ú╪«╪▒┘ë.",
++  "authGoogleNotConfigured": "╪¬╪│╪¼┘è┘ä ╪º┘ä╪»╪«┘ê┘ä ╪╣╪¿╪▒ Google ╪║┘è╪▒ ┘à╪╢╪¿┘ê╪╖ ┘ä┘ç╪░┘ç ╪º┘ä┘å╪│╪«╪⌐. ╪╣┘è┘æ┘å GOOGLE_SERVER_CLIENT_ID.",
+   "authServerUnreachable": "╪¬╪╣╪░┘æ╪▒ ╪º┘ä┘ê╪╡┘ê┘ä ╪Ñ┘ä┘ë ╪º┘ä╪«╪º╪»┘à. ╪¬╪¡┘é┘æ┘é ┘à┘å ╪º╪¬╪╡╪º┘ä┘â ╪¿╪º┘ä╪Ñ┘å╪¬╪▒┘å╪¬ ╪½┘à ╪¡╪º┘ê┘ä ┘à╪▒╪⌐ ╪ú╪«╪▒┘ë.",
+   "authGenericRetry": "╪¡╪»╪½ ╪«╪╖╪ú ┘à╪º. ╪¡╪º┘ê┘ä ┘à╪▒╪⌐ ╪ú╪«╪▒┘ë.",
+   "homeLoadFailed": "╪¬╪╣╪░┘æ╪▒ ╪¬╪¡┘à┘è┘ä ╪¿┘è╪º┘å╪º╪¬ ╪º┘ä╪▒╪ª┘è╪│┘è╪⌐.",
+   "notificationsLoadFailed": "╪¬╪╣╪░┘æ╪▒ ╪¬╪¡┘à┘è┘ä ╪º┘ä╪Ñ╪┤╪╣╪º╪▒╪º╪¬",
+   "plannerLoadFailed": "╪¬╪╣╪░┘æ╪▒ ╪¬╪¡┘à┘è┘ä ╪º┘ä╪╣┘å╪º╪╡╪▒ ┘ä┘ç╪░╪º ╪º┘ä┘è┘ê┘à.",
+   "plannerCreateSuccess": "╪¬┘à ╪Ñ┘å╪┤╪º╪í ╪º┘ä╪╣┘å╪╡╪▒ ╪¿┘å╪¼╪º╪¡!",
+   "plannerCreateFailed": "╪¬╪╣╪░┘æ╪▒ ╪Ñ┘å╪┤╪º╪í ╪º┘ä╪╣┘å╪╡╪▒.",
+   "plannerCompleteSuccess": "╪¬┘à ╪Ñ┘â┘à╪º┘ä ╪º┘ä╪╣┘å╪╡╪▒! ╪¡╪╡┘ä╪¬ ╪╣┘ä┘ë ┘å┘é╪º╪╖",
+   "plannerCompleteFailed": "╪¬╪╣╪░┘æ╪▒ ╪Ñ┘â┘à╪º┘ä ╪º┘ä╪╣┘å╪╡╪▒.",
+   "plannerDeleteSuccess": "╪¬┘à ╪¡╪░┘ü ╪º┘ä╪╣┘å╪╡╪▒ ╪¿┘å╪¼╪º╪¡.",
+diff --git a/focusly/lib/l10n/app_en.arb b/focusly/lib/l10n/app_en.arb
+index 7caeeb3..0831c56 100644
+--- a/focusly/lib/l10n/app_en.arb
++++ b/focusly/lib/l10n/app_en.arb
+@@ -880,20 +880,21 @@
+   "subscriptionPaymentNotCompleted": "Payment was not completed.",
+   "subscriptionPremiumActive": "Premium is active. Enjoy your upgraded study flow.",
+   "subscriptionPaymentReceived": "Payment received. Premium may take a moment to activate.",
+   "aiLoadSubjectsFailed": "Failed to load subjects.",
+   "aiStudyPackDeleted": "Study pack deleted.",
+   "aiDeleteStudyPackFailed": "Failed to delete study pack.",
+   "aiRateLimitReached": "AI rate limit reached. Try again later.",
+   "analyticsLoadFailed": "Failed to load analytics data.",
+   "authGoogleTokenFailed": "Failed to get Google sign-in token. Please try again.",
+   "authGoogleSignInFailed": "Google sign-in failed. Please try again.",
++  "authGoogleNotConfigured": "Google sign-in is not configured for this build. Set GOOGLE_SERVER_CLIENT_ID.",
+   "authServerUnreachable": "Cannot reach the server. Please check your internet connection and try again.",
+   "authGenericRetry": "Something went wrong. Please try again.",
+   "homeLoadFailed": "Failed to load home data.",
+   "notificationsLoadFailed": "Failed to load notifications",
+   "plannerLoadFailed": "Failed to load items for this date.",
+   "plannerCreateSuccess": "Item created successfully!",
+   "plannerCreateFailed": "Failed to create item.",
+   "plannerCompleteSuccess": "Item completed! Points earned",
+   "plannerCompleteFailed": "Failed to complete item.",
+   "plannerDeleteSuccess": "Item deleted successfully.",
+diff --git a/focusly/lib/l10n/app_localizations.dart b/focusly/lib/l10n/app_localizations.dart
+index 8253029..8002eef 100644
+--- a/focusly/lib/l10n/app_localizations.dart
++++ b/focusly/lib/l10n/app_localizations.dart
+@@ -3157,20 +3157,26 @@ abstract class AppLocalizations {
+   /// In en, this message translates to:
+   /// **'Failed to get Google sign-in token. Please try again.'**
+   String get authGoogleTokenFailed;
+ 
+   /// No description provided for @authGoogleSignInFailed.
+   ///
+   /// In en, this message translates to:
+   /// **'Google sign-in failed. Please try again.'**
+   String get authGoogleSignInFailed;
+ 
++  /// No description provided for @authGoogleNotConfigured.
++  ///
++  /// In en, this message translates to:
++  /// **'Google sign-in is not configured for this build. Set GOOGLE_SERVER_CLIENT_ID.'**
++  String get authGoogleNotConfigured;
++
+   /// No description provided for @authServerUnreachable.
+   ///
+   /// In en, this message translates to:
+   /// **'Cannot reach the server. Please check your internet connection and try again.'**
+   String get authServerUnreachable;
+ 
+   /// No description provided for @authGenericRetry.
+   ///
+   /// In en, this message translates to:
+   /// **'Something went wrong. Please try again.'**
+diff --git a/focusly/lib/l10n/app_localizations_ar.dart b/focusly/lib/l10n/app_localizations_ar.dart
+index 10a8063..e280202 100644
+--- a/focusly/lib/l10n/app_localizations_ar.dart
++++ b/focusly/lib/l10n/app_localizations_ar.dart
+@@ -1797,20 +1797,24 @@ class AppLocalizationsAr extends AppLocalizations {
+   String get analyticsLoadFailed => '╪¬╪╣╪░┘æ╪▒ ╪¬╪¡┘à┘è┘ä ╪¿┘è╪º┘å╪º╪¬ ╪º┘ä╪Ñ╪¡╪╡╪º╪ª┘è╪º╪¬.';
+ 
+   @override
+   String get authGoogleTokenFailed =>
+       '╪¬╪╣╪░┘æ╪▒ ╪º┘ä╪¡╪╡┘ê┘ä ╪╣┘ä┘ë ╪▒┘à╪▓ ╪¬╪│╪¼┘è┘ä ╪º┘ä╪»╪«┘ê┘ä ╪╣╪¿╪▒ Google. ╪¡╪º┘ê┘ä ┘à╪▒╪⌐ ╪ú╪«╪▒┘ë.';
+ 
+   @override
+   String get authGoogleSignInFailed =>
+       '┘ü╪┤┘ä ╪¬╪│╪¼┘è┘ä ╪º┘ä╪»╪«┘ê┘ä ╪╣╪¿╪▒ Google. ╪¡╪º┘ê┘ä ┘à╪▒╪⌐ ╪ú╪«╪▒┘ë.';
+ 
++  @override
++  String get authGoogleNotConfigured =>
++      '╪¬╪│╪¼┘è┘ä ╪º┘ä╪»╪«┘ê┘ä ╪╣╪¿╪▒ Google ╪║┘è╪▒ ┘à╪╢╪¿┘ê╪╖ ┘ä┘ç╪░┘ç ╪º┘ä┘å╪│╪«╪⌐. ╪╣┘è┘æ┘å GOOGLE_SERVER_CLIENT_ID.';
++
+   @override
+   String get authServerUnreachable =>
+       '╪¬╪╣╪░┘æ╪▒ ╪º┘ä┘ê╪╡┘ê┘ä ╪Ñ┘ä┘ë ╪º┘ä╪«╪º╪»┘à. ╪¬╪¡┘é┘æ┘é ┘à┘å ╪º╪¬╪╡╪º┘ä┘â ╪¿╪º┘ä╪Ñ┘å╪¬╪▒┘å╪¬ ╪½┘à ╪¡╪º┘ê┘ä ┘à╪▒╪⌐ ╪ú╪«╪▒┘ë.';
+ 
+   @override
+   String get authGenericRetry => '╪¡╪»╪½ ╪«╪╖╪ú ┘à╪º. ╪¡╪º┘ê┘ä ┘à╪▒╪⌐ ╪ú╪«╪▒┘ë.';
+ 
+   @override
+   String get homeLoadFailed => '╪¬╪╣╪░┘æ╪▒ ╪¬╪¡┘à┘è┘ä ╪¿┘è╪º┘å╪º╪¬ ╪º┘ä╪▒╪ª┘è╪│┘è╪⌐.';
+ 
+diff --git a/focusly/lib/l10n/app_localizations_en.dart b/focusly/lib/l10n/app_localizations_en.dart
+index 5c32403..c1379bf 100644
+--- a/focusly/lib/l10n/app_localizations_en.dart
++++ b/focusly/lib/l10n/app_localizations_en.dart
+@@ -1757,20 +1757,24 @@ class AppLocalizationsEn extends AppLocalizations {
+   String get analyticsLoadFailed => 'Failed to load analytics data.';
+ 
+   @override
+   String get authGoogleTokenFailed =>
+       'Failed to get Google sign-in token. Please try again.';
+ 
+   @override
+   String get authGoogleSignInFailed =>
+       'Google sign-in failed. Please try again.';
+ 
++  @override
++  String get authGoogleNotConfigured =>
++      'Google sign-in is not configured for this build. Set GOOGLE_SERVER_CLIENT_ID.';
++
+   @override
+   String get authServerUnreachable =>
+       'Cannot reach the server. Please check your internet connection and try again.';
+ 
+   @override
+   String get authGenericRetry => 'Something went wrong. Please try again.';
+ 
+   @override
+   String get homeLoadFailed => 'Failed to load home data.';
+ 

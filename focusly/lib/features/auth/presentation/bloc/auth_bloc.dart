@@ -136,7 +136,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } on DioException catch (e) {
       emit(AuthError(message: _extractErrorMessage(e)));
     } catch (e) {
-      emit(AuthError(message: AppL10n.current.authGoogleSignInFailed));
+      // Surface SDK errors in debug (e.g. ApiException:10 = SHA/package mismatch).
+      final detail = e.toString();
+      emit(
+        AuthError(
+          message: detail.contains('ApiException') || detail.contains('PlatformException')
+              ? detail
+              : AppL10n.current.authGoogleSignInFailed,
+        ),
+      );
     }
   }
 

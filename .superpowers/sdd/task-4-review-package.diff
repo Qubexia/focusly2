@@ -1,0 +1,44 @@
+﻿diff --git a/.vscode/launch.json b/.vscode/launch.json
+new file mode 100644
+index 0000000..7785c12
+--- /dev/null
++++ b/.vscode/launch.json
+@@ -0,0 +1,15 @@
++{
++  "version": "0.2.0",
++  "configurations": [
++    {
++      "name": "zakerly (Android + Google)",
++      "request": "launch",
++      "type": "dart",
++      "program": "focusly/lib/main.dart",
++      "cwd": "focusly",
++      "toolArgs": [
++        "--dart-define=GOOGLE_SERVER_CLIENT_ID=264301190550-asllhnma6e86477cm9tckti0h03ln223.apps.googleusercontent.com"
++      ]
++    }
++  ]
++}
+diff --git a/focusly/lib/core/config/auth_config.dart b/focusly/lib/core/config/auth_config.dart
+index 47f5b51..fc9b0fc 100644
+--- a/focusly/lib/core/config/auth_config.dart
++++ b/focusly/lib/core/config/auth_config.dart
+@@ -1,13 +1,16 @@
+ /// OAuth configuration for social sign-in.
+ ///
+ /// Set [googleServerClientId] via `--dart-define=GOOGLE_SERVER_CLIENT_ID=...`
+-/// at build time. It must match `GOOGLE_CLIENT_ID` on the backend (Firebase
+-/// Web client ID from the Google Cloud console).
++/// at build time.
++///
++/// Example (Android):
++/// `flutter run --dart-define=GOOGLE_SERVER_CLIENT_ID=xxx.apps.googleusercontent.com`
++/// Must match backend `GOOGLE_CLIENT_ID` (Firebase/Google Web client ID).
+ class AuthConfig {
+   AuthConfig._();
+ 
+   static const String googleServerClientId = String.fromEnvironment(
+     'GOOGLE_SERVER_CLIENT_ID',
+     defaultValue: '',
+   );
+ }

@@ -43,6 +43,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "264301190550-n82ouc2lrvskjfjen2cv4vv4gu6b1p4h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zakerly.app",
+            "certificate_hash": "0da0288497c102482035df619f00a9074f2ee199"
+          }
+        },
+        {
           "client_id": "264301190550-asllhnma6e86477cm9tckti0h03ln223.apps.googleusercontent.com",
           "client_type": 3
         }
