@@ -5,11 +5,13 @@ import {
   Header,
   HttpCode,
   HttpStatus,
+  Logger,
   Param,
   Post,
   Query,
   Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -17,7 +19,9 @@ import { Request, Response } from 'express';
 
 import { CurrentUser, CurrentUserPayload } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { EmailVerifiedGuard } from '../../common/guards/email-verified.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 
 import { PaymobCardPayDto } from './dto/paymob-card-pay.dto';
 import { PaymobCheckoutDto } from './dto/paymob-checkout.dto';
@@ -33,13 +37,16 @@ import { SubscriptionsService } from './subscriptions.service';
 @ApiTags('Subscription — Paymob')
 @Controller({ path: 'subscription/paymob', version: '1' })
 export class PaymobController {
+  private readonly logger = new Logger(PaymobController.name);
+
   constructor(
     private readonly paymobService: PaymobService,
     private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
-  /** URLs to paste in Paymob dashboard (read-only). */
-  @Public()
+  /** URLs to paste in Paymob dashboard (admin-only: leaks integration metadata). */
+  @Roles('admin')
+  @UseGuards(RolesGuard)
   @Get('config-urls')
   getConfigUrls() {
     return {
@@ -90,7 +97,19 @@ export class PaymobController {
     @CurrentUser() user: CurrentUserPayload,
     @Body() dto: PaymobConfirmSdkDto,
   ) {
-    return this.subscriptionsService.activatePaymobFromSdk(user.id, dto.plan, dto.transactionId);
+    // Never grant premium on the client's word alone — Paymob is asked whether
+    // this transaction really succeeded, for this user, at this plan's price.
+    const verified = await this.paymobService.verifySdkTransaction(
+      user.id,
+      dto.plan,
+      dto.transactionId,
+    );
+
+    return this.subscriptionsService.activatePaymobFromSdk(
+      user.id,
+      verified.plan,
+      verified.transactionId,
+    );
   }
 
   /** Hosted card checkout page (replaces broken Paymob /standalone/ SPA on mobile). */
@@ -126,16 +145,24 @@ export class PaymobController {
     const receivedHmac =
       queryHmac ?? (body.hmac as string | undefined) ?? (req.headers['hmac'] as string | undefined);
 
-    const hmacSecret = process.env.PAYMOB_HMAC_SECRET ?? '';
-    if (hmacSecret && receivedHmac) {
-      const valid = verifyTransactionProcessedHmac(transaction, receivedHmac, hmacSecret);
-      if (!valid) {
-        return { received: false, reason: 'invalid_hmac' };
-      }
+    // Fail closed: an unsigned or badly-signed callback is never processed.
+    // Skipping verification when the signature is absent would let anyone mint
+    // premium for any account by POSTing a forged transaction.
+    const hmacSecret = this.paymobService.callbackHmacSecret;
+    if (!hmacSecret) {
+      this.logger.error('Rejected Paymob webhook: PAYMOB_HMAC_SECRET is not configured.');
+      throw new UnauthorizedException({ message: 'Webhook verification is not configured.' });
+    }
+    if (!receivedHmac || !verifyTransactionProcessedHmac(transaction, receivedHmac, hmacSecret)) {
+      this.logger.warn('Rejected Paymob webhook: missing or invalid HMAC signature.');
+      throw new UnauthorizedException({ message: 'Invalid webhook signature.' });
     }
 
     const success = transaction.success === true || transaction.success === 'true';
-    if (!success) {
+    const pending = transaction.pending === true || transaction.pending === 'true';
+    const refunded = transaction.is_refunded === true || transaction.is_refunded === 'true';
+    const voided = transaction.is_voided === true || transaction.is_voided === 'true';
+    if (!success || pending || refunded || voided) {
       return { received: true, outcome: 'ignored', reason: 'not_successful' };
     }
 
@@ -160,7 +187,23 @@ export class PaymobController {
       typeof rawId === 'string' || typeof rawId === 'number'
         ? String(rawId)
         : `paymob-${Date.now()}`;
-    const plan = extras?.plan as string | undefined;
+    // Entitlement follows the amount actually paid, not the client-declared
+    // plan: a monthly payment tagged `extras.plan = yearly` must not buy a year.
+    const paidCurrency =
+      typeof transaction.currency === 'string' ? transaction.currency.toUpperCase() : '';
+    if (paidCurrency && paidCurrency !== this.paymobService.currency) {
+      this.logger.warn(`Ignored Paymob webhook: unexpected currency ${paidCurrency}.`);
+      return { received: true, outcome: 'ignored', reason: 'currency_mismatch' };
+    }
+
+    const plan = this.paymobService.resolvePlanFromAmount(transaction.amount_cents);
+    if (!plan) {
+      this.logger.warn(
+        `Ignored Paymob webhook: amount ${JSON.stringify(transaction.amount_cents)} matches no plan price.`,
+      );
+      return { received: true, outcome: 'ignored', reason: 'amount_mismatch' };
+    }
+
     const periodEnd = new Date();
     if (plan === 'yearly') {
       periodEnd.setFullYear(periodEnd.getFullYear() + 1);
@@ -189,14 +232,15 @@ export class PaymobController {
   @Public()
   @Get('redirect')
   handleRedirect(@Query() query: Record<string, string>, @Res() res: Response) {
-    const hmacSecret = process.env.PAYMOB_HMAC_SECRET ?? '';
+    const hmacSecret = this.paymobService.callbackHmacSecret;
     const receivedHmac = query.hmac;
-    if (hmacSecret && receivedHmac) {
-      const valid = verifyResponseCallbackHmac(query, receivedHmac, hmacSecret);
-      if (!valid) {
-        res.status(400).send(this.renderHtml(false, 'Payment verification failed.'));
-        return;
-      }
+    if (
+      !hmacSecret ||
+      !receivedHmac ||
+      !verifyResponseCallbackHmac(query, receivedHmac, hmacSecret)
+    ) {
+      res.status(400).send(this.renderHtml(false, 'Payment verification failed.'));
+      return;
     }
 
     const success = query.success === 'true';

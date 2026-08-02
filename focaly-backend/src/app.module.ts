@@ -7,6 +7,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { MaintenanceGuard } from './common/guards/maintenance.guard';
 import { PremiumGuard } from './common/guards/premium.guard';
+import { RolesGuard } from './common/guards/roles.guard';
 import { ThrottlerBehindProxyGuard } from './common/guards/throttler-behind-proxy.guard';
 import { AuditLogMiddleware } from './common/middleware/audit-log.middleware';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
@@ -25,6 +26,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
+import { LegalModule } from './modules/legal/legal.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PlannedItemsModule } from './modules/planned-items/planned-items.module';
 import { PlatformSettingsModule } from './modules/platform-settings/platform-settings.module';
@@ -58,6 +60,7 @@ import { EventBusModule } from './shared/events/event-bus.module';
     TracingModule,
     EventBusModule,
     HealthModule,
+    LegalModule,
     UsersModule,
     AuthModule,
     SubjectsModule,
@@ -76,6 +79,9 @@ import { EventBusModule } from './shared/events/event-bus.module';
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerBehindProxyGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    // Global so a controller that declares @Roles(...) can never be left
+    // unenforced by forgetting @UseGuards(RolesGuard). No-ops without @Roles.
+    { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: MaintenanceGuard },
     PremiumGuard,
   ],

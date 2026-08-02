@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -10,6 +12,15 @@ import { SubscriptionsService } from '../subscription/subscriptions.service';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersRepository } from './users.repository';
+
+const AVATAR_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
+
+/** Picks a safe extension from a client filename, defaulting to .jpg. */
+function extensionForAvatar(fileName: string): string {
+  const match = /\.[a-z0-9]{1,5}$/i.exec(fileName ?? '');
+  const ext = match?.[0]?.toLowerCase() ?? '';
+  return AVATAR_EXTENSIONS.has(ext) ? ext : '.jpg';
+}
 
 @Injectable()
 export class UsersService {
@@ -81,7 +92,10 @@ export class UsersService {
   async uploadAvatar(user: CurrentUserPayload, fileName: string): Promise<{ avatarUrl: string }> {
     const bucket = this.configService.getOrThrow<string>('s3.bucket');
     const region = this.configService.getOrThrow<string>('s3.region');
-    const avatarUrl = `https://${bucket}.s3.${region}.amazonaws.com/avatars/${user.id}/${fileName}`;
+    // The client filename is never trusted in the key — it could otherwise
+    // point the stored avatar URL at an arbitrary path in the bucket.
+    const objectName = `${randomUUID()}${extensionForAvatar(fileName)}`;
+    const avatarUrl = `https://${bucket}.s3.${region}.amazonaws.com/avatars/${user.id}/${objectName}`;
 
     await this.usersRepository.updateOne({ _id: user.id }, { $set: { avatarUrl } });
     return { avatarUrl };

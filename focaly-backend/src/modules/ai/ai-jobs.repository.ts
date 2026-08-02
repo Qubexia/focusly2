@@ -29,6 +29,11 @@ export class AiJobsRepository {
     return this.model.findById(id).exec();
   }
 
+  /** Ownership-scoped lookup — use this for anything reachable from a request. */
+  findByIdAndUser(id: string, userId: string): Promise<AiJobDocument | null> {
+    return this.model.findOne({ _id: id, userId }).exec();
+  }
+
   findByUser(userId: string, limit = 20): Promise<AiJobDocument[]> {
     return this.model.find({ userId }).sort({ createdAt: -1 }).limit(limit).exec();
   }

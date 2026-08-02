@@ -5,7 +5,9 @@
   "compilerOptions": {
     "deleteOutDir": false,
     "webpack": false,
-    "tsConfigPath": "tsconfig.build.json"
+    "tsConfigPath": "tsconfig.build.json",
+    "assets": [{ "include": "modules/legal/pages/*.html", "outDir": "dist" }],
+    "watchAssets": true
   },
   "entryFile": "main",
   "monorepo": false

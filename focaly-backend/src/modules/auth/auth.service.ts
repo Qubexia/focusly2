@@ -240,6 +240,13 @@ export class AuthService {
       throw this.unauthorized('User no longer exists.');
     }
 
+    // A ban applied after login must end the session now — otherwise the
+    // existing refresh token keeps minting access tokens for its full lifetime.
+    if (user.isBanned) {
+      await this.authSessionsRepository.revokeAllByUserId(claims.sub);
+      throw this.suspended();
+    }
+
     await this.subscriptionsService.syncUserPlanFromSubscription(claims.sub);
     const syncedUser = await this.usersRepository.findActiveById(claims.sub);
     if (!syncedUser) {

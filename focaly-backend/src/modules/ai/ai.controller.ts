@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpException,
@@ -18,6 +19,7 @@ import { CurrentUser, CurrentUserPayload } from '../../common/decorators/current
 import { PremiumGuard } from '../../common/guards/premium.guard';
 
 import { AiArtifactsRepository } from './ai-artifacts.repository';
+import { AiFilesService } from './ai-files.service';
 import { AiJobsRepository } from './ai-jobs.repository';
 import { AiRateLimiterService } from './ai-rate-limiter.service';
 import { AiSettingsService } from './ai-settings.service';
@@ -34,6 +36,7 @@ export class AiController {
     private readonly rateLimiter: AiRateLimiterService,
     private readonly aiWorkerService: AiWorkerService,
     private readonly aiSettings: AiSettingsService,
+    private readonly aiFiles: AiFilesService,
   ) {}
 
   @Post('notes/jobs')
@@ -62,6 +65,19 @@ export class AiController {
       );
     }
 
+    // Reject borrowed file references up front: an S3 key is only usable by the
+    // account it was presigned for, and a GridFS id only by its uploader.
+    const ownedPrefix = `uploads/${user.id}/`;
+    if ((dto.imageKeys ?? []).some((key) => !key.startsWith(ownedPrefix))) {
+      throw new ForbiddenException({ message: 'One or more image keys do not belong to you.' });
+    }
+
+    for (const fileId of dto.pdfKeys ?? []) {
+      if (!(await this.aiFiles.isOwnedBy(fileId, user.id))) {
+        throw new ForbiddenException({ message: 'One or more PDF files do not belong to you.' });
+      }
+    }
+
     const job = await this.aiJobsRepo.create({
       userId: user.id,
       subjectId: dto.subjectId ?? null,
@@ -85,8 +101,13 @@ export class AiController {
   }
 
   @Get('notes/jobs/:id')
-  async getJob(@Param('id') id: string) {
-    return this.aiJobsRepo.findById(id);
+  async getJob(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
+    const job = await this.aiJobsRepo.findByIdAndUser(id, user.id);
+    if (!job) {
+      throw new NotFoundException({ message: 'Job not found.' });
+    }
+
+    return job;
   }
 
   @Get('artifacts')

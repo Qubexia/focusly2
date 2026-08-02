@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import mongoose, { Connection } from 'mongoose';
 
@@ -39,8 +39,28 @@ export class AiFilesService {
     });
   }
 
-  /** Reads a stored file back into memory. */
-  read(fileId: string): Promise<Buffer> {
+  /** True when `fileId` exists and was uploaded by `userId`. */
+  async isOwnedBy(fileId: string, userId: string): Promise<boolean> {
+    if (!mongoose.isValidObjectId(fileId)) {
+      return false;
+    }
+
+    const [file] = await this.bucket()
+      .find({ _id: new mongoose.mongo.ObjectId(fileId) }, { limit: 1 })
+      .toArray();
+
+    return file?.metadata?.userId === userId;
+  }
+
+  /**
+   * Reads a stored file back into memory. Callers must pass the owning user so
+   * one account can never read another account's uploads by guessing an id.
+   */
+  async read(fileId: string, userId: string): Promise<Buffer> {
+    if (!(await this.isOwnedBy(fileId, userId))) {
+      throw new ForbiddenException({ message: 'File not found for this user.' });
+    }
+
     const bucket = this.bucket();
     const objectId = new mongoose.mongo.ObjectId(fileId);
     return new Promise((resolve, reject) => {

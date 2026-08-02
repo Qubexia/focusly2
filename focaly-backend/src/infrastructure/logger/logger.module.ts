@@ -1,7 +1,8 @@
+import { randomUUID } from 'crypto';
+
 import { Module, Global } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
-import { randomUUID } from 'crypto';
 
 @Global()
 @Module({
@@ -27,6 +28,14 @@ import { randomUUID } from 'crypto';
               '*.idToken',
               '*.purchaseToken',
               '*.receipt',
+              // Cardholder data must never reach the logs (PCI-DSS).
+              '*.number',
+              '*.cvv',
+              '*.cvn',
+              '*.expiryMonth',
+              '*.expiryYear',
+              '*.identifier',
+              '*.hmac',
             ],
             censor: '[REDACTED]',
           },

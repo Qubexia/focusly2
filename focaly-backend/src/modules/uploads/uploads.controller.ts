@@ -17,7 +17,7 @@ export class UploadsController {
   }
 
   @Post('confirm')
-  confirm(@Body() dto: ConfirmUploadDto) {
-    return this.uploadsService.confirmUpload(dto.key);
+  confirm(@CurrentUser() user: CurrentUserPayload, @Body() dto: ConfirmUploadDto) {
+    return this.uploadsService.confirmUpload(user.id, dto.key);
   }
 }

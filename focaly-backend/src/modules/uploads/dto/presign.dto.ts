@@ -1,10 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString, Max, Min } from 'class-validator';
+import { IsIn, IsNumber, IsString, Max, Min } from 'class-validator';
+
+export const UPLOAD_KINDS = [
+  'lecture-image',
+  'ai-notes-image',
+  'subject-pdf',
+  'chapter-pdf',
+  'avatar',
+] as const;
+
+export type UploadKind = (typeof UPLOAD_KINDS)[number];
+
+/** Largest per-kind limit; the exact cap is enforced per kind in UploadsService. */
+const MAX_UPLOAD_BYTES = 26_214_400;
 
 export class PresignDto {
-  @ApiProperty({ example: 'lecture-image' })
-  @IsString()
-  kind!: string;
+  @ApiProperty({ enum: UPLOAD_KINDS, example: 'lecture-image' })
+  @IsIn(UPLOAD_KINDS)
+  kind!: UploadKind;
 
   @ApiProperty({ example: 'image/jpeg' })
   @IsString()
@@ -13,7 +26,7 @@ export class PresignDto {
   @ApiProperty({ example: 1024000 })
   @IsNumber()
   @Min(1)
-  @Max(10_485_760)
+  @Max(MAX_UPLOAD_BYTES)
   sizeBytes!: number;
 }
 

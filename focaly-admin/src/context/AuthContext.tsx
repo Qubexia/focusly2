@@ -32,7 +32,9 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   }, []);
 
   const loadMe = useCallback(async () => {
-    if (!tokenStore.access) {
+    // The access token is memory-only, so on a page reload it is restored from
+    // the refresh token before the profile call.
+    if (!tokenStore.access && !tokenStore.refresh) {
       setUser(null);
       return;
     }

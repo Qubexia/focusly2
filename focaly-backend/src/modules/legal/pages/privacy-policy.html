@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Focaly</title>
+<meta name="description" content="How the Focaly study app collects, uses, stores, and deletes your personal data. Available in English and Arabic.">
+<meta name="robots" content="index, follow">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#FAFAF7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1311" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://zakerlyai.tech/privacy">
+
+<style>
+  /* ---------- reset ---------- */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  img, svg { max-width: 100%; display: block; }
+
+  /* ---------- tokens ---------- */
+  :root {
+    --ground:  #FAFAF7;
+    --surface: #FFFFFF;
+    --ink:     #151A17;
+    --body:    #3A423D;
+    --muted:   #6B746D;
+    --rule:    #E2E5E0;
+    --accent:  #1F6F5C;
+    --soft:    #EDF3F0;
+
+    --serif: ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --naskh: "Noto Naskh Arabic", "Geeza Pro", "Traditional Arabic", "Segoe UI", Tahoma, serif;
+    --arabic: "Segoe UI", Tahoma, "Geeza Pro", "Noto Naskh Arabic", system-ui, sans-serif;
+
+    --measure: 66ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:  #0E1311;
+      --surface: #141A17;
+      --ink:     #E9EFEA;
+      --body:    #BAC5BD;
+      --muted:   #8B958D;
+      --rule:    #232B26;
+      --accent:  #6FC3A6;
+      --soft:    #17211D;
+    }
+  }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; animation: none !important; }
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--body);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.65;
+    min-height: 100vh;
+    padding: 0 24px 96px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  html[dir="rtl"] body { font-family: var(--arabic); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  /* ---------- masthead ---------- */
+
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 28px 0 0;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .mark {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    border-top-color: transparent;
+    flex: none;
+  }
+
+  .langs {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 3px;
+  }
+  .langs button {
+    font: inherit;
+    font-size: 13px;
+    line-height: 1;
+    padding: 8px 16px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease;
+  }
+  .langs button:hover { color: var(--ink); }
+  .langs button[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--ground);
+  }
+  .langs button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  header.head {
+    padding: 56px 0 40px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    color: var(--ink);
+    text-wrap: balance;
+    margin: 0 0 20px;
+  }
+  html[dir="rtl"] h1,
+  html[dir="rtl"] h2 { font-family: var(--naskh); letter-spacing: normal; }
+  .lede {
+    font-size: 1.125rem;
+    max-width: var(--measure);
+    margin: 0;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 40px;
+    margin: 32px 0 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .meta div { display: flex; flex-direction: column; gap: 4px; }
+  .meta dt { letter-spacing: .1em; text-transform: uppercase; font-size: 10px; }
+  .meta dd { margin: 0; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* ---------- summary strip ---------- */
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 40px 0 8px;
+  }
+  .summary section {
+    background: var(--surface);
+    padding: 24px 22px;
+  }
+  .summary h2 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 12px;
+    font-weight: 500;
+    display: block;
+  }
+  html[dir="rtl"] .summary h2 { font-family: var(--mono); }
+  .summary h2::before { content: none; }
+  .summary ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .summary li { font-size: .9375rem; line-height: 1.5; }
+
+  /* ---------- body layout ---------- */
+
+  .cols {
+    display: grid;
+    grid-template-columns: 208px minmax(0, 1fr);
+    gap: 64px;
+    margin-top: 56px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .cols { grid-template-columns: 1fr; gap: 32px; }
+  }
+
+  nav.toc {
+    position: sticky;
+    top: 24px;
+    font-size: .875rem;
+  }
+  @media (max-width: 900px) {
+    nav.toc {
+      position: static;
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 20px;
+    }
+  }
+  nav.toc p {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; counter-reset: toc; }
+  @media (max-width: 900px) {
+    nav.toc ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 9px 24px; }
+  }
+  nav.toc a {
+    color: var(--muted);
+    text-decoration: none;
+    display: flex;
+    gap: 10px;
+    transition: color .15s ease;
+  }
+  nav.toc a::before {
+    counter-increment: toc;
+    content: counter(toc);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--rule);
+    padding-top: 2px;
+    min-width: 14px;
+  }
+  nav.toc a:hover { color: var(--ink); }
+  nav.toc a:hover::before { color: var(--accent); }
+
+  article { max-width: var(--measure); counter-reset: sec; }
+  article > section { padding-bottom: 44px; }
+  article > section + section { border-top: 1px solid var(--rule); padding-top: 44px; }
+
+  article h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.5rem;
+    line-height: 1.25;
+    letter-spacing: -.01em;
+    color: var(--ink);
+    text-wrap: balance;
+    margin: 0 0 18px;
+    display: flex;
+    gap: 14px;
+    align-items: baseline;
+  }
+  article h2::before {
+    counter-increment: sec;
+    content: "§" counter(sec);
+    font-family: var(--mono);
+    font-size: .75rem;
+    color: var(--accent);
+    letter-spacing: 0;
+    flex: none;
+  }
+  h3.sub {
+    font-family: var(--sans);
+    font-size: .8125rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 28px 0 10px;
+  }
+  html[dir="rtl"] h3.sub { font-family: var(--arabic); letter-spacing: normal; }
+
+  p { margin: 0 0 16px; }
+  p:last-child { margin-bottom: 0; }
+  article ul { margin: 0 0 16px; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 10px; }
+  article li::marker { color: var(--accent); }
+  strong { color: var(--ink); font-weight: 600; }
+  a { color: var(--accent); text-underline-offset: 3px; }
+
+  .scroller { overflow-x: auto; margin: 0 0 16px; border: 1px solid var(--rule); border-radius: 4px; }
+  table { border-collapse: collapse; width: 100%; min-width: 460px; font-size: .875rem; background: var(--surface); }
+  th, td { text-align: start; padding: 12px 16px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    background: var(--soft);
+  }
+  tr:last-child td { border-bottom: 0; }
+  td:first-child { color: var(--ink); font-weight: 600; white-space: nowrap; }
+
+  .callout {
+    background: var(--soft);
+    border-inline-start: 2px solid var(--accent);
+    padding: 18px 20px;
+    border-radius: 0 4px 4px 0;
+    margin: 0 0 16px;
+    font-size: .9375rem;
+  }
+  html[dir="rtl"] .callout { border-radius: 4px 0 0 4px; }
+
+  footer.foot {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .06em;
+    color: var(--muted);
+  }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="bar">
+    <div class="brand"><span class="mark"></span> Focaly</div>
+    <div class="langs" role="group" aria-label="Language / اللغة">
+      <button type="button" id="btn-en" aria-pressed="true" lang="en">English</button>
+      <button type="button" id="btn-ar" aria-pressed="false" lang="ar">العربية</button>
+    </div>
+  </div>
+
+  <!-- ============================ ENGLISH ============================ -->
+  <div id="en" lang="en">
+
+    <header class="head">
+      <div class="eyebrow">Legal</div>
+      <h1>Privacy Policy</h1>
+      <p class="lede">Focaly is a study app. It holds your plans, your sessions, and sometimes your notes — so this page explains, in plain terms, exactly what we keep, who else ever sees it, and how you get it back or delete it.</p>
+      <dl class="meta">
+        <div><dt>Last updated</dt><dd>2 August 2026</dd></div>
+        <div><dt>Effective</dt><dd>2 August 2026</dd></div>
+        <div><dt>Applies to</dt><dd>Focaly app &amp; zakerlyai.tech</dd></div>
+      </dl>
+    </header>
+
+    <div class="summary">
+      <section>
+        <h2>What we keep</h2>
+        <ul>
+          <li>Your account: name, email, photo</li>
+          <li>Your study data: subjects, tasks, sessions, streaks</li>
+          <li>Files you upload for AI features</li>
+          <li>Device and app settings needed to send reminders</li>
+        </ul>
+      </section>
+      <section>
+        <h2>What we never do</h2>
+        <ul>
+          <li>Sell or rent your personal data</li>
+          <li>Read your notes to target ads at you</li>
+          <li>Store your card number — Paymob handles payment</li>
+          <li>Use your uploads to train AI models</li>
+        </ul>
+      </section>
+      <section>
+        <h2>What you control</h2>
+        <ul>
+          <li>Turn any notification category off</li>
+          <li>Request a copy of your data</li>
+          <li>Delete your account and its contents</li>
+          <li>Marketing messages are off unless you opt in</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="cols">
+      <nav class="toc" aria-label="Contents">
+        <p>Contents</p>
+        <ol>
+          <li><a href="#en-1">Who we are</a></li>
+          <li><a href="#en-2">Information we collect</a></li>
+          <li><a href="#en-3">How we use it</a></li>
+          <li><a href="#en-4">AI features</a></li>
+          <li><a href="#en-5">Payments</a></li>
+          <li><a href="#en-6">Who we share with</a></li>
+          <li><a href="#en-7">How long we keep it</a></li>
+          <li><a href="#en-8">Security</a></li>
+          <li><a href="#en-9">Your rights</a></li>
+          <li><a href="#en-10">Children</a></li>
+          <li><a href="#en-11">Transfers abroad</a></li>
+          <li><a href="#en-12">Changes</a></li>
+          <li><a href="#en-13">Contact us</a></li>
+        </ol>
+      </nav>
+
+      <article>
+
+        <section id="en-1">
+          <h2>Who we are</h2>
+          <p>Focaly is a focus and study-planning app: Pomodoro sessions, a subject planner, streaks, progress analytics, and AI study tools built from material you upload. This policy covers the Focaly mobile app, our website, and the backend services behind them. Together we call these “Focaly” or “the app”.</p>
+          <p>Focaly is the controller of the personal data described here. Where this policy says “we”, it means the Focaly team.</p>
+        </section>
+
+        <section id="en-2">
+          <h2>Information we collect</h2>
+
+          <h3 class="sub">Account information</h3>
+          <p>When you create an account we collect your <strong>name</strong>, <strong>email address</strong>, and, if you set one, a <strong>profile photo</strong>. If you sign up with a password, we never store the password itself — only a one-way cryptographic hash of it. If you sign in with Google, we receive your Google account identifier, name, email, and profile picture from Google, and store an identifier that links your Focaly account to it.</p>
+
+          <h3 class="sub">Your study content</h3>
+          <p>Everything you create in the app: subjects, tasks and planned items, study schedules, focus and Pomodoro sessions with their timestamps and durations, streaks, points, and the analytics we calculate from them. This is the core of the service — it is what the app is for.</p>
+
+          <h3 class="sub">Files you upload</h3>
+          <p>If you use the AI study tools, we store the documents and images you upload (lecture notes, PDFs, photos of handwritten pages) along with the text extracted from them and the summaries, flashcards, or questions generated in return. Please don't upload material you are not comfortable storing with us, or that belongs to someone else.</p>
+
+          <h3 class="sub">Settings and preferences</h3>
+          <p>Your language, timezone, focus-mode state, and which notification categories you have enabled — reminders, streak alerts, and marketing, the last of which is off by default.</p>
+
+          <h3 class="sub">Device and technical data</h3>
+          <p>To deliver push notifications we store a device token issued by Firebase Cloud Messaging. Our servers also keep standard operational logs: IP address, device and app version, request timestamps, and error reports. These logs let us keep the service running, investigate faults, and detect abuse such as credential-stuffing or automated scraping.</p>
+
+          <div class="callout">We do not collect your contacts, your photo library, your precise location, or the contents of other apps on your device.</div>
+        </section>
+
+        <section id="en-3">
+          <h2>How we use it</h2>
+          <ul>
+            <li><strong>To run the app</strong> — save your plans, run your timers, calculate streaks and analytics, and sync everything across your devices.</li>
+            <li><strong>To identify you</strong> — sign you in, keep your session valid, and protect your account.</li>
+            <li><strong>To send what you asked for</strong> — study reminders and streak notifications, according to the switches you set.</li>
+            <li><strong>To provide AI features</strong> — process the files you submit and return the summaries or questions you requested.</li>
+            <li><strong>To handle subscriptions</strong> — confirm your payment and unlock premium features for the right period.</li>
+            <li><strong>To keep the service safe and working</strong> — diagnose crashes, apply rate limits, and prevent fraud and abuse.</li>
+            <li><strong>To improve Focaly</strong> — understand which features get used, using aggregated figures rather than reading individual accounts.</li>
+          </ul>
+          <p>If you are in a region covered by the GDPR or a similar law, our legal bases are: <strong>performance of a contract</strong> for everything needed to deliver the app, <strong>legitimate interests</strong> for security, fraud prevention, and product improvement, <strong>consent</strong> for marketing messages, and <strong>legal obligation</strong> where we must retain records.</p>
+        </section>
+
+        <section id="en-4">
+          <h2>AI features</h2>
+          <p>Focaly's AI study tools work by sending your uploaded material to specialist processors on our behalf:</p>
+          <ul>
+            <li><strong>Amazon Textract</strong> extracts text from your PDFs and images.</li>
+            <li><strong>OpenAI</strong> turns that text into summaries, flashcards, and practice questions.</li>
+          </ul>
+          <p>These providers act under contract as our processors. Under our agreements with them, your content is <strong>not used to train their models</strong>. Processing is triggered only when you submit a file — we do not scan your uploads for any other purpose.</p>
+          <p>AI output can be wrong. Generated summaries and answers are a study aid, not a verified source, and you should check anything that matters against your actual course material.</p>
+        </section>
+
+        <section id="en-5">
+          <h2>Payments</h2>
+          <p>Premium subscriptions are processed by <strong>Paymob</strong>, a licensed payment provider. Your card number, CVV, and other full payment credentials go directly to Paymob and <strong>never reach our servers</strong>. We receive only what we need to activate your subscription: a transaction reference, the amount and currency, whether it succeeded, and the resulting expiry date of your premium access.</p>
+          <p>Paymob handles that payment data under its own privacy policy and its obligations as a regulated payment processor.</p>
+        </section>
+
+        <section id="en-6">
+          <h2>Who we share with</h2>
+          <p>We do not sell, rent, or trade your personal data. We share it only with service providers who process it on our instructions, and only as far as their job requires:</p>
+          <div class="scroller">
+            <table>
+              <thead>
+                <tr><th>Provider</th><th>What it does</th><th>What it receives</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Amazon Web Services</td><td>File storage and text extraction</td><td>Files you upload</td></tr>
+                <tr><td>OpenAI</td><td>Generates study material</td><td>Text extracted from your files</td></tr>
+                <tr><td>Google</td><td>Sign-in with Google</td><td>Your Google account identity</td></tr>
+                <tr><td>Firebase</td><td>Push notifications</td><td>Device token, notification content</td></tr>
+                <tr><td>Paymob</td><td>Subscription payments</td><td>Payment details you enter</td></tr>
+                <tr><td>Hosting &amp; email</td><td>Runs the service, sends account email</td><td>Account data, email address</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>We may also disclose data if we are legally required to — by a valid court order or lawful request — or where it is necessary to protect the rights, safety, or property of our users or of Focaly. If Focaly is ever involved in a merger or acquisition, your data may transfer to the new owner, who would remain bound by this policy until you are notified of any change.</p>
+        </section>
+
+        <section id="en-7">
+          <h2>How long we keep it</h2>
+          <ul>
+            <li><strong>While your account is open</strong> — we keep your account and study data so the app works.</li>
+            <li><strong>When you delete your account</strong> — it is deactivated immediately and becomes inaccessible, then permanently erased from our live systems within <strong>30 days</strong>, and from routine backups within <strong>90 days</strong>.</li>
+            <li><strong>Uploaded files</strong> — kept until you delete them or delete your account.</li>
+            <li><strong>Operational logs</strong> — kept for a limited period for security and debugging, then discarded.</li>
+            <li><strong>Payment records</strong> — retained as long as accounting and tax law requires, even after account deletion.</li>
+          </ul>
+        </section>
+
+        <section id="en-8">
+          <h2>Security</h2>
+          <p>All traffic between the app and our servers is encrypted with TLS. Passwords are stored as Argon2 hashes, which cannot be reversed into the original password. Access to production systems is restricted to the people who need it, sessions are token-based and revocable, and requests are rate-limited to blunt automated attacks.</p>
+          <p>No system is perfectly secure. If a breach affects your personal data, we will notify you and the relevant regulator as required by law and applicable timelines.</p>
+        </section>
+
+        <section id="en-9">
+          <h2>Your rights</h2>
+          <p>Wherever you live, you can ask us to:</p>
+          <ul>
+            <li><strong>Access</strong> the personal data we hold about you, or receive a copy in a portable format.</li>
+            <li><strong>Correct</strong> anything inaccurate — most of it you can edit directly in the app.</li>
+            <li><strong>Delete</strong> your account and its contents, from Settings or by writing to us.</li>
+            <li><strong>Object to or restrict</strong> certain processing, and withdraw consent for marketing at any time.</li>
+            <li><strong>Complain</strong> to your local data protection authority if you think we have got it wrong.</li>
+          </ul>
+          <p>Notification categories can be switched off individually in the app at any time. To exercise any other right, email us at the address in §13 — we will respond within 30 days. We may need to verify your identity before acting on a request.</p>
+        </section>
+
+        <section id="en-10">
+          <h2>Children</h2>
+          <p>Focaly is not directed at children under 13, and we do not knowingly collect their personal data. Where local law sets a higher age of digital consent, that age applies instead. If you believe a child has given us personal data, contact us and we will delete the account and its contents.</p>
+        </section>
+
+        <section id="en-11">
+          <h2>Transfers abroad</h2>
+          <p>Focaly runs on cloud infrastructure, and our service providers may process data in countries other than yours, including the United States and the European Union. Where data leaves your region, we rely on appropriate safeguards — such as the European Commission's Standard Contractual Clauses — in our contracts with those providers.</p>
+        </section>
+
+        <section id="en-12">
+          <h2>Changes</h2>
+          <p>We may update this policy as Focaly changes. The date at the top of this page always reflects the current version. If a change materially affects your rights or how we use your data, we will tell you in the app or by email before it takes effect. Continuing to use Focaly after that means you accept the updated policy.</p>
+        </section>
+
+        <section id="en-13">
+          <h2>Contact us</h2>
+          <p>Questions about this policy, or about your data, go to:</p>
+          <p><strong>Email</strong> · <a href="mailto:privacy@focaly.app">privacy@focaly.app</a><br>
+          <strong>Support</strong> · <a href="mailto:support@focaly.app">support@focaly.app</a></p>
+          <p>Please write “Privacy request” in the subject line so it reaches the right person quickly.</p>
+        </section>
+
+      </article>
+    </div>
+
+    <footer class="foot">
+      <div>Focaly — Privacy Policy · v1.0</div>
+      <div><a href="#top">Back to top</a></div>
+    </footer>
+  </div>
+
+  <!-- ============================ ARABIC ============================ -->
+  <div id="ar" lang="ar" hidden>
+
+    <header class="head">
+      <div class="eyebrow">الشروط والسياسات</div>
+      <h1>سياسة الخصوصية</h1>
+      <p class="lede">فوكالي تطبيق للمذاكرة، ويحتفظ بخططك وجلساتك وأحيانًا ملاحظاتك. هذه الصفحة تشرح بوضوح ما الذي نحتفظ به، ومن غيرنا قد يطّلع عليه، وكيف تحصل على نسخة منه أو تحذفه.</p>
+      <dl class="meta">
+        <div><dt>آخر تحديث</dt><dd>٢ أغسطس ٢٠٢٦</dd></div>
+        <div><dt>تاريخ السريان</dt><dd>٢ أغسطس ٢٠٢٦</dd></div>
+        <div><dt>تسري على</dt><dd>تطبيق فوكالي وموقع zakerlyai.tech</dd></div>
+      </dl>
+    </header>
+
+    <div class="summary">
+      <section>
+        <h2>ما نحتفظ به</h2>
+        <ul>
+          <li>بيانات حسابك: الاسم والبريد والصورة</li>
+          <li>بيانات مذاكرتك: المواد والمهام والجلسات والسلاسل</li>
+          <li>الملفات التي ترفعها لخصائص الذكاء الاصطناعي</li>
+          <li>إعدادات الجهاز والتطبيق اللازمة لإرسال التذكيرات</li>
+        </ul>
+      </section>
+      <section>
+        <h2>ما لا نفعله أبدًا</h2>
+        <ul>
+          <li>لا نبيع بياناتك الشخصية ولا نؤجّرها</li>
+          <li>لا نقرأ ملاحظاتك لعرض إعلانات موجّهة</li>
+          <li>لا نخزّن رقم بطاقتك — الدفع يتم عبر Paymob</li>
+          <li>لا تُستخدم ملفاتك في تدريب نماذج الذكاء الاصطناعي</li>
+        </ul>
+      </section>
+      <section>
+        <h2>ما تتحكم أنت فيه</h2>
+        <ul>
+          <li>إيقاف أي نوع من الإشعارات</li>
+          <li>طلب نسخة من بياناتك</li>
+          <li>حذف حسابك وكل محتوياته</li>
+          <li>الرسائل التسويقية موقوفة ما لم توافق عليها</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="cols">
+      <nav class="toc" aria-label="المحتويات">
+        <p>المحتويات</p>
+        <ol>
+          <li><a href="#ar-1">من نحن</a></li>
+          <li><a href="#ar-2">البيانات التي نجمعها</a></li>
+          <li><a href="#ar-3">كيف نستخدمها</a></li>
+          <li><a href="#ar-4">خصائص الذكاء الاصطناعي</a></li>
+          <li><a href="#ar-5">المدفوعات</a></li>
+          <li><a href="#ar-6">مع من نشاركها</a></li>
+          <li><a href="#ar-7">مدة الاحتفاظ</a></li>
+          <li><a href="#ar-8">الأمان</a></li>
+          <li><a href="#ar-9">حقوقك</a></li>
+          <li><a href="#ar-10">الأطفال</a></li>
+          <li><a href="#ar-11">النقل خارج بلدك</a></li>
+          <li><a href="#ar-12">التعديلات</a></li>
+          <li><a href="#ar-13">تواصل معنا</a></li>
+        </ol>
+      </nav>
+
+      <article>
+
+        <section id="ar-1">
+          <h2>من نحن</h2>
+          <p>فوكالي تطبيق للتركيز وتنظيم المذاكرة: جلسات بومودورو، ومخطِّط للمواد الدراسية، وسلاسل الإنجاز، وتحليلات للتقدّم، وأدوات ذكاء اصطناعي تعمل على المواد التي ترفعها. تسري هذه السياسة على تطبيق فوكالي للهاتف، وموقعنا الإلكتروني، والخدمات الخلفية التي تشغّلهما، ونشير إليها جميعًا بكلمة «فوكالي» أو «التطبيق».</p>
+          <p>فوكالي هي المتحكم في البيانات الشخصية الموضّحة هنا، وحين تقول هذه السياسة «نحن» فالمقصود فريق فوكالي.</p>
+        </section>
+
+        <section id="ar-2">
+          <h2>البيانات التي نجمعها</h2>
+
+          <h3 class="sub">بيانات الحساب</h3>
+          <p>عند إنشاء حسابك نجمع <strong>اسمك</strong> و<strong>بريدك الإلكتروني</strong>، و<strong>صورة الملف الشخصي</strong> إن أضفتها. إذا سجّلت بكلمة مرور فنحن لا نخزّن كلمة المرور نفسها إطلاقًا، بل بصمة تشفيرية أحادية الاتجاه لها. وإذا سجّلت الدخول عبر جوجل فنستقبل منها معرّف حسابك واسمك وبريدك وصورتك، ونحتفظ بمعرّف يربط حسابك في فوكالي بحساب جوجل.</p>
+
+          <h3 class="sub">محتوى مذاكرتك</h3>
+          <p>كل ما تنشئه داخل التطبيق: المواد والمهام والعناصر المخطّطة، وجداول المذاكرة، وجلسات التركيز وبومودورو بأوقاتها ومددها، وسلاسل الإنجاز والنقاط، والتحليلات التي نحسبها منها. هذا هو جوهر الخدمة وسبب وجود التطبيق.</p>
+
+          <h3 class="sub">الملفات التي ترفعها</h3>
+          <p>إذا استخدمت أدوات الذكاء الاصطناعي فنحن نخزّن المستندات والصور التي ترفعها (محاضرات، ملفات PDF، صور صفحات مكتوبة بخط اليد) مع النص المستخرج منها وما يُنتَج عنها من ملخصات وبطاقات وأسئلة. من فضلك لا ترفع موادّ تتحفّظ على تخزينها لدينا أو تخصّ شخصًا آخر.</p>
+
+          <h3 class="sub">الإعدادات والتفضيلات</h3>
+          <p>لغتك، ومنطقتك الزمنية، وحالة وضع التركيز، وأنواع الإشعارات التي فعّلتها: التذكيرات وتنبيهات السلاسل والرسائل التسويقية، والأخيرة موقوفة افتراضيًا.</p>
+
+          <h3 class="sub">بيانات الجهاز والبيانات التقنية</h3>
+          <p>لإرسال الإشعارات نحتفظ برمز جهاز يصدره Firebase Cloud Messaging. كما تحفظ خوادمنا سجلات تشغيل معتادة: عنوان IP، ونوع الجهاز وإصدار التطبيق، وأوقات الطلبات، وتقارير الأخطاء. تتيح لنا هذه السجلات إبقاء الخدمة تعمل، وتتبّع الأعطال، وكشف إساءة الاستخدام.</p>
+
+          <div class="callout">نحن لا نجمع جهات اتصالك، ولا مكتبة صورك، ولا موقعك الدقيق، ولا محتوى التطبيقات الأخرى على جهازك.</div>
+        </section>
+
+        <section id="ar-3">
+          <h2>كيف نستخدمها</h2>
+          <ul>
+            <li><strong>لتشغيل التطبيق</strong> — حفظ خططك، وتشغيل مؤقتاتك، وحساب السلاسل والتحليلات، ومزامنة كل ذلك بين أجهزتك.</li>
+            <li><strong>للتعرّف عليك</strong> — تسجيل دخولك، وإبقاء جلستك صالحة، وحماية حسابك.</li>
+            <li><strong>لإرسال ما طلبته</strong> — تذكيرات المذاكرة وإشعارات السلاسل، وفق الإعدادات التي اخترتها.</li>
+            <li><strong>لتشغيل خصائص الذكاء الاصطناعي</strong> — معالجة الملفات التي ترسلها وإعادة الملخصات أو الأسئلة المطلوبة.</li>
+            <li><strong>لإدارة الاشتراكات</strong> — تأكيد دفعتك وتفعيل المزايا المدفوعة للمدة الصحيحة.</li>
+            <li><strong>للحفاظ على أمان الخدمة</strong> — تشخيص الأعطال، وتطبيق حدود الاستخدام، ومنع الاحتيال.</li>
+            <li><strong>لتحسين فوكالي</strong> — معرفة الخصائص الأكثر استخدامًا عبر أرقام مجمّعة، لا بقراءة الحسابات فرديًا.</li>
+          </ul>
+          <p>إذا كنت في نطاق اللائحة الأوروبية العامة لحماية البيانات أو قانون مشابه، فالأسس القانونية لدينا هي: <strong>تنفيذ العقد</strong> لكل ما يلزم لتقديم التطبيق، و<strong>المصالح المشروعة</strong> للأمان ومنع الاحتيال وتحسين المنتج، و<strong>الموافقة</strong> للرسائل التسويقية، و<strong>الالتزام القانوني</strong> حين يُلزمنا القانون بالاحتفاظ بسجلات.</p>
+        </section>
+
+        <section id="ar-4">
+          <h2>خصائص الذكاء الاصطناعي</h2>
+          <p>تعمل أدوات المذاكرة الذكية بإرسال المواد التي ترفعها إلى مزوّدين متخصصين ينوبون عنّا:</p>
+          <ul>
+            <li><strong>Amazon Textract</strong> لاستخراج النص من ملفات PDF والصور.</li>
+            <li><strong>OpenAI</strong> لتحويل ذلك النص إلى ملخصات وبطاقات وأسئلة تدريبية.</li>
+          </ul>
+          <p>يعمل هؤلاء المزوّدون بصفتهم معالِجين للبيانات بموجب عقود معنا، وتنص اتفاقياتنا معهم على أن محتواك <strong>لا يُستخدم في تدريب نماذجهم</strong>. ولا تبدأ المعالجة إلا عند إرسالك ملفًا؛ فنحن لا نفحص ملفاتك لأي غرض آخر.</p>
+          <p>مخرجات الذكاء الاصطناعي قد تكون خاطئة. اعتبر الملخصات والإجابات المولَّدة وسيلة مساعدة للمذاكرة لا مصدرًا موثّقًا، وراجع ما يهمّك منها في مادتك الدراسية الأصلية.</p>
+        </section>
+
+        <section id="ar-5">
+          <h2>المدفوعات</h2>
+          <p>تُعالَج الاشتراكات المدفوعة عبر <strong>Paymob</strong>، وهي جهة دفع مرخّصة. تذهب بيانات بطاقتك ورمز التحقق وسائر بيانات الدفع الكاملة إلى Paymob مباشرة و<strong>لا تصل إلى خوادمنا مطلقًا</strong>. نستقبل نحن فقط ما نحتاجه لتفعيل اشتراكك: رقم مرجعي للعملية، والمبلغ والعملة، وما إذا كانت العملية ناجحة، وتاريخ انتهاء اشتراكك المترتب عليها.</p>
+          <p>وتتعامل Paymob مع بيانات الدفع وفق سياسة الخصوصية الخاصة بها والتزاماتها كجهة دفع خاضعة للتنظيم.</p>
+        </section>
+
+        <section id="ar-6">
+          <h2>مع من نشاركها</h2>
+          <p>نحن لا نبيع بياناتك الشخصية ولا نؤجّرها ولا نتاجر بها. ولا نشاركها إلا مع مزوّدي خدمة يعالجونها بناءً على تعليماتنا، وبالقدر الذي تتطلبه مهمتهم فقط:</p>
+          <div class="scroller">
+            <table>
+              <thead>
+                <tr><th>المزوّد</th><th>دوره</th><th>ما يستقبله</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Amazon Web Services</td><td>تخزين الملفات واستخراج النص</td><td>الملفات التي ترفعها</td></tr>
+                <tr><td>OpenAI</td><td>توليد المواد الدراسية</td><td>النص المستخرج من ملفاتك</td></tr>
+                <tr><td>Google</td><td>تسجيل الدخول عبر جوجل</td><td>هوية حسابك على جوجل</td></tr>
+                <tr><td>Firebase</td><td>الإشعارات الفورية</td><td>رمز الجهاز ومحتوى الإشعار</td></tr>
+                <tr><td>Paymob</td><td>مدفوعات الاشتراك</td><td>بيانات الدفع التي تُدخلها</td></tr>
+                <tr><td>الاستضافة والبريد</td><td>تشغيل الخدمة وإرسال رسائل الحساب</td><td>بيانات الحساب والبريد الإلكتروني</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>وقد نفصح عن البيانات إذا ألزمنا القانون بذلك — بأمر قضائي صحيح أو طلب مشروع — أو عند الضرورة لحماية حقوق مستخدمينا أو فوكالي وسلامتهم وممتلكاتهم. وإذا دخلت فوكالي يومًا في عملية اندماج أو استحواذ فقد تنتقل بياناتك إلى المالك الجديد، ويظل ملتزمًا بهذه السياسة إلى أن نخطرك بأي تغيير.</p>
+        </section>
+
+        <section id="ar-7">
+          <h2>مدة الاحتفاظ</h2>
+          <ul>
+            <li><strong>ما دام حسابك قائمًا</strong> — نحتفظ ببيانات حسابك ومذاكرتك ليعمل التطبيق.</li>
+            <li><strong>عند حذف حسابك</strong> — يُعطَّل فورًا ويصبح غير متاح، ثم يُمحى نهائيًا من أنظمتنا الحية خلال <strong>٣٠ يومًا</strong>، ومن النسخ الاحتياطية الدورية خلال <strong>٩٠ يومًا</strong>.</li>
+            <li><strong>الملفات المرفوعة</strong> — تبقى حتى تحذفها أو تحذف حسابك.</li>
+            <li><strong>سجلات التشغيل</strong> — تُحفظ مدة محدودة لأغراض الأمان وتتبّع الأعطال ثم تُتلَف.</li>
+            <li><strong>سجلات الدفع</strong> — تُحفظ بالمدة التي تفرضها القوانين المحاسبية والضريبية، حتى بعد حذف الحساب.</li>
+          </ul>
+        </section>
+
+        <section id="ar-8">
+          <h2>الأمان</h2>
+          <p>كل الاتصالات بين التطبيق وخوادمنا مشفّرة عبر TLS، وتُخزَّن كلمات المرور بصيغة Argon2 التي لا يمكن ردّها إلى كلمة المرور الأصلية. والوصول إلى أنظمة التشغيل مقصور على من يحتاجه فعلًا، والجلسات قائمة على رموز يمكن إبطالها، والطلبات محدودة المعدل لصدّ الهجمات الآلية.</p>
+          <p>لا يوجد نظام آمن تمامًا. وإذا وقع اختراق يمسّ بياناتك الشخصية فسنُخطرك وتُخطَر الجهة الرقابية المختصة وفق ما يوجبه القانون وفي المدد المقررة.</p>
+        </section>
+
+        <section id="ar-9">
+          <h2>حقوقك</h2>
+          <p>أينما كنت، يمكنك أن تطلب منّا:</p>
+          <ul>
+            <li><strong>الاطلاع</strong> على بياناتك الشخصية لدينا أو الحصول على نسخة منها بصيغة قابلة للنقل.</li>
+            <li><strong>تصحيح</strong> أي بيانات غير دقيقة، ومعظمها يمكنك تعديله بنفسك داخل التطبيق.</li>
+            <li><strong>حذف</strong> حسابك ومحتوياته من الإعدادات أو بمراسلتنا.</li>
+            <li><strong>الاعتراض على المعالجة أو تقييدها</strong> في حالات معيّنة، وسحب موافقتك على التسويق في أي وقت.</li>
+            <li><strong>التقدّم بشكوى</strong> إلى الجهة المختصة بحماية البيانات في بلدك إذا رأيت أننا أخطأنا.</li>
+          </ul>
+          <p>يمكنك إيقاف أي نوع من الإشعارات على حدة من داخل التطبيق في أي وقت. ولممارسة أي حق آخر راسلنا على العنوان الوارد في §١٣، وسنردّ خلال ٣٠ يومًا. وقد نحتاج إلى التحقق من هويتك قبل تنفيذ الطلب.</p>
+        </section>
+
+        <section id="ar-10">
+          <h2>الأطفال</h2>
+          <p>فوكالي غير موجّه للأطفال دون سن ١٣ عامًا، ولا نجمع بياناتهم الشخصية عن علم. وإذا حدّد قانون بلدك سنًّا أعلى للموافقة الرقمية فذلك السن هو المعتبر. وإذا اعتقدت أن طفلًا زوّدنا ببيانات شخصية فتواصل معنا وسنحذف الحساب ومحتوياته.</p>
+        </section>
+
+        <section id="ar-11">
+          <h2>النقل خارج بلدك</h2>
+          <p>يعمل فوكالي على بنية سحابية، وقد يعالج مزوّدو خدماتنا البيانات في دول غير دولتك، ومنها الولايات المتحدة والاتحاد الأوروبي. وحين تغادر البيانات منطقتك نعتمد على ضمانات مناسبة في عقودنا مع هؤلاء المزوّدين، مثل البنود التعاقدية النموذجية الصادرة عن المفوضية الأوروبية.</p>
+        </section>
+
+        <section id="ar-12">
+          <h2>التعديلات</h2>
+          <p>قد نحدّث هذه السياسة مع تطوّر فوكالي، ويعكس التاريخ الموجود أعلى الصفحة النسخة السارية دائمًا. وإذا مسّ التعديل حقوقك أو طريقة استخدامنا لبياناتك بشكل جوهري فسنخبرك داخل التطبيق أو بالبريد الإلكتروني قبل سريانه. واستمرارك في استخدام فوكالي بعد ذلك يعني قبولك السياسة المحدّثة.</p>
+        </section>
+
+        <section id="ar-13">
+          <h2>تواصل معنا</h2>
+          <p>لأي استفسار عن هذه السياسة أو عن بياناتك:</p>
+          <p><strong>البريد الإلكتروني</strong> · <a href="mailto:privacy@focaly.app">privacy@focaly.app</a><br>
+          <strong>الدعم الفني</strong> · <a href="mailto:support@focaly.app">support@focaly.app</a></p>
+          <p>اكتب «طلب خصوصية» في عنوان الرسالة ليصل إلى الشخص المختص سريعًا.</p>
+        </section>
+
+      </article>
+    </div>
+
+    <footer class="foot">
+      <div>فوكالي — سياسة الخصوصية · الإصدار ١٫٠</div>
+      <div><a href="#top">العودة إلى الأعلى</a></div>
+    </footer>
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var en = document.getElementById('en');
+    var ar = document.getElementById('ar');
+    var btnEn = document.getElementById('btn-en');
+    var btnAr = document.getElementById('btn-ar');
+
+    function show(lang, push) {
+      var isAr = lang === 'ar';
+      ar.hidden = !isAr;
+      en.hidden = isAr;
+      root.setAttribute('dir', isAr ? 'rtl' : 'ltr');
+      root.setAttribute('lang', isAr ? 'ar' : 'en');
+      btnAr.setAttribute('aria-pressed', String(isAr));
+      btnEn.setAttribute('aria-pressed', String(!isAr));
+      document.title = isAr ? 'سياسة الخصوصية — فوكالي' : 'Privacy Policy — Focaly';
+      // Keep ?lang= in the URL so the chosen language is what gets shared.
+      if (push && window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', isAr ? '?lang=ar' : '?lang=en');
+      }
+    }
+
+    btnEn.addEventListener('click', function () { show('en', true); });
+    btnAr.addEventListener('click', function () { show('ar', true); });
+
+    var requested = (location.search.match(/[?&]lang=(ar|en)\b/) || [])[1];
+    if (requested) {
+      show(requested, false);
+    } else if ((navigator.language || '').toLowerCase().indexOf('ar') === 0) {
+      show('ar', false);
+    }
+  })();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { PresignDto } from './dto';
@@ -40,12 +40,12 @@ export class UploadsService {
 
   async presignPut(userId: string, dto: PresignDto): Promise<{ url: string; key: string }> {
     if (!MIME_ALLOWLIST.includes(dto.mimeType)) {
-      throw new Error(`Unsupported mime type: ${dto.mimeType}`);
+      throw new BadRequestException(`Unsupported mime type: ${dto.mimeType}`);
     }
 
     const maxSize = KIND_LIMITS[dto.kind] ?? KIND_LIMITS['lecture-image']!;
     if (dto.sizeBytes > maxSize) {
-      throw new Error(`File too large for kind "${dto.kind}": max ${maxSize} bytes`);
+      throw new BadRequestException(`File too large for kind "${dto.kind}": max ${maxSize} bytes`);
     }
 
     const key = `uploads/${userId}/${dto.kind}/${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -61,8 +61,13 @@ export class UploadsService {
     return { url, key };
   }
 
-  confirmUpload(key: string): Promise<void> {
-    void key;
+  /** Marks an upload as complete. Scoped to the owner so it can never be
+   * used to touch another account's object once it does real work. */
+  confirmUpload(userId: string, key: string): Promise<void> {
+    if (!key.startsWith(`uploads/${userId}/`)) {
+      throw new ForbiddenException('This upload key does not belong to you.');
+    }
+
     return Promise.resolve();
   }
 }
