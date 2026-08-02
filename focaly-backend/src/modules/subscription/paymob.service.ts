@@ -574,8 +574,17 @@ export class PaymobService {
 
     const data = (await response.json()) as Record<string, unknown>;
     if (!response.ok) {
-      const detail = typeof data.detail === 'string' ? data.detail : '';
-      if (response.status === 404 && detail.includes('Integration')) {
+      const detail = this.intentionErrorDetail(data);
+      // Missing / wrong integration for Unified Checkout → use legacy payment key.
+      if (
+        response.status === 404 ||
+        /integration/i.test(detail) ||
+        /does not exist/i.test(detail)
+      ) {
+        this.logger.warn(
+          `Paymob intention unavailable (${response.status}): ${detail || JSON.stringify(data)}; ` +
+            'falling back to legacy payment key.',
+        );
         return null;
       }
 
@@ -731,8 +740,21 @@ export class PaymobService {
     );
   }
 
+  private intentionErrorDetail(data: Record<string, unknown>): string {
+    if (typeof data.detail === 'string') {
+      return data.detail;
+    }
+    if (Array.isArray(data.detail)) {
+      return data.detail.map((item) => String(item)).join('; ');
+    }
+    if (typeof data.message === 'string') {
+      return data.message;
+    }
+    return '';
+  }
+
   private mapIntentionError(status: number, data: Record<string, unknown>): BadRequestException {
-    const detail = typeof data.detail === 'string' ? data.detail : undefined;
+    const detail = this.intentionErrorDetail(data) || undefined;
 
     if (
       status === 401 ||
