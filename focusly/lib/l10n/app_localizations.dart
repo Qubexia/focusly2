@@ -3164,6 +3164,12 @@ abstract class AppLocalizations {
   /// **'Google sign-in failed. Please try again.'**
   String get authGoogleSignInFailed;
 
+  /// No description provided for @authGoogleNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in is not configured for this build. Set GOOGLE_SERVER_CLIENT_ID.'**
+  String get authGoogleNotConfigured;
+
   /// No description provided for @authServerUnreachable.
   ///
   /// In en, this message translates to:

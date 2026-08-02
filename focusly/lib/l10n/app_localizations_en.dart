@@ -1765,6 +1765,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Google sign-in failed. Please try again.';
 
   @override
+  String get authGoogleNotConfigured =>
+      'Google sign-in is not configured for this build. Set GOOGLE_SERVER_CLIENT_ID.';
+
+  @override
   String get authServerUnreachable =>
       'Cannot reach the server. Please check your internet connection and try again.';
 

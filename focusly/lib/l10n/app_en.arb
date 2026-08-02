@@ -887,6 +887,7 @@
   "analyticsLoadFailed": "Failed to load analytics data.",
   "authGoogleTokenFailed": "Failed to get Google sign-in token. Please try again.",
   "authGoogleSignInFailed": "Google sign-in failed. Please try again.",
+  "authGoogleNotConfigured": "Google sign-in is not configured for this build. Set GOOGLE_SERVER_CLIENT_ID.",
   "authServerUnreachable": "Cannot reach the server. Please check your internet connection and try again.",
   "authGenericRetry": "Something went wrong. Please try again.",
   "homeLoadFailed": "Failed to load home data.",

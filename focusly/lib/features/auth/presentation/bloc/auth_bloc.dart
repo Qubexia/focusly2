@@ -113,6 +113,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
+    if (AuthConfig.googleServerClientId.isEmpty) {
+      emit(AuthError(message: AppL10n.current.authGoogleNotConfigured));
+      return;
+    }
     try {
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
@@ -156,6 +160,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     await _authRepository.logout();
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // Local session already cleared; ignore Google SDK errors.
+    }
     emit(const AuthUnauthenticated());
   }
 

@@ -1805,6 +1805,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'فشل تسجيل الدخول عبر Google. حاول مرة أخرى.';
 
   @override
+  String get authGoogleNotConfigured =>
+      'تسجيل الدخول عبر Google غير مضبوط لهذه النسخة. عيّن GOOGLE_SERVER_CLIENT_ID.';
+
+  @override
   String get authServerUnreachable =>
       'تعذّر الوصول إلى الخادم. تحقّق من اتصالك بالإنترنت ثم حاول مرة أخرى.';
 

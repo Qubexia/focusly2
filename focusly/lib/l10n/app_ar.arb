@@ -518,6 +518,7 @@
   "analyticsLoadFailed": "تعذّر تحميل بيانات الإحصائيات.",
   "authGoogleTokenFailed": "تعذّر الحصول على رمز تسجيل الدخول عبر Google. حاول مرة أخرى.",
   "authGoogleSignInFailed": "فشل تسجيل الدخول عبر Google. حاول مرة أخرى.",
+  "authGoogleNotConfigured": "تسجيل الدخول عبر Google غير مضبوط لهذه النسخة. عيّن GOOGLE_SERVER_CLIENT_ID.",
   "authServerUnreachable": "تعذّر الوصول إلى الخادم. تحقّق من اتصالك بالإنترنت ثم حاول مرة أخرى.",
   "authGenericRetry": "حدث خطأ ما. حاول مرة أخرى.",
   "homeLoadFailed": "تعذّر تحميل بيانات الرئيسية.",
