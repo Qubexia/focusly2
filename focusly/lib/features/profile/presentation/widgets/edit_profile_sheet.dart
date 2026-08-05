@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:zakerly/l10n/app_localizations.dart';
@@ -142,16 +143,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     setState(() => _isSendingReset = true);
     try {
       await _authRepository.forgotPassword(email: email);
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(l10n.profilePasswordResetSent),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-      }
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      context.push(
+        '/verify-reset-otp?email=${Uri.encodeQueryComponent(email)}',
+      );
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -189,10 +185,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
 
+    final resolvedAvatar = _user?.resolvedAvatarUrl;
     final avatarProvider = _selectedAvatarPath != null
         ? FileImage(File(_selectedAvatarPath!)) as ImageProvider
-        : (_user?.avatarUrl != null && _user!.avatarUrl!.isNotEmpty
-              ? NetworkImage(_user!.avatarUrl!)
+        : (resolvedAvatar != null && resolvedAvatar.isNotEmpty
+              ? NetworkImage(resolvedAvatar)
               : null);
 
     return Padding(

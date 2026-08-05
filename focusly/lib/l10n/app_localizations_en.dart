@@ -744,10 +744,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authForgotPasswordSubtitle =>
-      'Enter the email address associated with your account and we\'ll send you a link to reset your password.';
+      'Enter the email address associated with your account and we\'ll send you a one-time code to reset your password.';
 
   @override
   String get authSendResetLinkButton => 'Send Reset Link';
+
+  @override
+  String get authSendResetOtpButton => 'Send verification code';
 
   @override
   String get authCheckEmailTitle => 'Check Your Email';
@@ -759,6 +762,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authBackToSignInButton => 'Back to Sign In';
+
+  @override
+  String get authOtpAppBar => 'Enter verification code';
+
+  @override
+  String authOtpSubtitle(String email) {
+    return 'We sent a 6-digit code to\n$email';
+  }
+
+  @override
+  String get authOtpLabel => 'Verification code';
+
+  @override
+  String get authOtpHint => '6-digit code';
+
+  @override
+  String get authOtpInvalidLength => 'Enter the 6-digit code';
+
+  @override
+  String get authOtpInvalid => 'Invalid or expired verification code.';
+
+  @override
+  String get authVerifyOtpButton => 'Verify code';
+
+  @override
+  String get authResendOtpButton => 'Resend code';
+
+  @override
+  String authResendOtpIn(int seconds) {
+    return 'Resend code in ${seconds}s';
+  }
+
+  @override
+  String get authOtpResent => 'A new verification code was sent.';
+
+  @override
+  String get authOtpResendError => 'Could not resend the code right now.';
 
   @override
   String get authResetPasswordAppBar => 'Reset password';
@@ -783,7 +823,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authPasswordUpdated => 'Password updated. You can sign in now.';
 
   @override
-  String get authResetLinkInvalid => 'Invalid or expired reset link.';
+  String get authResetLinkInvalid =>
+      'Invalid or expired reset session. Please request a new code.';
 
   @override
   String get authVerifyEmailAppBar => 'Verify email';
@@ -1249,11 +1290,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profilePasswordResetSent =>
-      'Password reset link sent to your email.';
+      'Password reset code sent to your email.';
 
   @override
   String get profilePasswordResetError =>
-      'Could not send reset link right now.';
+      'Could not send reset code right now.';
 
   @override
   String get profileChangePhoto => 'Change Photo';
@@ -1278,7 +1319,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Email change is not available yet.';
 
   @override
-  String get profileSendPasswordReset => 'Send Password Reset Link';
+  String get profileSendPasswordReset => 'Reset password with code';
 
   @override
   String get profileSaveChanges => 'Save Changes';

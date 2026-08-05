@@ -125,15 +125,42 @@ paths:
     post:
       tags: [Auth]
       security: []
-      summary: Email a single-use password reset link
+      summary: Email a single-use 6-digit OTP for password reset
       requestBody: { $ref: '#/components/requestBodies/ForgotPasswordBody' }
       responses: { '204': { description: No Content } }
+
+  /auth/verify-reset-otp:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Verify the password-reset OTP and return a short-lived reset token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, otp]
+              properties:
+                email: { type: string, format: email }
+                otp: { type: string, pattern: '^\d{6}$' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [resetToken]
+                properties:
+                  resetToken: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
   /auth/reset-password:
     post:
       tags: [Auth]
       security: []
-      summary: Apply a new password using the reset token (revokes existing sessions)
+      summary: Apply a new password using the reset token from OTP verification (revokes existing sessions)
       requestBody: { $ref: '#/components/requestBodies/ResetPasswordBody' }
       responses:
         '204': { description: No Content }

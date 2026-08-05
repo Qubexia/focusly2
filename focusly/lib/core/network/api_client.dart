@@ -101,6 +101,7 @@ class _AuthInterceptor extends Interceptor {
       ApiEndpoints.register,
       ApiEndpoints.googleLogin,
       ApiEndpoints.forgotPassword,
+      ApiEndpoints.verifyResetOtp,
       ApiEndpoints.resetPassword,
       ApiEndpoints.verifyEmail,
     ];

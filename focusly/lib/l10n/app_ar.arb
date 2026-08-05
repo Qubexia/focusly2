@@ -219,11 +219,39 @@
   "authContinueWithGoogle": "المتابعة باستخدام Google",
   "authOrDivider": "أو",
   "authForgotPasswordTitle": "إعادة تعيين\nكلمة المرور 🔑",
-  "authForgotPasswordSubtitle": "أدخل البريد الإلكتروني المرتبط بحسابك وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.",
+  "authForgotPasswordSubtitle": "أدخل البريد الإلكتروني المرتبط بحسابك وسنرسل لك رمز تحقق لإعادة تعيين كلمة المرور.",
   "authSendResetLinkButton": "إرسال رابط إعادة التعيين",
+  "authSendResetOtpButton": "إرسال رمز التحقق",
   "authCheckEmailTitle": "تحقق من بريدك الإلكتروني",
   "authResetLinkSentTo": "لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى\n{email}",
   "authBackToSignInButton": "العودة إلى تسجيل الدخول",
+  "authOtpAppBar": "أدخل رمز التحقق",
+  "authOtpSubtitle": "أرسلنا رمزًا مكوّنًا من 6 أرقام إلى\n{email}",
+  "@authOtpSubtitle": {
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "your@email.com"
+      }
+    }
+  },
+  "authOtpLabel": "رمز التحقق",
+  "authOtpHint": "رمز من 6 أرقام",
+  "authOtpInvalidLength": "أدخل الرمز المكوّن من 6 أرقام",
+  "authOtpInvalid": "رمز التحقق غير صالح أو منتهي الصلاحية.",
+  "authVerifyOtpButton": "تحقق من الرمز",
+  "authResendOtpButton": "إعادة إرسال الرمز",
+  "authResendOtpIn": "إعادة الإرسال خلال {seconds}ث",
+  "@authResendOtpIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int",
+        "example": "45"
+      }
+    }
+  },
+  "authOtpResent": "تم إرسال رمز تحقق جديد.",
+  "authOtpResendError": "تعذّر إعادة إرسال الرمز الآن.",
   "authResetPasswordAppBar": "إعادة تعيين كلمة المرور",
   "authResetPasswordSubtitle": "اختر كلمة مرور جديدة لحسابك.",
   "authNewPasswordLabel": "كلمة المرور الجديدة",
@@ -231,7 +259,7 @@
   "authPasswordMinLength": "8 أحرف كحد أدنى",
   "authUpdatePasswordButton": "تحديث كلمة المرور",
   "authPasswordUpdated": "تم تحديث كلمة المرور. يمكنك تسجيل الدخول الآن.",
-  "authResetLinkInvalid": "رابط إعادة التعيين غير صالح أو منتهي الصلاحية.",
+  "authResetLinkInvalid": "جلسة إعادة التعيين غير صالحة أو منتهية. اطلب رمزًا جديدًا.",
   "authVerifyEmailAppBar": "تأكيد البريد الإلكتروني",
   "authEmailVerifiedSuccess": "تم تأكيد البريد الإلكتروني بنجاح!",
   "authContinueToLoginButton": "المتابعة إلى تسجيل الدخول",
@@ -367,8 +395,8 @@
   "profilePhotoAccessBlocked": "الوصول إلى الصور محظور. يرجى تفعيله من إعدادات التطبيق.",
   "profilePhotoAccessRequired": "الوصول إلى الصور مطلوب لاختيار صورة شخصية.",
   "profilePhotoLibraryError": "تعذّر فتح مكتبة الصور الآن.",
-  "profilePasswordResetSent": "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.",
-  "profilePasswordResetError": "تعذّر إرسال رابط إعادة التعيين الآن.",
+  "profilePasswordResetSent": "تم إرسال رمز إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.",
+  "profilePasswordResetError": "تعذّر إرسال رمز إعادة التعيين الآن.",
   "profileChangePhoto": "تغيير الصورة",
   "profileDisplayName": "الاسم الظاهر",
   "profileDisplayNameHint": "أدخل اسمك الكامل",
@@ -376,7 +404,7 @@
   "profileNameTooShort": "الاسم قصير جدًا",
   "profileEmail": "البريد الإلكتروني",
   "profileEmailChangeUnavailable": "تغيير البريد الإلكتروني غير متاح بعد.",
-  "profileSendPasswordReset": "إرسال رابط إعادة تعيين كلمة المرور",
+  "profileSendPasswordReset": "إعادة تعيين كلمة المرور بالرمز",
   "profileSaveChanges": "حفظ التغييرات",
   "schedulesTitle": "جدول المذاكرة",
   "schedulesEmptyMessage": "لا توجد جلسات مذاكرة مجدولة لهذا اليوم.",

@@ -92,6 +92,13 @@ class AuthRepository {
     await _remoteDataSource.forgotPassword(email: email);
   }
 
+  Future<String> verifyResetOtp({
+    required String email,
+    required String otp,
+  }) {
+    return _remoteDataSource.verifyResetOtp(email: email, otp: otp);
+  }
+
   Future<void> resetPassword({
     required String token,
     required String newPassword,
@@ -169,11 +176,28 @@ class AuthRepository {
     required String name,
     String? avatarPath,
   }) async {
+    String? avatarUrl;
     if (avatarPath != null && avatarPath.isNotEmpty) {
-      await _remoteDataSource.uploadAvatar(filePath: avatarPath);
+      avatarUrl = await _remoteDataSource.uploadAvatar(filePath: avatarPath);
     }
 
-    return _remoteDataSource.updateProfile(name: name);
+    final user = await _remoteDataSource.updateProfile(name: name);
+    final updated = avatarUrl != null && avatarUrl.isNotEmpty
+        ? UserModel(
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            avatarUrl: avatarUrl,
+            emailVerified: user.emailVerified,
+            role: user.role,
+            plan: user.plan,
+            premiumUntil: user.premiumUntil,
+            totalPoints: user.totalPoints,
+          )
+        : user;
+
+    await _cacheUser(await SharedPreferences.getInstance(), updated);
+    return updated;
   }
 
   Future<void> _persistTokens(AuthResponse response) async {

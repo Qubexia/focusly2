@@ -443,7 +443,8 @@ class _ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasAvatar = user?.avatarUrl?.isNotEmpty == true;
+    final avatarUrl = user?.resolvedAvatarUrl;
+    final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
 
     return Container(
       height: 82,
@@ -457,7 +458,7 @@ class _ProfileAvatar extends StatelessWidget {
       ),
       child: CircleAvatar(
         backgroundColor: Colors.white.withValues(alpha: 0.18),
-        backgroundImage: hasAvatar ? NetworkImage(user!.avatarUrl!) : null,
+        backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
         child: hasAvatar
             ? null
             : const Icon(Icons.person_rounded, color: Colors.white, size: 30),

@@ -71,6 +71,21 @@ class AuthRemoteDataSource {
     );
   }
 
+  Future<String> verifyResetOtp({
+    required String email,
+    required String otp,
+  }) async {
+    final response = await _dio.post(
+      ApiEndpoints.verifyResetOtp,
+      data: {
+        'email': email,
+        'otp': otp,
+      },
+    );
+    final data = response.data as Map<String, dynamic>;
+    return (data['resetToken'] ?? '') as String;
+  }
+
   Future<void> resetPassword({
     required String token,
     required String newPassword,

@@ -79,6 +79,7 @@ class ApiEndpoints {
   static const String logout = '/v1/auth/logout';
   static const String logoutAll = '/v1/auth/logout-all';
   static const String forgotPassword = '/v1/auth/forgot-password';
+  static const String verifyResetOtp = '/v1/auth/verify-reset-otp';
   static const String resetPassword = '/v1/auth/reset-password';
   static const String verifyEmail = '/v1/auth/verify-email';
   static const String resendVerification = '/v1/auth/resend-verification';

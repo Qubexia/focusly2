@@ -152,14 +152,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthForgotPasswordRequested event,
     Emitter<AuthState> emit,
   ) async {
+    final previousState = state;
     emit(const AuthLoading());
     try {
       await _authRepository.forgotPassword(email: event.email);
       emit(const AuthForgotPasswordSuccess());
     } on DioException catch (e) {
       emit(AuthError(message: _extractErrorMessage(e)));
+      if (previousState is AuthAuthenticated ||
+          previousState is AuthUnauthenticated) {
+        emit(previousState);
+      }
     } catch (e) {
       emit(AuthError(message: e.toString()));
+      if (previousState is AuthAuthenticated ||
+          previousState is AuthUnauthenticated) {
+        emit(previousState);
+      }
     }
   }
 

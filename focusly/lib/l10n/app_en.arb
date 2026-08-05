@@ -357,8 +357,9 @@
   "authContinueWithGoogle": "Continue with Google",
   "authOrDivider": "OR",
   "authForgotPasswordTitle": "Reset\nPassword 🔑",
-  "authForgotPasswordSubtitle": "Enter the email address associated with your account and we'll send you a link to reset your password.",
+  "authForgotPasswordSubtitle": "Enter the email address associated with your account and we'll send you a one-time code to reset your password.",
   "authSendResetLinkButton": "Send Reset Link",
+  "authSendResetOtpButton": "Send verification code",
   "authCheckEmailTitle": "Check Your Email",
   "authResetLinkSentTo": "We've sent a password reset link to\n{email}",
   "@authResetLinkSentTo": {
@@ -370,6 +371,33 @@
     }
   },
   "authBackToSignInButton": "Back to Sign In",
+  "authOtpAppBar": "Enter verification code",
+  "authOtpSubtitle": "We sent a 6-digit code to\n{email}",
+  "@authOtpSubtitle": {
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "your@email.com"
+      }
+    }
+  },
+  "authOtpLabel": "Verification code",
+  "authOtpHint": "6-digit code",
+  "authOtpInvalidLength": "Enter the 6-digit code",
+  "authOtpInvalid": "Invalid or expired verification code.",
+  "authVerifyOtpButton": "Verify code",
+  "authResendOtpButton": "Resend code",
+  "authResendOtpIn": "Resend code in {seconds}s",
+  "@authResendOtpIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int",
+        "example": "45"
+      }
+    }
+  },
+  "authOtpResent": "A new verification code was sent.",
+  "authOtpResendError": "Could not resend the code right now.",
   "authResetPasswordAppBar": "Reset password",
   "authResetPasswordSubtitle": "Choose a new password for your account.",
   "authNewPasswordLabel": "New password",
@@ -377,7 +405,7 @@
   "authPasswordMinLength": "Min 8 characters",
   "authUpdatePasswordButton": "Update password",
   "authPasswordUpdated": "Password updated. You can sign in now.",
-  "authResetLinkInvalid": "Invalid or expired reset link.",
+  "authResetLinkInvalid": "Invalid or expired reset session. Please request a new code.",
   "authVerifyEmailAppBar": "Verify email",
   "authEmailVerifiedSuccess": "Email verified successfully!",
   "authContinueToLoginButton": "Continue to login",
@@ -596,8 +624,8 @@
   "profilePhotoAccessBlocked": "Photo access is blocked. Please enable it from app settings.",
   "profilePhotoAccessRequired": "Photo access is required to choose an avatar.",
   "profilePhotoLibraryError": "Could not open your photo library right now.",
-  "profilePasswordResetSent": "Password reset link sent to your email.",
-  "profilePasswordResetError": "Could not send reset link right now.",
+  "profilePasswordResetSent": "Password reset code sent to your email.",
+  "profilePasswordResetError": "Could not send reset code right now.",
   "profileChangePhoto": "Change Photo",
   "profileDisplayName": "Display name",
   "profileDisplayNameHint": "Enter your full name",
@@ -605,7 +633,7 @@
   "profileNameTooShort": "Name is too short",
   "profileEmail": "Email",
   "profileEmailChangeUnavailable": "Email change is not available yet.",
-  "profileSendPasswordReset": "Send Password Reset Link",
+  "profileSendPasswordReset": "Reset password with code",
   "profileSaveChanges": "Save Changes",
   "schedulesTitle": "Study Schedule",
   "schedulesEmptyMessage": "No study sessions scheduled for today.",

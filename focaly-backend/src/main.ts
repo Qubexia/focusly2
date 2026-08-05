@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+import { join } from 'path';
+
 import { ClassSerializerInterceptor, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
@@ -32,8 +34,21 @@ async function bootstrap(): Promise<void> {
   // keys its buckets on.
   app.set('trust proxy', 1);
 
-  app.use(helmet());
+  // Avatars are loaded by the mobile/web clients from another origin, so allow
+  // cross-origin resource reads for static uploads.
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
   app.use(compression());
+
+  // Local avatar (and future) uploads live under ./storage and are served at /uploads/*
+  app.useStaticAssets(join(process.cwd(), 'storage'), {
+    prefix: '/uploads/',
+    maxAge: '7d',
+    index: false,
+  });
 
   if (isProduction && corsOrigins.length === 0) {
     throw new Error('CORS_ORIGINS must list at least one origin in production.');

@@ -29,6 +29,7 @@ import {
   RegisterDto,
   ResetPasswordDto,
   VerifyEmailDto,
+  VerifyResetOtpDto,
 } from './dto';
 import { RefreshTokenClaims } from './jwt.service';
 
@@ -88,6 +89,13 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<void> {
     await this.authService.forgotPassword(dto);
+  }
+
+  @Post('verify-reset-otp')
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async verifyResetOtp(@Body() dto: VerifyResetOtpDto): Promise<{ resetToken: string }> {
+    return await this.authService.verifyResetOtp(dto);
   }
 
   @Post('reset-password')

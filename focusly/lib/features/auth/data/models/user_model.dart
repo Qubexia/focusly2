@@ -1,3 +1,5 @@
+import '../../../../core/utils/media_url.dart';
+
 /// Represents the authenticated user returned by the backend.
 class UserModel {
   final String id;
@@ -21,6 +23,9 @@ class UserModel {
     this.premiumUntil,
     required this.totalPoints,
   });
+
+  /// Absolute URL suitable for [NetworkImage] / image widgets.
+  String? get resolvedAvatarUrl => resolveMediaUrl(avatarUrl);
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(

@@ -88,7 +88,7 @@ class _HomeContent extends StatelessWidget {
                           greeting: _getGreeting(context),
                           dateLabel: _formatToday(context),
                           name: name,
-                          avatarUrl: user?.avatarUrl,
+                          avatarUrl: user?.resolvedAvatarUrl,
                           isDark: isDark,
                         );
                       },

@@ -1415,7 +1415,7 @@ abstract class AppLocalizations {
   /// No description provided for @authForgotPasswordSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Enter the email address associated with your account and we\'ll send you a link to reset your password.'**
+  /// **'Enter the email address associated with your account and we\'ll send you a one-time code to reset your password.'**
   String get authForgotPasswordSubtitle;
 
   /// No description provided for @authSendResetLinkButton.
@@ -1423,6 +1423,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send Reset Link'**
   String get authSendResetLinkButton;
+
+  /// No description provided for @authSendResetOtpButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send verification code'**
+  String get authSendResetOtpButton;
 
   /// No description provided for @authCheckEmailTitle.
   ///
@@ -1441,6 +1447,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to Sign In'**
   String get authBackToSignInButton;
+
+  /// No description provided for @authOtpAppBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter verification code'**
+  String get authOtpAppBar;
+
+  /// No description provided for @authOtpSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a 6-digit code to\n{email}'**
+  String authOtpSubtitle(String email);
+
+  /// No description provided for @authOtpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification code'**
+  String get authOtpLabel;
+
+  /// No description provided for @authOtpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get authOtpHint;
+
+  /// No description provided for @authOtpInvalidLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code'**
+  String get authOtpInvalidLength;
+
+  /// No description provided for @authOtpInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid or expired verification code.'**
+  String get authOtpInvalid;
+
+  /// No description provided for @authVerifyOtpButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify code'**
+  String get authVerifyOtpButton;
+
+  /// No description provided for @authResendOtpButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code'**
+  String get authResendOtpButton;
+
+  /// No description provided for @authResendOtpIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code in {seconds}s'**
+  String authResendOtpIn(int seconds);
+
+  /// No description provided for @authOtpResent.
+  ///
+  /// In en, this message translates to:
+  /// **'A new verification code was sent.'**
+  String get authOtpResent;
+
+  /// No description provided for @authOtpResendError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not resend the code right now.'**
+  String get authOtpResendError;
 
   /// No description provided for @authResetPasswordAppBar.
   ///
@@ -1487,7 +1559,7 @@ abstract class AppLocalizations {
   /// No description provided for @authResetLinkInvalid.
   ///
   /// In en, this message translates to:
-  /// **'Invalid or expired reset link.'**
+  /// **'Invalid or expired reset session. Please request a new code.'**
   String get authResetLinkInvalid;
 
   /// No description provided for @authVerifyEmailAppBar.
@@ -2303,13 +2375,13 @@ abstract class AppLocalizations {
   /// No description provided for @profilePasswordResetSent.
   ///
   /// In en, this message translates to:
-  /// **'Password reset link sent to your email.'**
+  /// **'Password reset code sent to your email.'**
   String get profilePasswordResetSent;
 
   /// No description provided for @profilePasswordResetError.
   ///
   /// In en, this message translates to:
-  /// **'Could not send reset link right now.'**
+  /// **'Could not send reset code right now.'**
   String get profilePasswordResetError;
 
   /// No description provided for @profileChangePhoto.
@@ -2357,7 +2429,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileSendPasswordReset.
   ///
   /// In en, this message translates to:
-  /// **'Send Password Reset Link'**
+  /// **'Reset password with code'**
   String get profileSendPasswordReset;
 
   /// No description provided for @profileSaveChanges.

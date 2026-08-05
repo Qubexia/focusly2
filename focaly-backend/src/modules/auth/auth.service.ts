@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { createHash, randomInt, randomUUID } from 'crypto';
 
 import {
   ConflictException,
@@ -31,6 +31,7 @@ import {
   RegisterDto,
   ResetPasswordDto,
   VerifyEmailDto,
+  VerifyResetOtpDto,
 } from './dto';
 import { GoogleAuthService } from './google-auth.service';
 import { JwtService, RefreshTokenClaims, TokenPairResult } from './jwt.service';
@@ -39,6 +40,16 @@ import { AuditLog, AuditLogDocument } from './schemas/audit-log.schema';
 import { buildVerificationEmail } from './templates/email-verification.template';
 import { buildPasswordResetEmail } from './templates/password-reset.template';
 import { buildVerifyResultPage } from './templates/verify-email-result.template';
+
+const RESET_OTP_TTL_SECONDS = 600;
+const RESET_OTP_MAX_ATTEMPTS = 5;
+const RESET_TOKEN_TTL_SECONDS = 900;
+
+interface ResetOtpRecord {
+  userId: string;
+  otpHash: string;
+  attempts: number;
+}
 
 export interface RequestMeta {
   ip?: string | null;
@@ -289,13 +300,77 @@ export class AuthService {
   }
 
   async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
-    const user = await this.usersRepository.findActiveByEmail(dto.email);
+    const email = dto.email.trim().toLowerCase();
+    const user = await this.usersRepository.findActiveByEmail(email);
     if (!user) {
       return;
     }
 
-    const token = await this.sendEmailToken(getDocumentId(user), user.email, 'reset-password');
-    await this.mailer.send(buildPasswordResetEmail(user.email, this.buildResetPasswordUrl(token)));
+    const otp = String(randomInt(100_000, 1_000_000));
+    const record: ResetOtpRecord = {
+      userId: getDocumentId(user),
+      otpHash: this.hashOtp(otp, email),
+      attempts: 0,
+    };
+
+    await this.redis.set(
+      this.getResetOtpKey(email),
+      JSON.stringify(record),
+      'EX',
+      RESET_OTP_TTL_SECONDS,
+    );
+    await this.mailer.send(buildPasswordResetEmail(user.email, otp));
+  }
+
+  async verifyResetOtp(dto: VerifyResetOtpDto): Promise<{ resetToken: string }> {
+    const email = dto.email.trim().toLowerCase();
+    const redisKey = this.getResetOtpKey(email);
+    const raw = await this.redis.get(redisKey);
+    if (!raw) {
+      throw this.unauthorized('OTP is invalid or expired.');
+    }
+
+    let record: ResetOtpRecord;
+    try {
+      record = JSON.parse(raw) as ResetOtpRecord;
+    } catch {
+      await this.redis.del(redisKey);
+      throw this.unauthorized('OTP is invalid or expired.');
+    }
+
+    if (record.attempts >= RESET_OTP_MAX_ATTEMPTS) {
+      await this.redis.del(redisKey);
+      throw this.unauthorized('Too many invalid OTP attempts. Request a new code.');
+    }
+
+    const otpHash = this.hashOtp(dto.otp, email);
+    if (otpHash !== record.otpHash) {
+      record.attempts += 1;
+      const ttl = await this.redis.ttl(redisKey);
+      if (ttl > 0) {
+        await this.redis.set(redisKey, JSON.stringify(record), 'EX', ttl);
+      }
+      throw this.unauthorized('OTP is invalid or expired.');
+    }
+
+    await this.redis.del(redisKey);
+
+    const { token, jti, expiresIn } = this.jwtService.signEmailToken(
+      {
+        sub: record.userId,
+        email,
+        purpose: 'reset-password',
+      },
+      RESET_TOKEN_TTL_SECONDS,
+    );
+    await this.redis.set(
+      this.getEmailTokenKey('reset-password', jti),
+      record.userId,
+      'EX',
+      expiresIn,
+    );
+
+    return { resetToken: token };
   }
 
   async resetPassword(dto: ResetPasswordDto): Promise<void> {
@@ -461,21 +536,20 @@ export class AuthService {
     return `auth:email:${purpose}:${jti}`;
   }
 
+  private getResetOtpKey(email: string): string {
+    return `auth:reset-otp:${email}`;
+  }
+
+  private hashOtp(otp: string, email: string): string {
+    return createHash('sha256').update(`${email}:${otp}`).digest('hex');
+  }
+
   private buildVerifyEmailUrl(token: string): string {
     const explicit = this.config.get<string>('app.verifyEmailUrl') ?? '';
     const port = this.config.get<number>('app.port') ?? 5000;
     const base = explicit || `http://localhost:${port}/v1/auth/verify-email`;
     const separator = base.includes('?') ? '&' : '?';
     return `${base}${separator}token=${encodeURIComponent(token)}`;
-  }
-
-  private buildResetPasswordUrl(token: string): string {
-    const explicit = this.config.get<string>('app.resetPasswordUrl') ?? '';
-    if (explicit) {
-      const separator = explicit.includes('?') ? '&' : '?';
-      return `${explicit}${separator}token=${encodeURIComponent(token)}`;
-    }
-    return `zakerly://reset-password?token=${encodeURIComponent(token)}`;
   }
 
   private unauthorized(message: string): UnauthorizedException {

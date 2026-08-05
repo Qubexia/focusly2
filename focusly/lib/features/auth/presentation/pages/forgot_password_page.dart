@@ -12,7 +12,9 @@ import '../bloc/auth_event_state.dart';
 import '../widgets/auth_text_field.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
-  const ForgotPasswordPage({super.key});
+  const ForgotPasswordPage({super.key, this.initialEmail});
+
+  final String? initialEmail;
 
   @override
   State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
@@ -20,8 +22,13 @@ class ForgotPasswordPage extends StatefulWidget {
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  bool _emailSent = false;
+  late final TextEditingController _emailController;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController(text: widget.initialEmail ?? '');
+  }
 
   @override
   void dispose() {
@@ -44,7 +51,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthForgotPasswordSuccess) {
-          setState(() => _emailSent = true);
+          final email = _emailController.text.trim();
+          context.push(
+            '/verify-reset-otp?email=${Uri.encodeQueryComponent(email)}',
+          );
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
@@ -63,7 +73,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       child: Scaffold(
         body: Stack(
           children: [
-            // Decorative Background Glow
             Positioned(
               top: -100,
               right: -100,
@@ -97,182 +106,102 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                  const SizedBox(height: 16),
-
-                  // Back button
-                  IconButton(
-                    onPressed: () => context.pop(),
-                    icon: Icon(
-                      Icons.arrow_back_rounded,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: isDark
-                          ? AppColors.cardDark
-                          : AppColors.surfaceLight,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
+                      const SizedBox(height: 16),
+                      IconButton(
+                        onPressed: () => context.pop(),
+                        icon: Icon(
+                          Icons.arrow_back_rounded,
                           color: isDark
-                              ? AppColors.borderDark
-                              : AppColors.borderLight,
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimaryLight,
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: isDark
+                              ? AppColors.cardDark
+                              : AppColors.surfaceLight,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: isDark
+                                  ? AppColors.borderDark
+                                  : AppColors.borderLight,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  if (!_emailSent) ...[
-                    // Header
-                    Text(
-                      l10n.authForgotPasswordTitle,
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineLarge
-                          ?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            height: 1.2,
-                          ),
-                    ).animate().fadeIn(duration: 400.ms),
-
-                    const SizedBox(height: 12),
-
-                    Text(
-                      l10n.authForgotPasswordSubtitle,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondaryLight,
-                            height: 1.5,
-                          ),
-                    ).animate(delay: 100.ms).fadeIn(duration: 400.ms),
-
-                    const SizedBox(height: 40),
-
-                    AuthTextField(
-                      controller: _emailController,
-                      label: l10n.authEmailLabel,
-                      hint: l10n.authEmailHint,
-                      keyboardType: TextInputType.emailAddress,
-                      prefixIcon: Icons.mail_outline_rounded,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return l10n.authEmailRequired;
-                        }
-                        if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$')
-                            .hasMatch(value)) {
-                          return l10n.authEmailInvalid;
-                        }
-                        return null;
-                      },
-                    ).animate(delay: 200.ms).fadeIn(duration: 400.ms),
-
-                    const SizedBox(height: 32),
-
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        final isLoading = state is AuthLoading;
-                        return SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed: isLoading ? null : _submit,
-                            child: isLoading
-                                ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                    ),
-                                  )
-                                : Text(l10n.authSendResetLinkButton),
-                          ),
-                        );
-                      },
-                    ).animate(delay: 300.ms).fadeIn(duration: 400.ms),
-                  ] else ...[
-                    // Success state
-                    Center(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 60),
-
-                          Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              color: AppColors.secondary
-                                  .withValues(alpha: isDark ? 0.2 : 0.1),
-                              shape: BoxShape.circle,
+                      const SizedBox(height: 32),
+                      Text(
+                        l10n.authForgotPasswordTitle,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineLarge
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              height: 1.2,
                             ),
-                            child: const Icon(
-                              Icons.mark_email_read_outlined,
-                              size: 48,
-                              color: AppColors.secondary,
+                      ).animate().fadeIn(duration: 400.ms),
+                      const SizedBox(height: 12),
+                      Text(
+                        l10n.authForgotPasswordSubtitle,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                              height: 1.5,
                             ),
-                          )
-                              .animate()
-                              .scale(
-                                begin: const Offset(0.5, 0.5),
-                                end: const Offset(1.0, 1.0),
-                                duration: 500.ms,
-                                curve: Curves.elasticOut,
-                              )
-                              .fadeIn(duration: 400.ms),
-
-                          const SizedBox(height: 32),
-
-                          Text(
-                            l10n.authCheckEmailTitle,
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ).animate(delay: 200.ms).fadeIn(duration: 400.ms),
-
-                          const SizedBox(height: 12),
-
-                          Text(
-                            l10n.authResetLinkSentTo(_emailController.text),
-                            textAlign: TextAlign.center,
-                            style:
-                                Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: isDark
-                                          ? AppColors.textSecondaryDark
-                                          : AppColors.textSecondaryLight,
-                                      height: 1.5,
-                                    ),
-                          ).animate(delay: 300.ms).fadeIn(duration: 400.ms),
-
-                          const SizedBox(height: 40),
-
-                          SizedBox(
+                      ).animate(delay: 100.ms).fadeIn(duration: 400.ms),
+                      const SizedBox(height: 40),
+                      AuthTextField(
+                        controller: _emailController,
+                        label: l10n.authEmailLabel,
+                        hint: l10n.authEmailHint,
+                        keyboardType: TextInputType.emailAddress,
+                        prefixIcon: Icons.mail_outline_rounded,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return l10n.authEmailRequired;
+                          }
+                          if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$')
+                              .hasMatch(value)) {
+                            return l10n.authEmailInvalid;
+                          }
+                          return null;
+                        },
+                      ).animate(delay: 200.ms).fadeIn(duration: 400.ms),
+                      const SizedBox(height: 32),
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          final isLoading = state is AuthLoading;
+                          return SizedBox(
                             width: double.infinity,
                             height: 56,
                             child: ElevatedButton(
-                              onPressed: () => context.go('/login'),
-                              child: Text(l10n.authBackToSignInButton),
+                              onPressed: isLoading ? null : _submit,
+                              child: isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          Colors.white,
+                                        ),
+                                      ),
+                                    )
+                                  : Text(l10n.authSendResetOtpButton),
                             ),
-                          ).animate(delay: 400.ms).fadeIn(duration: 400.ms),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
+                          );
+                        },
+                      ).animate(delay: 300.ms).fadeIn(duration: 400.ms),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ),
-      ],
-    ),
-  ),
-);
-}
+      ),
+    );
+  }
 }
