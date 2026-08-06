@@ -7,6 +7,7 @@
 | `https://zakerlyai.tech/` | Admin dashboard (static SPA) |
 | `https://zakerlyai.tech/v1/` | NestJS API |
 | `https://zakerlyai.tech/docs` | Swagger UI |
+| `https://zakerlyai.tech/uploads/` | User uploads (avatars), served by the API from `focaly-backend/storage/` |
 
 ## Stack
 
@@ -21,6 +22,13 @@
 # Rebuild & restart after code changes
 cd focaly-backend && npm run build && pm2 restart focaly-api focaly-worker
 cd focaly-admin && npm run build   # nginx serves dist/ automatically
+
+# Apply nginx changes (needed after editing deploy/nginx/zakerlyai.tech.conf)
+cp deploy/nginx/zakerlyai.tech.conf /etc/nginx/sites-available/zakerlyai.tech
+nginx -t && systemctl reload nginx
+
+# Verify uploads are reachable (must NOT return text/html)
+curl -sI https://zakerlyai.tech/uploads/avatars/ | head -3
 
 # Logs
 pm2 logs focaly-api
