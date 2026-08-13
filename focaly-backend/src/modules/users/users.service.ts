@@ -1,5 +1,8 @@
+import { randomUUID } from 'crypto';
+import { mkdir, writeFile } from 'fs/promises';
+import { join } from 'path';
+
 import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 import { CurrentUserPayload } from '../../common/decorators/current-user.decorator';
 import { ERROR_CODES } from '../../common/dto/api-response';
@@ -11,12 +14,27 @@ import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersRepository } from './users.repository';
 
+const AVATAR_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
+
+export interface AvatarUploadFile {
+  originalname: string;
+  mimetype?: string;
+  buffer: Buffer;
+  size: number;
+}
+
+/** Picks a safe extension from a client filename, defaulting to .jpg. */
+function extensionForAvatar(fileName: string): string {
+  const match = /\.[a-z0-9]{1,5}$/i.exec(fileName ?? '');
+  const ext = match?.[0]?.toLowerCase() ?? '';
+  return AVATAR_EXTENSIONS.has(ext) ? ext : '.jpg';
+}
+
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly authSessionsRepository: AuthSessionsRepository,
-    private readonly configService: ConfigService,
     @Inject(forwardRef(() => SubscriptionsService))
     private readonly subscriptionsService: SubscriptionsService,
   ) {}
@@ -78,10 +96,23 @@ export class UsersService {
     return updated.settings;
   }
 
-  async uploadAvatar(user: CurrentUserPayload, fileName: string): Promise<{ avatarUrl: string }> {
-    const bucket = this.configService.getOrThrow<string>('s3.bucket');
-    const region = this.configService.getOrThrow<string>('s3.region');
-    const avatarUrl = `https://${bucket}.s3.${region}.amazonaws.com/avatars/${user.id}/${fileName}`;
+  async uploadAvatar(
+    user: CurrentUserPayload,
+    file: AvatarUploadFile,
+  ): Promise<{ avatarUrl: string }> {
+    // Store on the API server disk and expose via /uploads/... static files.
+    // The client filename is never trusted in the key.
+    const ext = extensionForAvatar(file.originalname);
+    const objectName = `${randomUUID()}${ext}`;
+    const relativeDir = join('avatars', user.id);
+    const storageRoot = join(process.cwd(), 'storage');
+    const absoluteDir = join(storageRoot, relativeDir);
+    await mkdir(absoluteDir, { recursive: true });
+    await writeFile(join(absoluteDir, objectName), file.buffer);
+
+    // Relative path so clients resolve against their configured API base URL
+    // (localhost vs LAN IP vs production host).
+    const avatarUrl = `/uploads/avatars/${user.id}/${objectName}`;
 
     await this.usersRepository.updateOne({ _id: user.id }, { $set: { avatarUrl } });
     return { avatarUrl };

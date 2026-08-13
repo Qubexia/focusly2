@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
@@ -13,6 +14,7 @@ class AuthTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final String? Function(String?)? validator;
   final TextCapitalization textCapitalization;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AuthTextField({
     super.key,
@@ -25,6 +27,7 @@ class AuthTextField extends StatelessWidget {
     this.suffixIcon,
     this.validator,
     this.textCapitalization = TextCapitalization.none,
+    this.inputFormatters,
   });
 
   @override
@@ -48,6 +51,7 @@ class AuthTextField extends StatelessWidget {
           obscureText: obscureText,
           keyboardType: keyboardType,
           textCapitalization: textCapitalization,
+          inputFormatters: inputFormatters,
           validator: validator,
           style: Theme.of(context).textTheme.bodyLarge,
           decoration: InputDecoration(

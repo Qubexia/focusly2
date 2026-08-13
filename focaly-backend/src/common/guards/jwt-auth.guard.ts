@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 
+import { AuthSessionsRepository } from '../../modules/auth/auth-sessions.repository';
 import { JwtService } from '../../modules/auth/jwt.service';
 import type { CurrentUserPayload } from '../decorators/current-user.decorator';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -12,9 +13,10 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly jwtService: JwtService,
+    private readonly authSessionsRepository: AuthSessionsRepository,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -33,6 +35,18 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const payload = this.jwtService.verifyAccessToken(token);
+
+    // A valid signature is not enough: logout, logout-all, session revocation
+    // and password reset all revoke the session, and the access token issued
+    // against it must stop working immediately rather than at its expiry.
+    const session = await this.authSessionsRepository.findActiveById(payload.sessionId);
+    if (!session || session.userId.toString() !== payload.sub) {
+      throw new UnauthorizedException({
+        code: ERROR_CODES.UNAUTHORIZED,
+        message: 'Session is no longer active. Please sign in again.',
+      });
+    }
+
     req.user = {
       id: payload.sub,
       email: payload.email,

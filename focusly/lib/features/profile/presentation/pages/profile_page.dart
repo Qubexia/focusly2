@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zakerly/l10n/app_localizations.dart';
 
+import '../../../../core/premium/premium_status.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../analytics/data/repositories/analytics_repository.dart';
 import '../../../auth/data/models/user_model.dart';
@@ -12,6 +13,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
 import '../../../streaks/presentation/cubit/streak_cubit.dart';
 import '../../../streaks/presentation/cubit/streak_state.dart';
+import '../../../subscription/presentation/cubit/subscription_cubit.dart';
 import '../../../subscription/presentation/subscription_actions.dart';
 import '../widgets/edit_profile_sheet.dart';
 
@@ -55,6 +57,7 @@ class _ProfilePageState extends State<ProfilePage> {
     context.read<AuthBloc>().add(const AuthRefreshUser());
     await Future.wait([
       context.read<StreakCubit>().loadStreak(),
+      context.read<SubscriptionCubit>().load(),
       _focusSessionsKey.currentState?.reload() ?? Future<void>.value(),
     ]);
   }
@@ -81,6 +84,12 @@ class _ProfilePageState extends State<ProfilePage> {
       },
       builder: (context, state) {
         final user = state is AuthAuthenticated ? state.user : null;
+        final subscription =
+            context.watch<SubscriptionCubit>().state.subscription;
+        final isPremium = hasPremiumAccess(
+          authState: state,
+          subscription: subscription,
+        );
 
         return Scaffold(
           appBar: AppBar(
@@ -102,7 +111,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _ProfileHeroCard(user: user),
+                    _ProfileHeroCard(user: user, isPremium: isPremium),
                     const SizedBox(height: 20),
                     _SectionTitle(
                       title: l10n.profileOverviewTitle,
@@ -146,10 +155,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         _InfoTile(
                           icon: Icons.verified_rounded,
                           title: l10n.profilePlanStatus,
-                          value: user?.isPremium == true
+                          value: isPremium
                               ? l10n.profilePremium
                               : l10n.profileFree,
-                          color: user?.isPremium == true
+                          color: isPremium
                               ? AppColors.premium
                               : AppColors.secondary,
                         ),
@@ -174,7 +183,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         _InfoTile(
                           icon: Icons.star_outline_rounded,
                           title: l10n.profileCurrentPlan,
-                          value: _planLabel(context, user),
+                          value: _planLabel(context, isPremium: isPremium),
                         ),
                         _InfoActionTile(
                           icon: Icons.checklist_rounded,
@@ -191,10 +200,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         _InfoActionTile(
                           icon: Icons.workspace_premium_rounded,
                           title: l10n.profilePremium,
-                          subtitle: _planLabel(context, user),
+                          subtitle: _planLabel(context, isPremium: isPremium),
                           onTap: () => context.push('/premium'),
                         ),
-                        if (user?.isPremium == true)
+                        if (isPremium)
                           _InfoActionTile(
                             icon: Icons.cancel_outlined,
                             title: l10n.profileCancelSubscription,
@@ -277,10 +286,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  static String _planLabel(BuildContext context, UserModel? user) {
+  static String _planLabel(BuildContext context, {required bool isPremium}) {
     final l10n = AppLocalizations.of(context);
-    if (user == null) return l10n.profileFreePlan;
-    return user.isPremium ? l10n.profilePremiumPlan : l10n.profileFreePlan;
+    return isPremium ? l10n.profilePremiumPlan : l10n.profileFreePlan;
   }
 
   static Future<void> _confirmLogout(BuildContext context) async {
@@ -312,9 +320,10 @@ class _ProfilePageState extends State<ProfilePage> {
 }
 
 class _ProfileHeroCard extends StatelessWidget {
-  const _ProfileHeroCard({required this.user});
+  const _ProfileHeroCard({required this.user, required this.isPremium});
 
   final UserModel? user;
+  final bool isPremium;
 
   @override
   Widget build(BuildContext context) {
@@ -379,12 +388,10 @@ class _ProfileHeroCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _HeroBadge(
-                icon: user?.isPremium == true
+                icon: isPremium
                     ? Icons.workspace_premium_rounded
                     : Icons.eco_outlined,
-                label: user?.isPremium == true
-                    ? l10n.profilePremium
-                    : l10n.profileFree,
+                label: isPremium ? l10n.profilePremium : l10n.profileFree,
               ),
               _HeroBadge(
                 icon: (user?.emailVerified ?? false)
@@ -436,7 +443,8 @@ class _ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasAvatar = user?.avatarUrl?.isNotEmpty == true;
+    final avatarUrl = user?.resolvedAvatarUrl;
+    final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
 
     return Container(
       height: 82,
@@ -450,7 +458,7 @@ class _ProfileAvatar extends StatelessWidget {
       ),
       child: CircleAvatar(
         backgroundColor: Colors.white.withValues(alpha: 0.18),
-        backgroundImage: hasAvatar ? NetworkImage(user!.avatarUrl!) : null,
+        backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
         child: hasAvatar
             ? null
             : const Icon(Icons.person_rounded, color: Colors.white, size: 30),

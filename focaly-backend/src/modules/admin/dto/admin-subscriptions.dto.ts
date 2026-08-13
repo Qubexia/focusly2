@@ -9,7 +9,7 @@ export class ListSubscriptionsQueryDto extends PaginationQueryDto {
   status?: string;
 
   @IsOptional()
-  @IsIn(['stripe', 'google_play', 'app_store', 'paymob'])
+  @IsIn(['paymob', 'google_play', 'app_store'])
   provider?: string;
 }
 

@@ -8,6 +8,7 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/pages/verify_email_page.dart';
+import '../../features/auth/presentation/pages/verify_reset_otp_page.dart';
 import '../../features/subscription/presentation/pages/paywall_page.dart';
 import '../../features/home/presentation/pages/main_shell.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
@@ -38,7 +39,15 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/forgot-password',
-      builder: (context, state) => const ForgotPasswordPage(),
+      builder: (context, state) => ForgotPasswordPage(
+        initialEmail: state.uri.queryParameters['email'],
+      ),
+    ),
+    GoRoute(
+      path: '/verify-reset-otp',
+      builder: (context, state) => VerifyResetOtpPage(
+        email: state.uri.queryParameters['email'] ?? '',
+      ),
     ),
     GoRoute(
       path: '/reset-password',

@@ -59,7 +59,10 @@ class SchedulesCubit extends Cubit<SchedulesState> {
     emit(state.copyWith(isLoading: true, clearError: true));
 
     try {
-      final schedules = await _dataSource.getSchedules(from: start, to: end);
+      // The API returns rows in insertion order; every screen lists them as a
+      // day's timetable, so order them by time of day once, here.
+      final schedules = (await _dataSource.getSchedules(from: start, to: end))
+        ..sort((a, b) => a.startMinuteOfDay.compareTo(b.startMinuteOfDay));
       Set<String> completedKeys = state.completedKeys;
       try {
         completedKeys = await _dataSource.getCompletions(

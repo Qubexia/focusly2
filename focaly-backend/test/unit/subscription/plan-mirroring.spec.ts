@@ -1,9 +1,22 @@
 import { EventBus } from '@nestjs/cqrs';
+import { Model } from 'mongoose';
 
+import { AuditLogDocument } from '../../../src/modules/auth/schemas/audit-log.schema';
 import { PaymentEventsRepository } from '../../../src/modules/subscription/payment-events.repository';
+import { PaymentEventDocument } from '../../../src/modules/subscription/schemas/payment-event.schema';
 import { SubscriptionsRepository } from '../../../src/modules/subscription/subscriptions.repository';
 import { SubscriptionsService } from '../../../src/modules/subscription/subscriptions.service';
 import { UsersRepository } from '../../../src/modules/users/users.repository';
+
+type InsertIdempotentResult = Awaited<ReturnType<PaymentEventsRepository['insertIdempotent']>>;
+
+/** Only `_id` is read by the service, which stringifies it for markProcessed(). */
+function insertedEvent(id: string): InsertIdempotentResult {
+  return {
+    event: { _id: id } as unknown as PaymentEventDocument,
+    isNew: true,
+  };
+}
 
 describe('Subscription plan mirroring (T140)', () => {
   let service: SubscriptionsService;
@@ -16,29 +29,26 @@ describe('Subscription plan mirroring (T140)', () => {
     subsRepo = {
       findByProvider: jest.fn(),
       upsert: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<SubscriptionsRepository>;
     payEventsRepo = {
       insertIdempotent: jest.fn(),
       markProcessed: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<PaymentEventsRepository>;
     usersRepo = {
       updateById: jest.fn(),
-    } as any;
-    eventBus = { publish: jest.fn() } as any;
+    } as unknown as jest.Mocked<UsersRepository>;
+    eventBus = { publish: jest.fn() } as unknown as jest.Mocked<EventBus>;
 
-    const auditLogModel = { create: jest.fn() } as any;
+    const auditLogModel = { create: jest.fn() } as unknown as Model<AuditLogDocument>;
     service = new SubscriptionsService(subsRepo, payEventsRepo, usersRepo, eventBus, auditLogModel);
   });
 
   it('applyEvent("canceled") flips User.plan to free and clears premiumUntil', async () => {
-    payEventsRepo.insertIdempotent.mockResolvedValue({
-      event: { id: 'pe-1' },
-      isNew: true,
-    } as any);
+    payEventsRepo.insertIdempotent.mockResolvedValue(insertedEvent('pe-1'));
     subsRepo.findByProvider.mockResolvedValue(null);
 
     await service.applyEvent({
-      provider: 'stripe',
+      provider: 'paymob',
       eventId: 'evt_cancel',
       providerSubId: 'sub_123',
       userId: 'user-1',
@@ -47,23 +57,19 @@ describe('Subscription plan mirroring (T140)', () => {
       rawPayload: {},
     });
 
-    expect(usersRepo.updateById).toHaveBeenCalledWith(
-      'user-1',
-      { $set: { plan: 'free', premiumUntil: null } },
-    );
+    expect(usersRepo.updateById).toHaveBeenCalledWith('user-1', {
+      $set: { plan: 'free', premiumUntil: null },
+    });
     expect(payEventsRepo.markProcessed).toHaveBeenCalledWith('pe-1', 'applied');
   });
 
   it('applyEvent("active") flips User.plan to premium', async () => {
-    payEventsRepo.insertIdempotent.mockResolvedValue({
-      event: { id: 'pe-2' },
-      isNew: true,
-    } as any);
+    payEventsRepo.insertIdempotent.mockResolvedValue(insertedEvent('pe-2'));
     subsRepo.findByProvider.mockResolvedValue(null);
     const periodEnd = new Date(Date.now() + 30 * 86400_000);
 
     await service.applyEvent({
-      provider: 'stripe',
+      provider: 'paymob',
       eventId: 'evt_active',
       providerSubId: 'sub_456',
       userId: 'user-2',
@@ -73,9 +79,8 @@ describe('Subscription plan mirroring (T140)', () => {
       rawPayload: {},
     });
 
-    expect(usersRepo.updateById).toHaveBeenCalledWith(
-      'user-2',
-      { $set: { plan: 'premium', premiumUntil: periodEnd } },
-    );
+    expect(usersRepo.updateById).toHaveBeenCalledWith('user-2', {
+      $set: { plan: 'premium', premiumUntil: periodEnd },
+    });
   });
 });

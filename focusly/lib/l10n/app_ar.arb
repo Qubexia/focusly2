@@ -79,7 +79,8 @@
   "homeNoSubjectsTitle": "لا توجد مواد بعد",
   "homeNoSubjectsSubtitle": "أضف أول مادة لك لتجعل الشاشة الرئيسية مفيدة ونابضة بالحياة.",
   "homeCreateSubject": "إنشاء مادة",
-  "homeSubjectTargetMinutes": "· هدف {minutes} د",
+  "homeSubjectTargetMinutesDaily": "· {minutes} د/يوم",
+  "homeSubjectTargetMinutesWeekly": "· {minutes} د/أسبوع",
   "homeStudyOverview": "نظرة عامة على الدراسة",
   "homeOverallProgress": "التقدّم الإجمالي",
   "homeOverviewLoading": "جارٍ جلب موادك وأهدافك…",
@@ -218,11 +219,39 @@
   "authContinueWithGoogle": "المتابعة باستخدام Google",
   "authOrDivider": "أو",
   "authForgotPasswordTitle": "إعادة تعيين\nكلمة المرور 🔑",
-  "authForgotPasswordSubtitle": "أدخل البريد الإلكتروني المرتبط بحسابك وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.",
+  "authForgotPasswordSubtitle": "أدخل البريد الإلكتروني المرتبط بحسابك وسنرسل لك رمز تحقق لإعادة تعيين كلمة المرور.",
   "authSendResetLinkButton": "إرسال رابط إعادة التعيين",
+  "authSendResetOtpButton": "إرسال رمز التحقق",
   "authCheckEmailTitle": "تحقق من بريدك الإلكتروني",
   "authResetLinkSentTo": "لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى\n{email}",
   "authBackToSignInButton": "العودة إلى تسجيل الدخول",
+  "authOtpAppBar": "أدخل رمز التحقق",
+  "authOtpSubtitle": "أرسلنا رمزًا مكوّنًا من 6 أرقام إلى\n{email}",
+  "@authOtpSubtitle": {
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "your@email.com"
+      }
+    }
+  },
+  "authOtpLabel": "رمز التحقق",
+  "authOtpHint": "رمز من 6 أرقام",
+  "authOtpInvalidLength": "أدخل الرمز المكوّن من 6 أرقام",
+  "authOtpInvalid": "رمز التحقق غير صالح أو منتهي الصلاحية.",
+  "authVerifyOtpButton": "تحقق من الرمز",
+  "authResendOtpButton": "إعادة إرسال الرمز",
+  "authResendOtpIn": "إعادة الإرسال خلال {seconds}ث",
+  "@authResendOtpIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int",
+        "example": "45"
+      }
+    }
+  },
+  "authOtpResent": "تم إرسال رمز تحقق جديد.",
+  "authOtpResendError": "تعذّر إعادة إرسال الرمز الآن.",
   "authResetPasswordAppBar": "إعادة تعيين كلمة المرور",
   "authResetPasswordSubtitle": "اختر كلمة مرور جديدة لحسابك.",
   "authNewPasswordLabel": "كلمة المرور الجديدة",
@@ -230,7 +259,7 @@
   "authPasswordMinLength": "8 أحرف كحد أدنى",
   "authUpdatePasswordButton": "تحديث كلمة المرور",
   "authPasswordUpdated": "تم تحديث كلمة المرور. يمكنك تسجيل الدخول الآن.",
-  "authResetLinkInvalid": "رابط إعادة التعيين غير صالح أو منتهي الصلاحية.",
+  "authResetLinkInvalid": "جلسة إعادة التعيين غير صالحة أو منتهية. اطلب رمزًا جديدًا.",
   "authVerifyEmailAppBar": "تأكيد البريد الإلكتروني",
   "authEmailVerifiedSuccess": "تم تأكيد البريد الإلكتروني بنجاح!",
   "authContinueToLoginButton": "المتابعة إلى تسجيل الدخول",
@@ -366,8 +395,8 @@
   "profilePhotoAccessBlocked": "الوصول إلى الصور محظور. يرجى تفعيله من إعدادات التطبيق.",
   "profilePhotoAccessRequired": "الوصول إلى الصور مطلوب لاختيار صورة شخصية.",
   "profilePhotoLibraryError": "تعذّر فتح مكتبة الصور الآن.",
-  "profilePasswordResetSent": "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.",
-  "profilePasswordResetError": "تعذّر إرسال رابط إعادة التعيين الآن.",
+  "profilePasswordResetSent": "تم إرسال رمز إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.",
+  "profilePasswordResetError": "تعذّر إرسال رمز إعادة التعيين الآن.",
   "profileChangePhoto": "تغيير الصورة",
   "profileDisplayName": "الاسم الظاهر",
   "profileDisplayNameHint": "أدخل اسمك الكامل",
@@ -375,7 +404,7 @@
   "profileNameTooShort": "الاسم قصير جدًا",
   "profileEmail": "البريد الإلكتروني",
   "profileEmailChangeUnavailable": "تغيير البريد الإلكتروني غير متاح بعد.",
-  "profileSendPasswordReset": "إرسال رابط إعادة تعيين كلمة المرور",
+  "profileSendPasswordReset": "إعادة تعيين كلمة المرور بالرمز",
   "profileSaveChanges": "حفظ التغييرات",
   "schedulesTitle": "جدول المذاكرة",
   "schedulesEmptyMessage": "لا توجد جلسات مذاكرة مجدولة لهذا اليوم.",
@@ -445,6 +474,7 @@
   "subjectsDailyTargetLabel": "هدف {minutes} دقيقة",
   "subjectsMinutesValue": "{minutes} دقيقة",
   "subjectsMinutesPlannedDaily": "{minutes} دقيقة مخطّطة كل يوم",
+  "subjectsMinutesPlannedWeekly": "{minutes} دقيقة مخطّطة كل أسبوع",
   "subjectsProgressLabel": "التقدّم",
   "subjectsPercentValue": "{percent}٪",
   "subjectsSaveChanges": "حفظ التغييرات",
@@ -492,7 +522,6 @@
   "subscriptionPayPaymobMonthly": "ادفع بالبطاقة — شهري (ج.م)",
   "subscriptionPayPaymobYearly": "ادفع بالبطاقة — سنوي (ج.م)",
   "subscriptionPaymobNote": "أدخل بيانات بطاقتك لإتمام الدفع بأمان.",
-  "subscriptionPayStripe": "بطاقة دولية (Stripe)",
   "subscriptionPremiumActiveTitle": "بريميوم مفعّل",
   "subscriptionPremiumCanceling": "بريميوم (قيد الإلغاء)",
   "subscriptionStatusLabel": "الحالة: {status}",
@@ -517,6 +546,7 @@
   "analyticsLoadFailed": "تعذّر تحميل بيانات الإحصائيات.",
   "authGoogleTokenFailed": "تعذّر الحصول على رمز تسجيل الدخول عبر Google. حاول مرة أخرى.",
   "authGoogleSignInFailed": "فشل تسجيل الدخول عبر Google. حاول مرة أخرى.",
+  "authGoogleNotConfigured": "تسجيل الدخول عبر Google غير مضبوط لهذه النسخة. عيّن GOOGLE_SERVER_CLIENT_ID.",
   "authServerUnreachable": "تعذّر الوصول إلى الخادم. تحقّق من اتصالك بالإنترنت ثم حاول مرة أخرى.",
   "authGenericRetry": "حدث خطأ ما. حاول مرة أخرى.",
   "homeLoadFailed": "تعذّر تحميل بيانات الرئيسية.",
@@ -576,9 +606,5 @@
   "subscriptionPaymentRejected": "تم رفض الدفع.",
   "subscriptionPaymentFailed": "تعذّر إتمام الدفع.",
   "subscriptionCheckoutFailed": "تعذّر بدء الدفع عبر Paymob.",
-  "subscriptionStripeUnavailable": "الدفع بالبطاقة غير متاح مؤقتاً. جرّب طريقة أخرى أو حاول لاحقاً.",
-  "subscriptionStripeBrowserPrompt": "أكمل الدفع في المتصفح، ثم عُد واضغط على تحديث.",
-  "subscriptionPaymentPageFailed": "تعذّر فتح صفحة الدفع.",
-  "subscriptionCardCheckoutFailed": "تعذّر بدء الدفع بالبطاقة.",
   "subscriptionCanceledEnded": "تم إلغاء الاشتراك. انتهى وصول بريميوم."
 }

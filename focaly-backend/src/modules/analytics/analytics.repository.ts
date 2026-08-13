@@ -124,6 +124,7 @@ export class AnalyticsRepository {
     }));
   }
 
+  /** Adds to a day's counters — used for live updates as activity happens. */
   async upsertDay(
     userId: string,
     date: Date,
@@ -141,6 +142,32 @@ export class AnalyticsRepository {
       .updateOne(
         { userId: normalizedUserId, date: dateStart },
         { $set: { userId: normalizedUserId, date: dateStart }, $inc: data },
+        { upsert: true },
+      )
+      .exec();
+  }
+
+  /**
+   * Overwrites a day's counters with freshly recomputed totals. The nightly
+   * rollup must replace rather than add, otherwise it double-counts everything
+   * the live handler already wrote during the day.
+   */
+  async setDay(
+    userId: string,
+    dayStart: Date,
+    data: {
+      focusMinutes: number;
+      completedCycles: number;
+      plannedItemsCompleted: number;
+      sessionsCount: number;
+    },
+  ): Promise<void> {
+    const normalizedUserId = toObjectIdIfPossible(userId);
+
+    await this.model
+      .updateOne(
+        { userId: normalizedUserId, date: dayStart },
+        { $set: { userId: normalizedUserId, date: dayStart, ...data } },
         { upsert: true },
       )
       .exec();

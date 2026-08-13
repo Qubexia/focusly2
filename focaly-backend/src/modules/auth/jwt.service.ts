@@ -135,7 +135,7 @@ export class JwtService {
     const jti = randomUUID();
     const token = new NestJwtService({
       secret: this.emailSecret,
-      signOptions: { expiresIn: expiresInSeconds },
+      signOptions: { expiresIn: expiresInSeconds, algorithm: 'HS256' },
     }).sign({ ...payload, jti });
 
     return { token, jti, expiresIn: expiresInSeconds };
@@ -151,7 +151,9 @@ export class JwtService {
 
   verifyEmailToken(token: string): EmailTokenClaims {
     try {
-      return new NestJwtService({ secret: this.emailSecret }).verify<EmailTokenClaims>(token);
+      return new NestJwtService({ secret: this.emailSecret }).verify<EmailTokenClaims>(token, {
+        algorithms: ['HS256'],
+      });
     } catch {
       throw new UnauthorizedException({
         code: ERROR_CODES.UNAUTHORIZED,

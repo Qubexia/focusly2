@@ -1,4 +1,12 @@
-import { createHmac, randomUUID } from 'crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'crypto';
+
+/** Length-safe, constant-time hex digest comparison. */
+function safeCompareHex(expected: string, received: string): boolean {
+  const a = Buffer.from(expected.toLowerCase(), 'utf8');
+  const b = Buffer.from(received.trim().toLowerCase(), 'utf8');
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
 
 function hmacPart(value: unknown): string {
   if (value === null || value === undefined) return '';
@@ -50,7 +58,7 @@ export function verifyTransactionProcessedHmac(
 ): boolean {
   if (!receivedHmac || !hmacSecret) return false;
   const expected = computeTransactionProcessedHmac(transaction, hmacSecret);
-  return expected.toLowerCase() === receivedHmac.toLowerCase();
+  return safeCompareHex(expected, receivedHmac);
 }
 
 /**
@@ -97,7 +105,7 @@ export function verifyResponseCallbackHmac(
 ): boolean {
   if (!receivedHmac || !hmacSecret) return false;
   const expected = computeResponseCallbackHmac(query, hmacSecret);
-  return expected.toLowerCase() === receivedHmac.toLowerCase();
+  return safeCompareHex(expected, receivedHmac);
 }
 
 /** Build a unique Paymob order reference that still embeds the Mongo user id. */

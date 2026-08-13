@@ -15,3 +15,12 @@
 # permission_handler + flutter_timezone
 -keep class com.baseflow.permissionhandler.** { *; }
 -keep class net.wolverinebeach.flutter_timezone.** { *; }
+
+# Paymob native SDK (AAR ships an empty proguard.txt). Release minify/R8 can
+# strip SDK classes/resources so Paymob.pay works in debug but fails on Play.
+-keep class com.paymob.** { *; }
+-keep class com.gyoussef55.paymob.** { *; }
+-keepclassmembers class com.paymob.** { *; }
+-dontwarn com.paymob.**
+-dontwarn kotlinx.parcelize.**
+-dontwarn kotlinx.android.parcel.**

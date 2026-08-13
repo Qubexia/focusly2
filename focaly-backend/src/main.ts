@@ -1,11 +1,10 @@
 import 'reflect-metadata';
-import {
-  ClassSerializerInterceptor,
-  ValidationPipe,
-  VersioningType,
-} from '@nestjs/common';
+import { join } from 'path';
+
+import { ClassSerializerInterceptor, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
 import basicAuth from 'express-basic-auth';
@@ -19,7 +18,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { buildSwaggerDocument, swaggerUiOptions } from './swagger/swagger';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
 
   app.useLogger(app.get(PinoLogger));
 
@@ -28,11 +27,36 @@ async function bootstrap(): Promise<void> {
   const port = config.get<number>('app.port') ?? 3000;
   const corsOrigins = config.get<string[]>('app.corsOrigins') ?? [];
 
-  app.use(helmet());
+  const isProduction = env === 'production';
+
+  // Behind exactly one reverse proxy (nginx). Without this, Express cannot tell
+  // a real client IP from a forged X-Forwarded-For, which is what the throttler
+  // keys its buckets on.
+  app.set('trust proxy', 1);
+
+  // Avatars are loaded by the mobile/web clients from another origin, so allow
+  // cross-origin resource reads for static uploads.
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
   app.use(compression());
 
+  // Local avatar (and future) uploads live under ./storage and are served at /uploads/*
+  app.useStaticAssets(join(process.cwd(), 'storage'), {
+    prefix: '/uploads/',
+    maxAge: '7d',
+    index: false,
+  });
+
+  if (isProduction && corsOrigins.length === 0) {
+    throw new Error('CORS_ORIGINS must list at least one origin in production.');
+  }
+
   app.enableCors({
-    origin: corsOrigins.length > 0 ? corsOrigins : true,
+    // Never reflect an arbitrary origin while allowing credentials.
+    origin: corsOrigins.length > 0 ? corsOrigins : !isProduction,
     credentials: true,
   });
 
@@ -52,25 +76,34 @@ async function bootstrap(): Promise<void> {
     new TransformInterceptor(),
   );
 
-  if (env === 'production') {
-    const user = config.get<string>('app.swagger.user');
-    const pass = config.get<string>('app.swagger.pass');
-    if (user && pass) {
+  // In production the docs are mounted only when credentials exist, so a deploy
+  // that forgets SWAGGER_USER/SWAGGER_PASS hides the API surface instead of
+  // publishing it.
+  const swaggerUser = config.get<string>('app.swagger.user');
+  const swaggerPass = config.get<string>('app.swagger.pass');
+  const swaggerEnabled = !isProduction || Boolean(swaggerUser && swaggerPass);
+
+  if (swaggerEnabled) {
+    if (isProduction) {
       app.use(
         ['/docs', '/docs-json'],
-        basicAuth({ users: { [user]: pass }, challenge: true }),
+        basicAuth({ users: { [swaggerUser!]: swaggerPass! }, challenge: true }),
       );
     }
-  }
 
-  const document = buildSwaggerDocument(app);
-  SwaggerModule.setup('docs', app, document, swaggerUiOptions);
+    const document = buildSwaggerDocument(app);
+    SwaggerModule.setup('docs', app, document, swaggerUiOptions);
+  }
 
   await app.listen(port, '0.0.0.0');
   const logger = app.get(PinoLogger);
   const url = await app.getUrl();
   logger.log(`Application is running on: ${url}`);
-  logger.log(`Swagger documentation: ${url}/docs`);
+  logger.log(
+    swaggerEnabled
+      ? `Swagger documentation: ${url}/docs`
+      : 'Swagger documentation disabled (set SWAGGER_USER and SWAGGER_PASS to enable).',
+  );
 }
 
 void bootstrap();

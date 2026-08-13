@@ -3,6 +3,7 @@ import { EventBus } from '@nestjs/cqrs';
 
 import { PomodoroRepository } from '../../../src/modules/pomodoro/pomodoro.repository';
 import { PomodoroService } from '../../../src/modules/pomodoro/pomodoro.service';
+import { UsersRepository } from '../../../src/modules/users/users.repository';
 
 describe('Pomodoro state machine', () => {
   let service: PomodoroService;
@@ -49,7 +50,10 @@ describe('Pomodoro state machine', () => {
     } as unknown as jest.Mocked<PomodoroRepository>;
 
     eventBus = { publish: jest.fn() } as unknown as jest.Mocked<EventBus>;
-    service = new PomodoroService(repo, eventBus);
+    const usersRepo = {
+      findActiveById: jest.fn().mockResolvedValue({ settings: { timezone: 'UTC' } }),
+    } as unknown as UsersRepository;
+    service = new PomodoroService(repo, usersRepo, eventBus);
   });
 
   describe('start', () => {

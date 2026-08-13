@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:zakerly/l10n/app_localizations.dart';
 
 import '../../../../core/localization/locale_cubit.dart';
+import '../../../../core/premium/premium_status.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
+import '../../../subscription/presentation/cubit/subscription_cubit.dart';
 import '../../../subscription/presentation/subscription_actions.dart';
 import '../widgets/edit_profile_sheet.dart';
 
@@ -172,6 +174,12 @@ class _SettingsPageState extends State<SettingsPage> {
           : BlocBuilder<AuthBloc, AuthState>(
               builder: (context, state) {
                 final user = state is AuthAuthenticated ? state.user : null;
+                final subscription =
+                    context.watch<SubscriptionCubit>().state.subscription;
+                final isPremium = hasPremiumAccess(
+                  authState: state,
+                  subscription: subscription,
+                );
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
                   children: [
@@ -184,12 +192,12 @@ class _SettingsPageState extends State<SettingsPage> {
                     _SettingsTile(
                       icon: Icons.workspace_premium_rounded,
                       title: l10n.settingsPremium,
-                      subtitle: user?.isPremium == true
+                      subtitle: isPremium
                           ? l10n.settingsPremiumActive
                           : l10n.settingsPremiumUpgrade,
                       onTap: () => context.push('/premium'),
                     ),
-                    if (user?.isPremium == true)
+                    if (isPremium)
                       _SettingsTile(
                         icon: Icons.cancel_outlined,
                         title: l10n.settingsCancelSubscription,

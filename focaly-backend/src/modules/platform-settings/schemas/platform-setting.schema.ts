@@ -10,7 +10,7 @@ export class PlatformSetting {
   key!: string;
 
   /** When false, all authenticated users get premium features (dev/demo mode). */
-  @Prop({ type: Boolean, default: false })
+  @Prop({ type: Boolean, default: true })
   premiumGatingEnabled!: boolean;
 
   /** Max active subjects for free-plan users. Premium users are unlimited. */

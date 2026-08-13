@@ -8,6 +8,7 @@ import 'package:zakerly/l10n/app_localizations.dart';
 import '../../../../core/premium/premium_status.dart';
 import '../../../../core/services/premium_refresh_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/subject_style.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event_state.dart';
 import '../../../notifications/presentation/pages/notifications_inbox_page.dart';
@@ -87,7 +88,7 @@ class _HomeContent extends StatelessWidget {
                           greeting: _getGreeting(context),
                           dateLabel: _formatToday(context),
                           name: name,
-                          avatarUrl: user?.avatarUrl,
+                          avatarUrl: user?.resolvedAvatarUrl,
                           isDark: isDark,
                         );
                       },
@@ -1099,9 +1100,15 @@ class _SubjectPreviewCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    AppLocalizations.of(context).homeSubjectTargetMinutes(
-                      subject.dailyTargetMinutes,
-                    ),
+                    subject.goalType == 'weekly'
+                        ? AppLocalizations.of(context)
+                            .homeSubjectTargetMinutesWeekly(
+                            subject.dailyTargetMinutes,
+                          )
+                        : AppLocalizations.of(context)
+                            .homeSubjectTargetMinutesDaily(
+                            subject.dailyTargetMinutes,
+                          ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -1322,33 +1329,8 @@ class _HomeMessageCard extends StatelessWidget {
 }
 
 class _HomeSubjectStyle {
-  static Color resolveColor(String? hex) {
-    for (final color in AppColors.subjectColors) {
-      if (_toHex(color) == hex) return color;
-    }
-    return AppColors.primary;
-  }
+  static Color resolveColor(String? hex) => SubjectPalette.resolveColor(hex);
 
-  static IconData resolveIcon(String? key) {
-    switch (key) {
-      case 'calculate':
-        return Icons.calculate_rounded;
-      case 'science':
-        return Icons.science_rounded;
-      case 'language':
-        return Icons.language_rounded;
-      case 'palette':
-        return Icons.palette_outlined;
-      case 'code':
-        return Icons.code_rounded;
-      case 'book':
-      default:
-        return Icons.menu_book_rounded;
-    }
-  }
-
-  static String _toHex(Color color) {
-    final value = color.toARGB32() & 0x00FFFFFF;
-    return '#${value.toRadixString(16).padLeft(6, '0').toUpperCase()}';
-  }
+  static IconData resolveIcon(String? key) =>
+      SubjectIconCatalog.iconForKey(key);
 }

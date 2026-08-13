@@ -23,9 +23,11 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "swagger:export": "node -r ./scripts/dev-runtime-flags.cjs ./node_modules/ts-node/dist/bin.js scripts/export-openapi.ts",
     "promote-admin": "node -r ./scripts/dev-runtime-flags.cjs ./node_modules/ts-node/dist/bin.js scripts/promote-admin.ts",
+    "premium-gating": "node -r ./scripts/dev-runtime-flags.cjs ./node_modules/ts-node/dist/bin.js scripts/set-premium-gating.ts",
     "verify-email": "node -r ./scripts/dev-runtime-flags.cjs ./node_modules/ts-node/dist/bin.js scripts/verify-user-email.ts",
     "paymob:test": "node -r ./scripts/dev-runtime-flags.cjs ./node_modules/ts-node/dist/bin.js scripts/test-paymob-credentials.ts",
-    "prepare": "cd .. && husky focaly-backend/.husky || true"
+    "prepare": "cd .. && husky focaly-backend/.husky || true",
+    "rebuild-analytics": "node -r ./scripts/dev-runtime-flags.cjs ./node_modules/ts-node/dist/bin.js scripts/rebuild-analytics-daily.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.658.0",
@@ -73,7 +75,6 @@
     "reflect-metadata": "^0.2.2",
     "rrule": "^2.8.1",
     "rxjs": "^7.8.1",
-    "stripe": "^17.1.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

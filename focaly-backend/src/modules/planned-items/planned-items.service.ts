@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
 import { ERROR_CODES } from '../../common/dto/api-response';
+import { localDayKey, resolveTimezone, todayKey } from '../../common/utils/day.util';
 import { PlannedItemChangedEvent } from '../../shared/events/planned-item-changed.event';
 import { PlannedItemCompletedEvent } from '../../shared/events/planned-item-completed.event';
 import { PlannedItemDeletedEvent } from '../../shared/events/planned-item-deleted.event';
@@ -116,26 +117,37 @@ export class PlannedItemsService {
       });
     }
 
+    // Items written before recurrence existed have no field at all; treat them
+    // as one-off rather than silently routing them down the recurring path.
+    const recurrence = item.recurrence ?? 'once';
+
     // A recurring item is completed one occurrence at a time, so ticking off
     // this Saturday leaves next Saturday's occurrence outstanding.
-    if (item.recurrence !== 'once') {
-      const occurrenceDate = normalizeOccurrenceDate(date);
+    if (recurrence !== 'once') {
+      const occurrenceDate = isDayKey(date) ? date : todayKey(await this.timezoneFor(userId));
       if (item.completedDates?.includes(occurrenceDate)) return item;
 
       const updated = await this.repository.completeOccurrence(id, occurrenceDate);
-      await this.awardPoints(userId, kind, id, item.rewardPoints || 0);
+      await this.awardPoints(userId, kind, id, item.rewardPoints || 0, occurrenceDate);
       return updated;
     }
 
     if (item.completed) return item;
 
+    const completedAt = new Date();
     const updated = await this.repository.updateById(id, {
-      $set: { completed: true, completedAt: new Date() },
+      $set: { completed: true, completedAt },
     });
 
-    await this.awardPoints(userId, kind, id, item.rewardPoints || 0);
+    const tz = await this.timezoneFor(userId);
+    await this.awardPoints(userId, kind, id, item.rewardPoints || 0, localDayKey(completedAt, tz));
 
     return updated;
+  }
+
+  private async timezoneFor(userId: string): Promise<string> {
+    const user = await this.usersRepository.findActiveById(userId);
+    return resolveTimezone(user?.settings?.timezone);
   }
 
   private async awardPoints(
@@ -143,12 +155,13 @@ export class PlannedItemsService {
     kind: PlannedItemKind,
     id: string,
     points: number,
+    occurrenceDate: string,
   ): Promise<void> {
     if (points > 0) {
       await this.usersRepository.updateOne({ _id: userId }, { $inc: { totalPoints: points } });
     }
 
-    this.eventBus.publish(new PlannedItemCompletedEvent(userId, id, kind, points));
+    this.eventBus.publish(new PlannedItemCompletedEvent(userId, id, kind, points, occurrenceDate));
   }
 
   async remove(userId: string, kind: PlannedItemKind, id: string) {
@@ -171,7 +184,6 @@ export class PlannedItemsService {
  * client sends the date it rendered rather than letting the server guess it
  * from a UTC timestamp.
  */
-function normalizeOccurrenceDate(date?: string): string {
-  if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
-  return new Date().toISOString().slice(0, 10);
+function isDayKey(date?: string): date is string {
+  return !!date && /^\d{4}-\d{2}-\d{2}$/.test(date);
 }

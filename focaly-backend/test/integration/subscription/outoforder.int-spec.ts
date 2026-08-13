@@ -5,8 +5,14 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose, { Model } from 'mongoose';
 
 import { PaymentEventsRepository } from '../../../src/modules/subscription/payment-events.repository';
-import { PaymentEvent, PaymentEventSchema } from '../../../src/modules/subscription/schemas/payment-event.schema';
-import { Subscription, SubscriptionSchema } from '../../../src/modules/subscription/schemas/subscription.schema';
+import {
+  PaymentEvent,
+  PaymentEventSchema,
+} from '../../../src/modules/subscription/schemas/payment-event.schema';
+import {
+  Subscription,
+  SubscriptionSchema,
+} from '../../../src/modules/subscription/schemas/subscription.schema';
 import { SubscriptionsRepository } from '../../../src/modules/subscription/subscriptions.repository';
 import { SubscriptionsService } from '../../../src/modules/subscription/subscriptions.service';
 import { User, UserSchema } from '../../../src/modules/users/schemas/user.schema';
@@ -65,10 +71,10 @@ describe('Out-of-order webhook handling', () => {
     const earlierEvent = new Date('2026-06-10');
 
     await service.applyEvent({
-      provider: 'stripe',
+      provider: 'paymob',
       eventId: 'evt_active_later',
       providerSubId: 'sub_xyz',
-      userId: user.id,
+      userId: String(user._id),
       status: 'active',
       currentPeriodEnd: new Date('2026-07-15'),
       eventTimestamp: laterEvent,
@@ -76,10 +82,10 @@ describe('Out-of-order webhook handling', () => {
     });
 
     const result = await service.applyEvent({
-      provider: 'stripe',
+      provider: 'paymob',
       eventId: 'evt_cancel_earlier',
       providerSubId: 'sub_xyz',
-      userId: user.id,
+      userId: String(user._id),
       status: 'canceled',
       eventTimestamp: earlierEvent,
       rawPayload: {},

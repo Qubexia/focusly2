@@ -1,18 +1,24 @@
-import { CqrsModule, EventBus } from '@nestjs/cqrs';
+import { CqrsModule } from '@nestjs/cqrs';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose, { Model } from 'mongoose';
 
 import { PaymentEventsRepository } from '../../../src/modules/subscription/payment-events.repository';
-import { PaymentEvent, PaymentEventSchema } from '../../../src/modules/subscription/schemas/payment-event.schema';
-import { Subscription, SubscriptionSchema } from '../../../src/modules/subscription/schemas/subscription.schema';
+import {
+  PaymentEvent,
+  PaymentEventSchema,
+} from '../../../src/modules/subscription/schemas/payment-event.schema';
+import {
+  Subscription,
+  SubscriptionSchema,
+} from '../../../src/modules/subscription/schemas/subscription.schema';
 import { SubscriptionsRepository } from '../../../src/modules/subscription/subscriptions.repository';
 import { SubscriptionsService } from '../../../src/modules/subscription/subscriptions.service';
 import { User, UserSchema } from '../../../src/modules/users/schemas/user.schema';
 import { UsersRepository } from '../../../src/modules/users/users.repository';
 
-describe('Stripe webhook idempotency (integration)', () => {
+describe('Payment webhook idempotency (integration)', () => {
   let mongod: MongoMemoryServer;
   let userModel: Model<User>;
   let paymentEventModel: Model<PaymentEvent>;
@@ -62,10 +68,10 @@ describe('Stripe webhook idempotency (integration)', () => {
     });
 
     const eventPayload = {
-      provider: 'stripe' as const,
+      provider: 'paymob' as const,
       eventId: 'evt_123',
       providerSubId: 'sub_abc',
-      userId: user.id,
+      userId: String(user._id),
       status: 'active' as const,
       currentPeriodEnd: new Date(Date.now() + 30 * 86400_000),
       eventTimestamp: new Date(),

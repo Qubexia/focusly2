@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDkz9nF_Iby0_jawCJBXMqbZN28lGDdjaQ',
-    appId: '1:264301190550:android:6293e9b7847256a6f751b7',
+    appId: '1:264301190550:android:bc962634566d73e7f751b7',
     messagingSenderId: '264301190550',
     projectId: 'focusly-9ac6a',
     storageBucket: 'focusly-9ac6a.firebasestorage.app',

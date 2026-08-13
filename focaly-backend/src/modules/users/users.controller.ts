@@ -22,6 +22,15 @@ import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
+const AVATAR_MAX_BYTES = 2_097_152;
+const AVATAR_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+]);
+
 @ApiTags('Users')
 @Controller({ path: 'users', version: '1' })
 export class UsersController {
@@ -55,19 +64,36 @@ export class UsersController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: AVATAR_MAX_BYTES },
+    }),
+  )
   async uploadAvatar(
     @CurrentUser() user: CurrentUserPayload,
-    @UploadedFile() file?: { originalname: string },
+    @UploadedFile()
+    file?: {
+      originalname: string;
+      mimetype?: string;
+      buffer: Buffer;
+      size: number;
+    },
   ): Promise<{ avatarUrl: string }> {
-    if (!file) {
+    if (!file?.buffer?.length) {
       throw new BadRequestException({
         code: ERROR_CODES.VALIDATION,
         message: 'Avatar file is required.',
       });
     }
 
-    return this.usersService.uploadAvatar(user, file.originalname);
+    if (file.mimetype && !AVATAR_MIME_TYPES.has(file.mimetype)) {
+      throw new BadRequestException({
+        code: ERROR_CODES.VALIDATION,
+        message: 'Unsupported avatar image type.',
+      });
+    }
+
+    return this.usersService.uploadAvatar(user, file);
   }
 
   @Post('me/fcm-token')

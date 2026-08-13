@@ -10,7 +10,7 @@ import { UsersRepository } from '../users/users.repository';
 
 import { PaymobCardPayDto } from './dto/paymob-card-pay.dto';
 import { PaymobCheckoutSessionStore } from './paymob-checkout.sessions';
-import { buildPaymobSpecialReference } from './paymob-hmac.util';
+import { buildPaymobSpecialReference, parseUserIdFromSpecialReference } from './paymob-hmac.util';
 import {
   renderPaymobHostedCheckoutPage,
   renderPaymobHostedCheckoutScript,
@@ -85,6 +85,145 @@ export class PaymobService {
   get redirectUrl(): string {
     const base = this.config.get<string>('paymob.publicApiBaseUrl') ?? '';
     return `${base}/v1/subscription/paymob/redirect`;
+  }
+
+  /** Secret used to verify Paymob callbacks. Empty means callbacks must be rejected. */
+  get callbackHmacSecret(): string {
+    return this.hmacSecret;
+  }
+
+  /** Configured price for a plan, in the smallest currency unit. */
+  planAmountCents(plan: PaymobPlan): number {
+    return plan === 'yearly'
+      ? (this.config.get<number>('paymob.yearlyAmountCents') ?? 0)
+      : (this.config.get<number>('paymob.monthlyAmountCents') ?? 0);
+  }
+
+  get currency(): string {
+    return (this.config.get<string>('paymob.currency') ?? 'EGP').toUpperCase();
+  }
+
+  /**
+   * Confirms with Paymob that `amountCents`/`currency` match what the plan
+   * actually costs. Guards against a caller claiming a yearly plan after
+   * paying the monthly price (or paying a token amount).
+   */
+  assertAmountMatchesPlan(plan: PaymobPlan, amountCents: unknown, currency: unknown): void {
+    const expected = this.planAmountCents(plan);
+    if (!expected) {
+      throw new ServiceUnavailableException({
+        message: 'Paymob plan pricing is not configured.',
+      });
+    }
+
+    const paid = Number(amountCents);
+    if (!Number.isFinite(paid) || paid < expected) {
+      throw new BadRequestException({ message: 'Payment amount does not match the plan price.' });
+    }
+
+    const paidCurrency = typeof currency === 'string' ? currency.toUpperCase() : '';
+    if (paidCurrency && paidCurrency !== this.currency) {
+      throw new BadRequestException({ message: 'Payment currency does not match the plan.' });
+    }
+  }
+
+  /**
+   * Resolves the plan a transaction actually paid for, from its verified
+   * amount. Returns null when the amount matches no configured plan.
+   */
+  resolvePlanFromAmount(amountCents: unknown): PaymobPlan | null {
+    const paid = Number(amountCents);
+    if (!Number.isFinite(paid)) return null;
+
+    const yearly = this.planAmountCents('yearly');
+    const monthly = this.planAmountCents('monthly');
+
+    if (yearly && paid >= yearly) return 'yearly';
+    if (monthly && paid >= monthly) return 'monthly';
+    return null;
+  }
+
+  /**
+   * Fetches a transaction straight from Paymob. This is the authority on
+   * whether a payment happened — never trust a client-supplied transaction id
+   * or status without running it through here.
+   */
+  async fetchTransaction(transactionId: string): Promise<Record<string, unknown>> {
+    this.assertConfigured();
+
+    const response = await fetch(
+      `${this.baseUrl}/api/acceptance/transactions/${encodeURIComponent(transactionId)}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Token ${this.secretKey}`,
+          Accept: 'application/json',
+        },
+      },
+    );
+
+    if (!response.ok) {
+      this.logger.warn(
+        `Paymob transaction inquiry failed for ${transactionId} (${response.status}).`,
+      );
+      throw new BadRequestException({ message: 'Could not verify this payment with Paymob.' });
+    }
+
+    return (await response.json()) as Record<string, unknown>;
+  }
+
+  /**
+   * Verifies a native-SDK payment before any premium is granted: the
+   * transaction must exist at Paymob, have succeeded, belong to this user,
+   * and have paid at least the configured price for the requested plan.
+   */
+  async verifySdkTransaction(
+    userId: string,
+    plan: PaymobPlan,
+    transactionId: string,
+  ): Promise<{ transactionId: string; amountCents: number; plan: PaymobPlan }> {
+    const tx = await this.fetchTransaction(transactionId.trim());
+
+    const success = tx.success === true || tx.success === 'true';
+    const pending = tx.pending === true || tx.pending === 'true';
+    const errored = tx.error_occured === true || tx.error_occured === 'true';
+    const refunded = tx.is_refunded === true || tx.is_refunded === 'true';
+    const voided = tx.is_voided === true || tx.is_voided === 'true';
+
+    if (!success || pending || errored || refunded || voided) {
+      throw new BadRequestException({
+        message: 'This Paymob transaction is not a completed payment.',
+      });
+    }
+
+    const order = tx.order as Record<string, unknown> | undefined;
+    const extras = (tx.extras ?? order?.extras) as Record<string, unknown> | undefined;
+    const reference =
+      (order?.merchant_order_id as string | undefined) ??
+      (tx.special_reference as string | undefined);
+
+    const referencedUserId =
+      parseUserIdFromSpecialReference(reference) ??
+      (typeof extras?.userId === 'string' ? extras.userId : null);
+
+    if (referencedUserId !== userId) {
+      this.logger.warn(
+        `Paymob SDK confirm rejected: transaction ${transactionId} does not belong to user ${userId}.`,
+      );
+      throw new BadRequestException({ message: 'This payment does not belong to your account.' });
+    }
+
+    this.assertAmountMatchesPlan(plan, tx.amount_cents, tx.currency);
+
+    const rawId = tx.id;
+    const resolvedId =
+      typeof rawId === 'string' || typeof rawId === 'number' ? String(rawId) : transactionId.trim();
+
+    return {
+      transactionId: resolvedId,
+      amountCents: Number(tx.amount_cents),
+      plan: this.resolvePlanFromAmount(tx.amount_cents) ?? plan,
+    };
   }
 
   private callbacksReachable(): boolean {
@@ -435,8 +574,17 @@ export class PaymobService {
 
     const data = (await response.json()) as Record<string, unknown>;
     if (!response.ok) {
-      const detail = typeof data.detail === 'string' ? data.detail : '';
-      if (response.status === 404 && detail.includes('Integration')) {
+      const detail = this.intentionErrorDetail(data);
+      // Missing / wrong integration for Unified Checkout → use legacy payment key.
+      if (
+        response.status === 404 ||
+        /integration/i.test(detail) ||
+        /does not exist/i.test(detail)
+      ) {
+        this.logger.warn(
+          `Paymob intention unavailable (${response.status}): ${detail || JSON.stringify(data)}; ` +
+            'falling back to legacy payment key.',
+        );
         return null;
       }
 
@@ -592,8 +740,21 @@ export class PaymobService {
     );
   }
 
+  private intentionErrorDetail(data: Record<string, unknown>): string {
+    if (typeof data.detail === 'string') {
+      return data.detail;
+    }
+    if (Array.isArray(data.detail)) {
+      return data.detail.map((item) => String(item)).join('; ');
+    }
+    if (typeof data.message === 'string') {
+      return data.message;
+    }
+    return '';
+  }
+
   private mapIntentionError(status: number, data: Record<string, unknown>): BadRequestException {
-    const detail = typeof data.detail === 'string' ? data.detail : undefined;
+    const detail = this.intentionErrorDetail(data) || undefined;
 
     if (
       status === 401 ||

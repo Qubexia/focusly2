@@ -84,13 +84,20 @@ export class AiWorker extends WorkerHost {
         return;
       }
 
-      const aiJob = await this.aiJobsRepo.findById(jobId);
+      const aiJob = await this.aiJobsRepo.findByIdAndUser(jobId, userId);
       if (!aiJob) {
         throw new Error(`AI job not found: ${jobId}`);
       }
 
-      const imageKeys = aiJob.imageKeys ?? [];
+      // Only ever read files this user owns. S3 keys are minted as
+      // `uploads/<userId>/...` by UploadsService, and GridFS ownership is
+      // checked inside AiFilesService.read.
+      const ownedPrefix = `uploads/${userId}/`;
+      const imageKeys = (aiJob.imageKeys ?? []).filter((key) => key.startsWith(ownedPrefix));
       const pdfKeys = aiJob.pdfKeys ?? [];
+      if ((aiJob.imageKeys ?? []).length !== imageKeys.length) {
+        throw new Error('Job references image keys that do not belong to this user');
+      }
       if (imageKeys.length === 0 && pdfKeys.length === 0) {
         throw new Error('No image or PDF keys found for this job');
       }
@@ -122,7 +129,7 @@ export class AiWorker extends WorkerHost {
 
         const files: string[] = [];
         for (const fileId of pdfKeys.slice(0, 3)) {
-          const buffer = await this.aiFiles.read(fileId);
+          const buffer = await this.aiFiles.read(fileId, userId);
           files.push(buffer.toString('base64'));
         }
 

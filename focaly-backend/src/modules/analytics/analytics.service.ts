@@ -1,13 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import dayjs from 'dayjs';
 import { Model, Types } from 'mongoose';
 
+import {
+  localDayBounds,
+  localDayCount,
+  localDayKeysBetween,
+  resolveTimezone,
+} from '../../common/utils/day.util';
 import { PlannedItem, PlannedItemDocument } from '../planned-items/schemas/planned-item.schema';
 import {
   PomodoroSession,
   PomodoroSessionDocument,
 } from '../pomodoro/schemas/pomodoro-session.schema';
+import { StreaksService } from '../streaks/streaks.service';
+import { UsersRepository } from '../users/users.repository';
 
 import { AnalyticsRepository } from './analytics.repository';
 
@@ -21,10 +28,24 @@ interface PomodoroDailyRow {
   minutes?: number;
 }
 
+interface CountRow {
+  total?: number;
+}
+
+interface RangeTotals {
+  totalFocusMinutes: number;
+  totalSessions: number;
+  totalTasksCompleted: number;
+  activeDays: number;
+  dailyFocus: Array<{ date: string; minutes: number }>;
+}
+
 @Injectable()
 export class AnalyticsService {
   constructor(
     private readonly analyticsRepo: AnalyticsRepository,
+    private readonly usersRepo: UsersRepository,
+    private readonly streaksService: StreaksService,
     @InjectModel(PomodoroSession.name)
     private readonly pomodoroModel: Model<PomodoroSessionDocument>,
     @InjectModel(PlannedItem.name)
@@ -32,88 +53,29 @@ export class AnalyticsService {
   ) {}
 
   async summary(userId: string, from: Date, to: Date) {
-    const fromDate = dayjs(from).startOf('day').toDate();
-    const toDate = dayjs(to).endOf('day').toDate();
-    const normalizedUserId = toObjectIdIfPossible(userId);
+    const tz = await this.timezoneFor(userId);
+    const { start, end } = localDayBounds(from, to, tz);
+    const totals = await this.rangeTotals(userId, start, end, tz);
+    const streak = await this.currentStreak(userId);
 
-    if (dayjs(to).diff(dayjs(from), 'day') <= 7) {
-      const [live, streakRows, dailyRows, tasksCompleted] = await Promise.all([
-        this.pomodoroModel
-          .aggregate<PomodoroTotalsRow>([
-            { $match: { userId: normalizedUserId, startedAt: { $gte: fromDate, $lte: toDate } } },
-            {
-              $group: {
-                _id: null,
-                totalFocusMinutes: { $sum: '$totalFocusMinutes' },
-                totalSessions: { $sum: 1 },
-              },
-            },
-          ])
-          .exec(),
-        this.pomodoroModel
-          .aggregate([
-            {
-              $match: {
-                userId: normalizedUserId,
-                startedAt: { $gte: fromDate, $lte: toDate },
-                totalFocusMinutes: { $gt: 0 },
-              },
-            },
-            {
-              $group: {
-                _id: {
-                  $dateToString: { format: '%Y-%m-%d', date: '$startedAt' },
-                },
-              },
-            },
-          ])
-          .exec(),
-        this.pomodoroModel
-          .aggregate<PomodoroDailyRow>([
-            { $match: { userId: normalizedUserId, startedAt: { $gte: fromDate, $lte: toDate } } },
-            {
-              $group: {
-                _id: {
-                  $dateToString: { format: '%Y-%m-%d', date: '$startedAt' },
-                },
-                minutes: { $sum: '$totalFocusMinutes' },
-              },
-            },
-            { $sort: { _id: 1 } },
-          ])
-          .exec(),
-        this.countCompletedPlannedItems(normalizedUserId, fromDate, toDate),
-      ]);
-
-      const s = live[0];
-      return {
-        totalFocusMinutes: s?.totalFocusMinutes ?? 0,
-        totalSessions: s?.totalSessions ?? 0,
-        totalTasksCompleted: tasksCompleted,
-        streak: streakRows.length,
-        dailyFocus: dailyRows.map((row) => ({
-          date: String(row._id ?? ''),
-          minutes: Number(row.minutes ?? 0),
-        })),
-        range: { from: fromDate.toISOString(), to: toDate.toISOString() },
-      };
-    }
-
-    const rollup = await this.analyticsRepo.getSummary(userId, fromDate, toDate);
-    const dailyRows = await this.analyticsRepo.getDailySeries(userId, fromDate, toDate);
     return {
-      totalFocusMinutes: rollup.totalFocusMinutes,
-      totalSessions: rollup.totalSessions,
-      totalTasksCompleted: rollup.totalPlannedItems,
-      streak: rollup.streakDays,
-      dailyFocus: dailyRows,
-      range: { from: fromDate.toISOString(), to: toDate.toISOString() },
+      totalFocusMinutes: totals.totalFocusMinutes,
+      totalSessions: totals.totalSessions,
+      totalTasksCompleted: totals.totalTasksCompleted,
+      // Consecutive study days, straight from the streak record.
+      streak,
+      // Days inside the selected range that had any focus time.
+      activeDays: totals.activeDays,
+      dailyFocus: totals.dailyFocus,
+      dayCount: localDayCount(start, end, tz),
+      timezone: tz,
+      range: { from: start.toISOString(), to: end.toISOString() },
     };
   }
 
   async bySubject(userId: string, from: Date, to: Date) {
-    const fromDate = dayjs(from).startOf('day').toDate();
-    const toDate = dayjs(to).endOf('day').toDate();
+    const tz = await this.timezoneFor(userId);
+    const { start, end } = localDayBounds(from, to, tz);
     const normalizedUserId = toObjectIdIfPossible(userId);
 
     return this.pomodoroModel
@@ -121,7 +83,8 @@ export class AnalyticsService {
         {
           $match: {
             userId: normalizedUserId,
-            startedAt: { $gte: fromDate, $lte: toDate },
+            status: 'completed',
+            startedAt: { $gte: start, $lte: end },
             subjectId: { $ne: null },
             totalFocusMinutes: { $gt: 0 },
           },
@@ -166,21 +129,64 @@ export class AnalyticsService {
   }
 
   async performance(userId: string, from: Date, to: Date) {
-    const fromDate = dayjs(from).startOf('day').toDate();
-    const toDate = dayjs(to).endOf('day').toDate();
-    const normalizedUserId = toObjectIdIfPossible(userId);
-    const dayCount = Math.max(1, dayjs(toDate).diff(dayjs(fromDate), 'day') + 1);
+    const tz = await this.timezoneFor(userId);
+    const { start, end } = localDayBounds(from, to, tz);
+    const dayCount = localDayCount(start, end, tz);
 
-    const [rollup, live, tasksCompleted, activeDays] = await Promise.all([
-      this.analyticsRepo.getSummary(userId, fromDate, toDate),
+    const [totals, streak] = await Promise.all([
+      this.rangeTotals(userId, start, end, tz),
+      this.currentStreak(userId),
+    ]);
+
+    const completionScore = computeCompletionScore({
+      totalFocusMinutes: totals.totalFocusMinutes,
+      totalSessions: totals.totalSessions,
+      totalTasksCompleted: totals.totalTasksCompleted,
+      activeDays: totals.activeDays,
+      dayCount,
+    });
+
+    return {
+      totals: {
+        totalFocusMinutes: totals.totalFocusMinutes,
+        totalSessions: totals.totalSessions,
+        totalTasksCompleted: totals.totalTasksCompleted,
+        streak,
+        activeDays: totals.activeDays,
+        // Legacy aliases kept for older clients.
+        totalPlannedItems: totals.totalTasksCompleted,
+        streakDays: streak,
+      },
+      completionScore,
+      dayCount,
+      timezone: tz,
+      range: { from: start.toISOString(), to: end.toISOString() },
+    };
+  }
+
+  /**
+   * One source of truth for every range. Reading the sessions themselves (not
+   * the nightly rollup) is what keeps the week, month and year tabs agreeing
+   * with each other.
+   */
+  private async rangeTotals(
+    userId: string,
+    start: Date,
+    end: Date,
+    tz: string,
+  ): Promise<RangeTotals> {
+    const normalizedUserId = toObjectIdIfPossible(userId);
+    const zone = resolveTimezone(tz);
+    const sessionMatch = {
+      userId: normalizedUserId,
+      status: 'completed',
+      startedAt: { $gte: start, $lte: end },
+    };
+
+    const [totalsRows, dailyRows, tasksCompleted] = await Promise.all([
       this.pomodoroModel
         .aggregate<PomodoroTotalsRow>([
-          {
-            $match: {
-              userId: normalizedUserId,
-              startedAt: { $gte: fromDate, $lte: toDate },
-            },
-          },
+          { $match: sessionMatch },
           {
             $group: {
               _id: null,
@@ -190,68 +196,95 @@ export class AnalyticsService {
           },
         ])
         .exec(),
-      this.countCompletedPlannedItems(normalizedUserId, fromDate, toDate),
       this.pomodoroModel
-        .aggregate([
-          {
-            $match: {
-              userId: normalizedUserId,
-              startedAt: { $gte: fromDate, $lte: toDate },
-              totalFocusMinutes: { $gt: 0 },
-            },
-          },
+        .aggregate<PomodoroDailyRow>([
+          { $match: sessionMatch },
           {
             $group: {
-              _id: { $dateToString: { format: '%Y-%m-%d', date: '$startedAt' } },
+              _id: {
+                $dateToString: { format: '%Y-%m-%d', date: '$startedAt', timezone: zone },
+              },
+              minutes: { $sum: '$totalFocusMinutes' },
             },
           },
+          { $sort: { _id: 1 } },
+        ])
+        .exec(),
+      this.countCompletedTasks(normalizedUserId, start, end, zone),
+    ]);
+
+    const totals = totalsRows[0];
+    const dailyFocus = dailyRows.map((row) => ({
+      date: String(row._id ?? ''),
+      minutes: Number(row.minutes ?? 0),
+    }));
+
+    return {
+      totalFocusMinutes: totals?.totalFocusMinutes ?? 0,
+      totalSessions: totals?.totalSessions ?? 0,
+      totalTasksCompleted: tasksCompleted,
+      activeDays: dailyFocus.filter((day) => day.minutes > 0).length,
+      dailyFocus,
+    };
+  }
+
+  /**
+   * One-off items carry a `completedAt` timestamp; recurring items are ticked
+   * off per occurrence into `completedDates`, so both have to be counted or
+   * every recurring task silently disappears from the stats.
+   */
+  private async countCompletedTasks(
+    userId: Types.ObjectId | string,
+    start: Date,
+    end: Date,
+    tz: string,
+  ): Promise<number> {
+    const dayKeys = localDayKeysBetween(start, end, tz);
+
+    const [oneOff, recurringRows] = await Promise.all([
+      this.plannedItemModel
+        .countDocuments({
+          userId,
+          recurrence: 'once',
+          completed: true,
+          completedAt: { $gte: start, $lte: end },
+        })
+        .exec(),
+      this.plannedItemModel
+        .aggregate<CountRow>([
+          {
+            $match: {
+              userId,
+              recurrence: { $ne: 'once' },
+              completedDates: { $in: dayKeys },
+            },
+          },
+          {
+            $project: {
+              hits: { $size: { $setIntersection: ['$completedDates', dayKeys] } },
+            },
+          },
+          { $group: { _id: null, total: { $sum: '$hits' } } },
         ])
         .exec(),
     ]);
 
-    const liveTotals = live[0];
-    const totalFocusMinutes = Math.max(
-      rollup.totalFocusMinutes,
-      liveTotals?.totalFocusMinutes ?? 0,
-    );
-    const totalSessions = Math.max(rollup.totalSessions, liveTotals?.totalSessions ?? 0);
-    const totalTasksCompleted = Math.max(rollup.totalPlannedItems, tasksCompleted);
-    const streak = Math.max(rollup.streakDays, activeDays.length);
-    const completionScore = computeCompletionScore({
-      totalFocusMinutes,
-      totalSessions,
-      totalTasksCompleted,
-      streak,
-      dayCount,
-    });
-
-    return {
-      totals: {
-        totalFocusMinutes,
-        totalSessions,
-        totalTasksCompleted,
-        streak,
-        // Legacy aliases kept for older clients / rollup consumers.
-        totalPlannedItems: totalTasksCompleted,
-        streakDays: streak,
-      },
-      completionScore,
-      range: { from: fromDate.toISOString(), to: toDate.toISOString() },
-    };
+    return oneOff + Number(recurringRows[0]?.total ?? 0);
   }
 
-  private countCompletedPlannedItems(
-    userId: Types.ObjectId | string,
-    fromDate: Date,
-    toDate: Date,
-  ): Promise<number> {
-    return this.plannedItemModel
-      .countDocuments({
-        userId,
-        completed: true,
-        completedAt: { $gte: fromDate, $lte: toDate },
-      })
-      .exec();
+  /** Goes through the service so a streak broken overnight already reads zero. */
+  private async currentStreak(userId: string): Promise<number> {
+    try {
+      const streak = await this.streaksService.getStreak(userId);
+      return streak.current;
+    } catch {
+      return 0;
+    }
+  }
+
+  private async timezoneFor(userId: string): Promise<string> {
+    const user = await this.usersRepo.findActiveById(userId);
+    return resolveTimezone(user?.settings?.timezone);
   }
 }
 
@@ -259,21 +292,21 @@ function computeCompletionScore(input: {
   totalFocusMinutes: number;
   totalSessions: number;
   totalTasksCompleted: number;
-  streak: number;
+  activeDays: number;
   dayCount: number;
 }): number {
-  const { totalFocusMinutes, totalSessions, totalTasksCompleted, streak, dayCount } = input;
+  const { totalFocusMinutes, totalSessions, totalTasksCompleted, activeDays, dayCount } = input;
   if (totalFocusMinutes <= 0 && totalSessions <= 0 && totalTasksCompleted <= 0) {
     return 0;
   }
 
   const focusRatio = Math.min(1, totalFocusMinutes / (25 * dayCount));
   const sessionRatio = Math.min(1, totalSessions / dayCount);
-  const streakRatio = Math.min(1, streak / dayCount);
+  const consistencyRatio = Math.min(1, activeDays / dayCount);
   const taskRatio =
     totalTasksCompleted > 0 ? Math.min(1, totalTasksCompleted / Math.max(1, dayCount)) : focusRatio;
 
-  const score = 0.45 * focusRatio + 0.25 * sessionRatio + 0.2 * taskRatio + 0.1 * streakRatio;
+  const score = 0.45 * focusRatio + 0.25 * sessionRatio + 0.2 * taskRatio + 0.1 * consistencyRatio;
 
   // Guarantee a visible non-zero score when the user has any activity.
   return Math.min(1, Math.max(score, 0.05));

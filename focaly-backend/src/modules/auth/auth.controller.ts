@@ -13,6 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 
 import { CurrentUser, CurrentUserPayload } from '../../common/decorators/current-user.decorator';
@@ -28,6 +29,7 @@ import {
   RegisterDto,
   ResetPasswordDto,
   VerifyEmailDto,
+  VerifyResetOtpDto,
 } from './dto';
 import { RefreshTokenClaims } from './jwt.service';
 
@@ -38,6 +40,7 @@ export class AuthController {
 
   @Post('register')
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   async register(@Body() dto: RegisterDto, @Req() req: Request): Promise<unknown> {
     const deviceId = req.get('x-device-id') ?? undefined;
     return await this.authService.register(dto, getRequestMeta(req), deviceId);
@@ -45,12 +48,14 @@ export class AuthController {
 
   @Post('login')
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   async login(@Body() dto: LoginDto, @Req() req: Request): Promise<unknown> {
     return await this.authService.login(dto, getRequestMeta(req));
   }
 
   @Post('google')
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async google(@Body() dto: GoogleLoginDto, @Req() req: Request): Promise<unknown> {
     return await this.authService.googleLogin(dto, getRequestMeta(req));
   }
@@ -80,13 +85,22 @@ export class AuthController {
 
   @Post('forgot-password')
   @Public()
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
   async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<void> {
     await this.authService.forgotPassword(dto);
   }
 
+  @Post('verify-reset-otp')
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async verifyResetOtp(@Body() dto: VerifyResetOtpDto): Promise<{ resetToken: string }> {
+    return await this.authService.verifyResetOtp(dto);
+  }
+
   @Post('reset-password')
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
   async resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
     await this.authService.resetPassword(dto);
@@ -94,6 +108,7 @@ export class AuthController {
 
   @Post('verify-email')
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
   async verifyEmail(@Body() dto: VerifyEmailDto): Promise<void> {
     await this.authService.verifyEmail(dto);

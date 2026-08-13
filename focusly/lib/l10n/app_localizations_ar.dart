@@ -251,8 +251,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeCreateSubject => 'إنشاء مادة';
 
   @override
-  String homeSubjectTargetMinutes(int minutes) {
-    return '· هدف $minutes د';
+  String homeSubjectTargetMinutesDaily(int minutes) {
+    return '· $minutes د/يوم';
+  }
+
+  @override
+  String homeSubjectTargetMinutesWeekly(int minutes) {
+    return '· $minutes د/أسبوع';
   }
 
   @override
@@ -754,10 +759,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get authForgotPasswordSubtitle =>
-      'أدخل البريد الإلكتروني المرتبط بحسابك وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.';
+      'أدخل البريد الإلكتروني المرتبط بحسابك وسنرسل لك رمز تحقق لإعادة تعيين كلمة المرور.';
 
   @override
   String get authSendResetLinkButton => 'إرسال رابط إعادة التعيين';
+
+  @override
+  String get authSendResetOtpButton => 'إرسال رمز التحقق';
 
   @override
   String get authCheckEmailTitle => 'تحقق من بريدك الإلكتروني';
@@ -769,6 +777,43 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get authBackToSignInButton => 'العودة إلى تسجيل الدخول';
+
+  @override
+  String get authOtpAppBar => 'أدخل رمز التحقق';
+
+  @override
+  String authOtpSubtitle(String email) {
+    return 'أرسلنا رمزًا مكوّنًا من 6 أرقام إلى\n$email';
+  }
+
+  @override
+  String get authOtpLabel => 'رمز التحقق';
+
+  @override
+  String get authOtpHint => 'رمز من 6 أرقام';
+
+  @override
+  String get authOtpInvalidLength => 'أدخل الرمز المكوّن من 6 أرقام';
+
+  @override
+  String get authOtpInvalid => 'رمز التحقق غير صالح أو منتهي الصلاحية.';
+
+  @override
+  String get authVerifyOtpButton => 'تحقق من الرمز';
+
+  @override
+  String get authResendOtpButton => 'إعادة إرسال الرمز';
+
+  @override
+  String authResendOtpIn(int seconds) {
+    return 'إعادة الإرسال خلال $secondsث';
+  }
+
+  @override
+  String get authOtpResent => 'تم إرسال رمز تحقق جديد.';
+
+  @override
+  String get authOtpResendError => 'تعذّر إعادة إرسال الرمز الآن.';
 
   @override
   String get authResetPasswordAppBar => 'إعادة تعيين كلمة المرور';
@@ -794,7 +839,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get authResetLinkInvalid =>
-      'رابط إعادة التعيين غير صالح أو منتهي الصلاحية.';
+      'جلسة إعادة التعيين غير صالحة أو منتهية. اطلب رمزًا جديدًا.';
 
   @override
   String get authVerifyEmailAppBar => 'تأكيد البريد الإلكتروني';
@@ -1265,11 +1310,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get profilePasswordResetSent =>
-      'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.';
+      'تم إرسال رمز إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.';
 
   @override
-  String get profilePasswordResetError =>
-      'تعذّر إرسال رابط إعادة التعيين الآن.';
+  String get profilePasswordResetError => 'تعذّر إرسال رمز إعادة التعيين الآن.';
 
   @override
   String get profileChangePhoto => 'تغيير الصورة';
@@ -1294,7 +1338,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'تغيير البريد الإلكتروني غير متاح بعد.';
 
   @override
-  String get profileSendPasswordReset => 'إرسال رابط إعادة تعيين كلمة المرور';
+  String get profileSendPasswordReset => 'إعادة تعيين كلمة المرور بالرمز';
 
   @override
   String get profileSaveChanges => 'حفظ التغييرات';
@@ -1554,6 +1598,11 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String subjectsMinutesPlannedWeekly(int minutes) {
+    return '$minutes دقيقة مخطّطة كل أسبوع';
+  }
+
+  @override
   String get subjectsProgressLabel => 'التقدّم';
 
   @override
@@ -1706,9 +1755,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get subscriptionPaymobNote => 'أدخل بيانات بطاقتك لإتمام الدفع بأمان.';
 
   @override
-  String get subscriptionPayStripe => 'بطاقة دولية (Stripe)';
-
-  @override
   String get subscriptionPremiumActiveTitle => 'بريميوم مفعّل';
 
   @override
@@ -1796,6 +1842,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get authGoogleSignInFailed =>
       'فشل تسجيل الدخول عبر Google. حاول مرة أخرى.';
+
+  @override
+  String get authGoogleNotConfigured =>
+      'تسجيل الدخول عبر Google غير مضبوط لهذه النسخة. عيّن GOOGLE_SERVER_CLIENT_ID.';
 
   @override
   String get authServerUnreachable =>
@@ -1993,20 +2043,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get subscriptionCheckoutFailed => 'تعذّر بدء الدفع عبر Paymob.';
-
-  @override
-  String get subscriptionStripeUnavailable =>
-      'الدفع بالبطاقة غير متاح مؤقتاً. جرّب طريقة أخرى أو حاول لاحقاً.';
-
-  @override
-  String get subscriptionStripeBrowserPrompt =>
-      'أكمل الدفع في المتصفح، ثم عُد واضغط على تحديث.';
-
-  @override
-  String get subscriptionPaymentPageFailed => 'تعذّر فتح صفحة الدفع.';
-
-  @override
-  String get subscriptionCardCheckoutFailed => 'تعذّر بدء الدفع بالبطاقة.';
 
   @override
   String get subscriptionCanceledEnded =>

@@ -79,6 +79,7 @@ class ApiEndpoints {
   static const String logout = '/v1/auth/logout';
   static const String logoutAll = '/v1/auth/logout-all';
   static const String forgotPassword = '/v1/auth/forgot-password';
+  static const String verifyResetOtp = '/v1/auth/verify-reset-otp';
   static const String resetPassword = '/v1/auth/reset-password';
   static const String verifyEmail = '/v1/auth/verify-email';
   static const String resendVerification = '/v1/auth/resend-verification';
@@ -156,8 +157,6 @@ class ApiEndpoints {
 
   // Subscription
   static const String subscriptionMe = '/v1/subscription/me';
-  static const String subscriptionStripeCheckout =
-      '/v1/subscription/stripe/checkout';
   static const String subscriptionCancel = '/v1/subscription/cancel';
   static const String subscriptionPaymobCheckout =
       '/v1/subscription/paymob/checkout';

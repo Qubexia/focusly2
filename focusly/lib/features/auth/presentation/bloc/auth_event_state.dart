@@ -26,7 +26,15 @@ class AuthUserSynced extends AuthEvent {
   const AuthUserSynced(this.user);
 
   @override
-  List<Object?> get props => [user.id, user.plan, user.premiumUntil];
+  List<Object?> get props => [
+        user.id,
+        user.name,
+        user.avatarUrl,
+        user.plan,
+        user.premiumUntil,
+        user.emailVerified,
+        user.totalPoints,
+      ];
 }
 
 class AuthLoginRequested extends AuthEvent {
@@ -111,7 +119,15 @@ class AuthAuthenticated extends AuthState {
   const AuthAuthenticated({required this.user});
 
   @override
-  List<Object?> get props => [user.id, user.plan, user.premiumUntil];
+  List<Object?> get props => [
+        user.id,
+        user.name,
+        user.avatarUrl,
+        user.plan,
+        user.premiumUntil,
+        user.emailVerified,
+        user.totalPoints,
+      ];
 }
 
 class AuthUnauthenticated extends AuthState {

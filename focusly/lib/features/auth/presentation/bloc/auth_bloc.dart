@@ -113,6 +113,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
+    if (AuthConfig.googleServerClientId.isEmpty) {
+      emit(AuthError(message: AppL10n.current.authGoogleNotConfigured));
+      return;
+    }
     try {
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
@@ -132,7 +136,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } on DioException catch (e) {
       emit(AuthError(message: _extractErrorMessage(e)));
     } catch (e) {
-      emit(AuthError(message: AppL10n.current.authGoogleSignInFailed));
+      // Surface SDK errors in debug (e.g. ApiException:10 = SHA/package mismatch).
+      final detail = e.toString();
+      emit(
+        AuthError(
+          message: detail.contains('ApiException') || detail.contains('PlatformException')
+              ? detail
+              : AppL10n.current.authGoogleSignInFailed,
+        ),
+      );
     }
   }
 
@@ -140,14 +152,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthForgotPasswordRequested event,
     Emitter<AuthState> emit,
   ) async {
+    final previousState = state;
     emit(const AuthLoading());
     try {
       await _authRepository.forgotPassword(email: event.email);
       emit(const AuthForgotPasswordSuccess());
     } on DioException catch (e) {
       emit(AuthError(message: _extractErrorMessage(e)));
+      if (previousState is AuthAuthenticated ||
+          previousState is AuthUnauthenticated) {
+        emit(previousState);
+      }
     } catch (e) {
       emit(AuthError(message: e.toString()));
+      if (previousState is AuthAuthenticated ||
+          previousState is AuthUnauthenticated) {
+        emit(previousState);
+      }
     }
   }
 
@@ -156,6 +177,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     await _authRepository.logout();
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // Local session already cleared; ignore Google SDK errors.
+    }
     emit(const AuthUnauthenticated());
   }
 

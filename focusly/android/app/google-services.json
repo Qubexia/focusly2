@@ -12,7 +12,12 @@
           "package_name": "com.example.focusly"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "264301190550-asllhnma6e86477cm9tckti0h03ln223.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDkz9nF_Iby0_jawCJBXMqbZN28lGDdjaQ"
@@ -20,7 +25,49 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "264301190550-asllhnma6e86477cm9tckti0h03ln223.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:264301190550:android:bc962634566d73e7f751b7",
+        "android_client_info": {
+          "package_name": "com.zakerly.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "264301190550-n82ouc2lrvskjfjen2cv4vv4gu6b1p4h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zakerly.app",
+            "certificate_hash": "0da0288497c102482035df619f00a9074f2ee199"
+          }
+        },
+        {
+          "client_id": "264301190550-asllhnma6e86477cm9tckti0h03ln223.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkz9nF_Iby0_jawCJBXMqbZN28lGDdjaQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "264301190550-asllhnma6e86477cm9tckti0h03ln223.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

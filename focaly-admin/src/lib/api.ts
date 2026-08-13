@@ -6,16 +6,23 @@ import axios, {
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000/v1';
 
-const ACCESS_KEY = 'focaly_admin_access';
 const REFRESH_KEY = 'focaly_admin_refresh';
 const DEVICE_KEY = 'focaly_admin_device';
 
+/**
+ * The access token lives in memory only, and the refresh token in
+ * sessionStorage — neither survives closing the tab, and the access token is
+ * never written to disk at all. Persisting both in localStorage (the previous
+ * behaviour) meant any injected script could lift a long-lived admin session.
+ */
+let accessToken: string | null = null;
+
 export const tokenStore = {
   get access(): string | null {
-    return localStorage.getItem(ACCESS_KEY);
+    return accessToken;
   },
   get refresh(): string | null {
-    return localStorage.getItem(REFRESH_KEY);
+    return sessionStorage.getItem(REFRESH_KEY);
   },
   get deviceId(): string {
     let id = localStorage.getItem(DEVICE_KEY);
@@ -26,11 +33,14 @@ export const tokenStore = {
     return id;
   },
   set(access: string, refresh: string): void {
-    localStorage.setItem(ACCESS_KEY, access);
-    localStorage.setItem(REFRESH_KEY, refresh);
+    accessToken = access;
+    sessionStorage.setItem(REFRESH_KEY, refresh);
   },
   clear(): void {
-    localStorage.removeItem(ACCESS_KEY);
+    accessToken = null;
+    sessionStorage.removeItem(REFRESH_KEY);
+    // Drop credentials left on disk by older builds of this dashboard.
+    localStorage.removeItem('focaly_admin_access');
     localStorage.removeItem(REFRESH_KEY);
   },
 };

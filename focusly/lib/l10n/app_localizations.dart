@@ -572,11 +572,17 @@ abstract class AppLocalizations {
   /// **'Create Subject'**
   String get homeCreateSubject;
 
-  /// No description provided for @homeSubjectTargetMinutes.
+  /// No description provided for @homeSubjectTargetMinutesDaily.
   ///
   /// In en, this message translates to:
-  /// **'· {minutes}m target'**
-  String homeSubjectTargetMinutes(int minutes);
+  /// **'· {minutes}m/day'**
+  String homeSubjectTargetMinutesDaily(int minutes);
+
+  /// No description provided for @homeSubjectTargetMinutesWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'· {minutes}m/week'**
+  String homeSubjectTargetMinutesWeekly(int minutes);
 
   /// No description provided for @homeStudyOverview.
   ///
@@ -1409,7 +1415,7 @@ abstract class AppLocalizations {
   /// No description provided for @authForgotPasswordSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Enter the email address associated with your account and we\'ll send you a link to reset your password.'**
+  /// **'Enter the email address associated with your account and we\'ll send you a one-time code to reset your password.'**
   String get authForgotPasswordSubtitle;
 
   /// No description provided for @authSendResetLinkButton.
@@ -1417,6 +1423,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send Reset Link'**
   String get authSendResetLinkButton;
+
+  /// No description provided for @authSendResetOtpButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send verification code'**
+  String get authSendResetOtpButton;
 
   /// No description provided for @authCheckEmailTitle.
   ///
@@ -1435,6 +1447,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to Sign In'**
   String get authBackToSignInButton;
+
+  /// No description provided for @authOtpAppBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter verification code'**
+  String get authOtpAppBar;
+
+  /// No description provided for @authOtpSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a 6-digit code to\n{email}'**
+  String authOtpSubtitle(String email);
+
+  /// No description provided for @authOtpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification code'**
+  String get authOtpLabel;
+
+  /// No description provided for @authOtpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get authOtpHint;
+
+  /// No description provided for @authOtpInvalidLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code'**
+  String get authOtpInvalidLength;
+
+  /// No description provided for @authOtpInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid or expired verification code.'**
+  String get authOtpInvalid;
+
+  /// No description provided for @authVerifyOtpButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify code'**
+  String get authVerifyOtpButton;
+
+  /// No description provided for @authResendOtpButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code'**
+  String get authResendOtpButton;
+
+  /// No description provided for @authResendOtpIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code in {seconds}s'**
+  String authResendOtpIn(int seconds);
+
+  /// No description provided for @authOtpResent.
+  ///
+  /// In en, this message translates to:
+  /// **'A new verification code was sent.'**
+  String get authOtpResent;
+
+  /// No description provided for @authOtpResendError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not resend the code right now.'**
+  String get authOtpResendError;
 
   /// No description provided for @authResetPasswordAppBar.
   ///
@@ -1481,7 +1559,7 @@ abstract class AppLocalizations {
   /// No description provided for @authResetLinkInvalid.
   ///
   /// In en, this message translates to:
-  /// **'Invalid or expired reset link.'**
+  /// **'Invalid or expired reset session. Please request a new code.'**
   String get authResetLinkInvalid;
 
   /// No description provided for @authVerifyEmailAppBar.
@@ -2297,13 +2375,13 @@ abstract class AppLocalizations {
   /// No description provided for @profilePasswordResetSent.
   ///
   /// In en, this message translates to:
-  /// **'Password reset link sent to your email.'**
+  /// **'Password reset code sent to your email.'**
   String get profilePasswordResetSent;
 
   /// No description provided for @profilePasswordResetError.
   ///
   /// In en, this message translates to:
-  /// **'Could not send reset link right now.'**
+  /// **'Could not send reset code right now.'**
   String get profilePasswordResetError;
 
   /// No description provided for @profileChangePhoto.
@@ -2351,7 +2429,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileSendPasswordReset.
   ///
   /// In en, this message translates to:
-  /// **'Send Password Reset Link'**
+  /// **'Reset password with code'**
   String get profileSendPasswordReset;
 
   /// No description provided for @profileSaveChanges.
@@ -2726,6 +2804,12 @@ abstract class AppLocalizations {
   /// **'{minutes} minutes planned every day'**
   String subjectsMinutesPlannedDaily(int minutes);
 
+  /// No description provided for @subjectsMinutesPlannedWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} minutes planned every week'**
+  String subjectsMinutesPlannedWeekly(int minutes);
+
   /// No description provided for @subjectsProgressLabel.
   ///
   /// In en, this message translates to:
@@ -3008,12 +3092,6 @@ abstract class AppLocalizations {
   /// **'Enter your card details to complete the payment securely.'**
   String get subscriptionPaymobNote;
 
-  /// No description provided for @subscriptionPayStripe.
-  ///
-  /// In en, this message translates to:
-  /// **'International card (Stripe)'**
-  String get subscriptionPayStripe;
-
   /// No description provided for @subscriptionPremiumActiveTitle.
   ///
   /// In en, this message translates to:
@@ -3157,6 +3235,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Google sign-in failed. Please try again.'**
   String get authGoogleSignInFailed;
+
+  /// No description provided for @authGoogleNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in is not configured for this build. Set GOOGLE_SERVER_CLIENT_ID.'**
+  String get authGoogleNotConfigured;
 
   /// No description provided for @authServerUnreachable.
   ///
@@ -3511,30 +3595,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not start Paymob checkout.'**
   String get subscriptionCheckoutFailed;
-
-  /// No description provided for @subscriptionStripeUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Card payments are temporarily unavailable. Please try another method or try again later.'**
-  String get subscriptionStripeUnavailable;
-
-  /// No description provided for @subscriptionStripeBrowserPrompt.
-  ///
-  /// In en, this message translates to:
-  /// **'Complete payment in the browser, then return and tap Refresh.'**
-  String get subscriptionStripeBrowserPrompt;
-
-  /// No description provided for @subscriptionPaymentPageFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not open the payment page.'**
-  String get subscriptionPaymentPageFailed;
-
-  /// No description provided for @subscriptionCardCheckoutFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not start card checkout.'**
-  String get subscriptionCardCheckoutFailed;
 
   /// No description provided for @subscriptionCanceledEnded.
   ///

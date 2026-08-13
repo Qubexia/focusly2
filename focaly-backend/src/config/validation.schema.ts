@@ -61,9 +61,6 @@ export const validationSchema = Joi.object({
   OPENAI_API_KEY: Joi.string().allow('').optional(),
   AWS_TEXTRACT_REGION: Joi.string().allow('').optional(),
 
-  STRIPE_SECRET_KEY: Joi.string().allow('').optional(),
-  STRIPE_WEBHOOK_SECRET: Joi.string().allow('').optional(),
-
   PAYMOB_API_KEY: Joi.string().allow('').optional(),
   PAYMOB_PUBLIC_KEY: Joi.string().allow('').optional(),
   PAYMOB_SECRET_KEY: Joi.string().allow('').optional(),

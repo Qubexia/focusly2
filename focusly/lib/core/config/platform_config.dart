@@ -16,7 +16,7 @@ class PlatformConfigData {
   final String? maintenanceMessage;
 
   static const defaults = PlatformConfigData(
-    premiumGatingEnabled: false,
+    premiumGatingEnabled: true,
     freeSubjectLimit: 3,
     aiHourlyLimit: 5,
     aiMonthlyLimit: 30,
@@ -25,7 +25,7 @@ class PlatformConfigData {
 
   factory PlatformConfigData.fromJson(Map<String, dynamic> json) {
     return PlatformConfigData(
-      premiumGatingEnabled: json['premiumGatingEnabled'] as bool? ?? false,
+      premiumGatingEnabled: json['premiumGatingEnabled'] as bool? ?? true,
       freeSubjectLimit: (json['freeSubjectLimit'] as num?)?.toInt() ?? 3,
       aiHourlyLimit: (json['aiHourlyLimit'] as num?)?.toInt() ?? 5,
       aiMonthlyLimit: (json['aiMonthlyLimit'] as num?)?.toInt() ?? 30,

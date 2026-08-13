@@ -1,18 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { EventBus } from '@nestjs/cqrs';
-import dayjs from 'dayjs';
-import timezone from 'dayjs/plugin/timezone';
-import utc from 'dayjs/plugin/utc';
 
+import { resolveTimezone, todayKey, yesterdayKey } from '../../../common/utils/day.util';
 import { PomodoroCompletedEvent } from '../../../shared/events/pomodoro-completed.event';
 import { RewardCode, RewardUnlockedEvent } from '../../../shared/events/reward-unlocked.event';
 import { StudyDayCompletedEvent } from '../../../shared/events/study-day-completed.event';
 import { UsersRepository } from '../../users/users.repository';
 import { StreaksRepository } from '../streaks.repository';
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 const MILESTONES = [3, 7, 30, 100] as const;
 const MILESTONE_MAP: Record<number, RewardCode> = {
@@ -48,9 +43,9 @@ export class AdvanceStreakHandler implements IEventHandler<
     const user = await this.usersRepository.findActiveById(event.userId);
     if (!user) return;
 
-    const tz = user.settings?.timezone || 'UTC';
-    const todayLocal = dayjs().tz(tz).format('YYYY-MM-DD');
-    const yesterdayLocal = dayjs().tz(tz).subtract(1, 'day').format('YYYY-MM-DD');
+    const tz = resolveTimezone(user.settings?.timezone);
+    const todayLocal = todayKey(tz);
+    const yesterdayLocal = yesterdayKey(tz);
 
     const streak = await this.streaksRepository.findOrCreate(event.userId);
 

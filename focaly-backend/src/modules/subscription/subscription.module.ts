@@ -2,21 +2,20 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 
+import { AuditLog, AuditLogSchema } from '../auth/schemas/audit-log.schema';
 import { UsersModule } from '../users/users.module';
 
-import { PaymentEventsRepository } from './payment-events.repository';
-import { StripeService } from './stripe.service';
-import { GoogleIapService } from './google-iap.service';
 import { AppleIapService } from './apple-iap.service';
+import { GoogleIapService } from './google-iap.service';
+import { PaymentEventsRepository } from './payment-events.repository';
 import { PaymobController } from './paymob.controller';
 import { PaymobService } from './paymob.service';
-import { SubscriptionController } from './subscription.controller';
+import { PaymentEvent, PaymentEventSchema } from './schemas/payment-event.schema';
+import { Subscription, SubscriptionSchema } from './schemas/subscription.schema';
 import { SubscriptionMaintenanceService } from './subscription-maintenance.service';
+import { SubscriptionController } from './subscription.controller';
 import { SubscriptionsRepository } from './subscriptions.repository';
 import { SubscriptionsService } from './subscriptions.service';
-import { AuditLog, AuditLogSchema } from '../auth/schemas/audit-log.schema';
-import { Subscription, SubscriptionSchema } from './schemas/subscription.schema';
-import { PaymentEvent, PaymentEventSchema } from './schemas/payment-event.schema';
 
 @Module({
   imports: [
@@ -33,7 +32,6 @@ import { PaymentEvent, PaymentEventSchema } from './schemas/payment-event.schema
     SubscriptionsService,
     SubscriptionsRepository,
     PaymentEventsRepository,
-    StripeService,
     GoogleIapService,
     AppleIapService,
     PaymobService,

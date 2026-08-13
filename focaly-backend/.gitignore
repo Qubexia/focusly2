@@ -2,6 +2,7 @@ node_modules/
 dist/
 build/
 coverage/
+storage/
 *.log
 *.tsbuildinfo
 
@@ -23,3 +24,6 @@ Thumbs.db
 .idea/
 
 docs/openapi.json
+
+# Local tooling cache
+.impeccable/
