@@ -109,6 +109,7 @@ export class PaymobController {
       user.id,
       verified.plan,
       verified.transactionId,
+      { amountCents: verified.amountCents, currency: verified.currency },
     );
   }
 
@@ -189,14 +190,15 @@ export class PaymobController {
         : `paymob-${Date.now()}`;
     // Entitlement follows the amount actually paid, not the client-declared
     // plan: a monthly payment tagged `extras.plan = yearly` must not buy a year.
+    const expectedCurrency = await this.paymobService.getCurrency();
     const paidCurrency =
       typeof transaction.currency === 'string' ? transaction.currency.toUpperCase() : '';
-    if (paidCurrency && paidCurrency !== this.paymobService.currency) {
+    if (paidCurrency && paidCurrency !== expectedCurrency) {
       this.logger.warn(`Ignored Paymob webhook: unexpected currency ${paidCurrency}.`);
       return { received: true, outcome: 'ignored', reason: 'currency_mismatch' };
     }
 
-    const plan = this.paymobService.resolvePlanFromAmount(transaction.amount_cents);
+    const plan = await this.paymobService.resolvePlanFromAmount(transaction.amount_cents);
     if (!plan) {
       this.logger.warn(
         `Ignored Paymob webhook: amount ${JSON.stringify(transaction.amount_cents)} matches no plan price.`,
@@ -221,6 +223,9 @@ export class PaymobController {
       priceId: specialReference,
       eventTimestamp: new Date(),
       rawPayload: body,
+      amountCents: Number(transaction.amount_cents),
+      currency: paidCurrency || expectedCurrency,
+      plan,
     });
 
     return { received: true, outcome: result.outcome };

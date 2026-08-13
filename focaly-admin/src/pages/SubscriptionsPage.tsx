@@ -23,7 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useRevenue, useSubscriptions } from '@/hooks/admin';
-import { formatDate, formatNumber } from '@/lib/utils';
+import { formatDate, formatMoney, formatNumber } from '@/lib/utils';
 
 const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'destructive' | 'secondary'> = {
   active: 'success',
@@ -58,6 +58,14 @@ export function SubscriptionsPage(): JSX.Element {
           title="Active subscriptions"
           value={formatNumber(revenue?.activeSubscriptions ?? 0)}
         />
+        {(revenue?.grossByCurrency ?? []).map((row) => (
+          <StatCard
+            key={row.currency}
+            title={`Gross revenue (${row.currency})`}
+            value={formatMoney(row.grossCents, row.currency)}
+            hint={`${formatNumber(row.payments)} settled payments`}
+          />
+        ))}
         {revenue
           ? Object.entries(revenue.subscriptionsByProvider).map(([provider, count]) => (
               <StatCard key={provider} title={`${provider} subs`} value={formatNumber(count)} />
@@ -97,6 +105,7 @@ export function SubscriptionsPage(): JSX.Element {
                 <SelectItem value="paymob">Paymob</SelectItem>
                 <SelectItem value="google_play">Google Play</SelectItem>
                 <SelectItem value="app_store">App Store</SelectItem>
+                <SelectItem value="manual">Manual (admin granted)</SelectItem>
               </SelectContent>
             </Select>
           </div>

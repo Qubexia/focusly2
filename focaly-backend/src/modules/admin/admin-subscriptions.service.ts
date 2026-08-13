@@ -94,10 +94,16 @@ export class AdminSubscriptionsService {
     user.premiumUntil = premiumUntil;
     await user.save();
 
+    // Upsert, not update: a user who never paid has no subscription row, and
+    // without this the grant would be invisible in the subscriptions list.
     await this.subscriptionModel
       .updateOne(
         { userId },
-        { $set: { status: 'active', currentPeriodEnd: premiumUntil, lastEventAt: new Date() } },
+        {
+          $set: { status: 'active', currentPeriodEnd: premiumUntil, lastEventAt: new Date() },
+          $setOnInsert: { provider: 'manual', providerSubId: `manual-${userId}` },
+        },
+        { upsert: true },
       )
       .exec();
 
@@ -130,7 +136,7 @@ export class AdminSubscriptionsService {
     }
 
     type CountRow = { _id: string | null; count: number };
-    const [byStatus, byProvider, paymentsByProvider, activeCount] = await Promise.all([
+    const [byStatus, byProvider, paymentsByProvider, activeCount, money] = await Promise.all([
       this.subscriptionModel.aggregate<CountRow>([
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
@@ -142,6 +148,19 @@ export class AdminSubscriptionsService {
         { $group: { _id: '$provider', count: { $sum: 1 } } },
       ]),
       this.subscriptionModel.countDocuments({ status: { $in: ['active', 'trialing'] } }).exec(),
+      this.paymentEventModel.aggregate<{ _id: string | null; grossCents: number; payments: number }>(
+        [
+          { $match: { ...range, outcome: 'applied', amountCents: { $gt: 0 } } },
+          {
+            $group: {
+              _id: '$currency',
+              grossCents: { $sum: '$amountCents' },
+              payments: { $sum: 1 },
+            },
+          },
+          { $sort: { grossCents: -1 } },
+        ],
+      ),
     ]);
 
     return {
@@ -149,6 +168,12 @@ export class AdminSubscriptionsService {
       subscriptionsByStatus: toMap(byStatus),
       subscriptionsByProvider: toMap(byProvider),
       appliedPaymentsByProvider: toMap(paymentsByProvider),
+      // Counts alone never answered "how much did we make" — this does.
+      grossByCurrency: money.map((row) => ({
+        currency: row._id ?? 'unknown',
+        grossCents: row.grossCents,
+        payments: row.payments,
+      })),
     };
   }
 }

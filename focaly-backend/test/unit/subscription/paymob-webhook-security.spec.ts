@@ -15,13 +15,14 @@ const YEARLY_CENTS = 120_000;
 function paymobServiceStub(): PaymobService {
   return {
     callbackHmacSecret: HMAC_SECRET,
-    currency: 'EGP',
+    // Pricing now resolves from the database (env fallback), so both are async.
+    getCurrency: () => Promise.resolve('EGP'),
     resolvePlanFromAmount: (amount: unknown) => {
       const paid = Number(amount);
-      if (!Number.isFinite(paid)) return null;
-      if (paid >= YEARLY_CENTS) return 'yearly';
-      if (paid >= MONTHLY_CENTS) return 'monthly';
-      return null;
+      if (!Number.isFinite(paid)) return Promise.resolve(null);
+      if (paid >= YEARLY_CENTS) return Promise.resolve('yearly');
+      if (paid >= MONTHLY_CENTS) return Promise.resolve('monthly');
+      return Promise.resolve(null);
     },
   } as unknown as PaymobService;
 }

@@ -34,6 +34,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
+  useSubscriptionDetail,
   useUpdateUser,
   useUser,
   useUserAction,
@@ -41,13 +42,14 @@ import {
   useSubscriptionActions,
 } from '@/hooks/admin';
 import { apiErrorMessage } from '@/lib/api';
-import { formatDate, formatDateTime, formatNumber } from '@/lib/utils';
+import { formatDate, formatDateTime, formatMoney, formatNumber } from '@/lib/utils';
 
 export function UserDetailPage(): JSX.Element {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: user, isLoading } = useUser(id);
   const { data: sessions } = useUserSessions(id);
+  const { data: subscriptionDetail } = useSubscriptionDetail(id);
   const update = useUpdateUser(id ?? '');
   const actions = useUserAction(id ?? '');
   const subActions = useSubscriptionActions();
@@ -216,6 +218,58 @@ export function UserDetailPage(): JSX.Element {
               Cancel premium
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            Payment history ({subscriptionDetail?.events.length ?? 0})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Provider</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead>Outcome</TableHead>
+                <TableHead>Transaction</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {subscriptionDetail && subscriptionDetail.events.length > 0 ? (
+                subscriptionDetail.events.map((e) => (
+                  <TableRow key={e.id}>
+                    <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                      {formatDateTime(e.createdAt)}
+                    </TableCell>
+                    <TableCell className="capitalize">{e.provider.replace('_', ' ')}</TableCell>
+                    <TableCell className="capitalize">{e.plan ?? '—'}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      {e.amountCents ? formatMoney(e.amountCents, e.currency ?? 'EGP') : '—'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={e.outcome === 'applied' ? 'success' : 'secondary'}>
+                        {e.outcome ?? 'pending'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-[160px] truncate font-mono text-xs">
+                      {e.providerTxId ?? e.eventId}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                    No payments recorded for this user.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

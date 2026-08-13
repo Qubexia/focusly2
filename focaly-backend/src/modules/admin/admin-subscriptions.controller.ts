@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { AdminAuditInterceptor } from '../../common/interceptors/admin-audit.interceptor';
 
 import { AdminSubscriptionsService } from './admin-subscriptions.service';
 import {
@@ -15,6 +16,7 @@ import {
 @ApiBearerAuth('bearerAccess')
 @Roles('admin')
 @UseGuards(RolesGuard)
+@UseInterceptors(AdminAuditInterceptor)
 @Controller({ path: 'admin/subscriptions', version: '1' })
 export class AdminSubscriptionsController {
   constructor(private readonly service: AdminSubscriptionsService) {}

@@ -57,10 +57,59 @@ export interface PaymentEvent {
   id: string;
   provider: string;
   eventId: string;
+  providerTxId: string | null;
   userId: string | null;
+  amountCents: number | null;
+  currency: string | null;
+  plan: string | null;
   outcome: string | null;
   error: string | null;
+  processedAt?: string | null;
   createdAt: string;
+  user?: { email?: string; name?: string; plan?: Plan };
+}
+
+export interface PaymentDetail extends Omit<PaymentEvent, 'user'> {
+  payload: Record<string, unknown>;
+  user: { email: string; name: string; plan: Plan; premiumUntil: string | null } | null;
+}
+
+export interface RevenueBreakdownRow {
+  key: string;
+  grossCents: number;
+  payments: number;
+}
+
+export interface RevenueReport {
+  from: string;
+  to: string;
+  interval: 'day' | 'month';
+  currency: string;
+  grossCents: number;
+  payments: number;
+  paymentsAllCurrencies: number;
+  averagePaymentCents: number;
+  allTimeGrossCents: number;
+  allTimePayments: number;
+  byCurrency: RevenueBreakdownRow[];
+  byProvider: RevenueBreakdownRow[];
+  byPlan: RevenueBreakdownRow[];
+  series: Array<{ period: string; grossCents: number; payments: number }>;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  actor: 'user' | 'admin' | 'system' | 'webhook';
+  eventType: string;
+  userId: string | null;
+  actorUserId: string | null;
+  ip: string | null;
+  userAgent: string | null;
+  requestId: string | null;
+  data: Record<string, unknown> | null;
+  createdAt: string;
+  subject?: { email?: string; name?: string };
+  actorUser?: { email?: string; name?: string };
 }
 
 export interface SubscriptionDetail {
@@ -74,6 +123,7 @@ export interface RevenueSummary {
   subscriptionsByStatus: Record<string, number>;
   subscriptionsByProvider: Record<string, number>;
   appliedPaymentsByProvider: Record<string, number>;
+  grossByCurrency: Array<{ currency: string; grossCents: number; payments: number }>;
 }
 
 export interface AnalyticsOverview {
@@ -165,6 +215,13 @@ export interface UpdateAiSettingsPayload {
   systemPrompt?: string;
 }
 
+export interface Pricing {
+  monthlyCents: number;
+  yearlyCents: number;
+  currency: string;
+  source: { monthly: 'database' | 'env'; yearly: 'database' | 'env'; currency: 'database' | 'env' };
+}
+
 export interface PlatformSettings {
   premiumGatingEnabled: boolean;
   freeSubjectLimit: number;
@@ -172,6 +229,7 @@ export interface PlatformSettings {
   aiMonthlyLimit: number;
   maintenanceMode: boolean;
   maintenanceMessage: string | null;
+  pricing: Pricing;
   updatedAt: string | null;
 }
 
@@ -182,6 +240,9 @@ export interface UpdatePlatformSettingsPayload {
   aiMonthlyLimit?: number;
   maintenanceMode?: boolean;
   maintenanceMessage?: string | null;
+  premiumMonthlyPriceCents?: number | null;
+  premiumYearlyPriceCents?: number | null;
+  currency?: string | null;
 }
 
 export interface AiTestResult {

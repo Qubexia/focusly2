@@ -4,10 +4,12 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AiSettingsPage } from '@/pages/AiSettingsPage';
 import { AnalyticsPage } from '@/pages/AnalyticsPage';
+import { AuditLogPage } from '@/pages/AuditLogPage';
 import { ContentPage } from '@/pages/ContentPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { OverviewPage } from '@/pages/OverviewPage';
+import { PaymentsPage } from '@/pages/PaymentsPage';
 import { PlatformSettingsPage } from '@/pages/PlatformSettingsPage';
 import { SubscriptionsPage } from '@/pages/SubscriptionsPage';
 import { UserDetailPage } from '@/pages/UserDetailPage';
@@ -23,7 +25,9 @@ export default function App(): JSX.Element {
           <Route path="/users" element={<UsersPage />} />
           <Route path="/users/:id" element={<UserDetailPage />} />
           <Route path="/subscriptions" element={<SubscriptionsPage />} />
+          <Route path="/payments" element={<PaymentsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/audit" element={<AuditLogPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/content" element={<ContentPage />} />
           <Route path="/ai" element={<AiSettingsPage />} />

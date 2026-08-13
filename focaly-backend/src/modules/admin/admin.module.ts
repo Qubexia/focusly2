@@ -4,7 +4,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AiModule } from '../ai/ai.module';
 import { AiJob, AiJobSchema } from '../ai/schemas/ai-job.schema';
 import { AnalyticsDaily, AnalyticsDailySchema } from '../analytics/schemas/analytics-daily.schema';
+import { AdminAuditInterceptor } from '../../common/interceptors/admin-audit.interceptor';
 import { AuthModule } from '../auth/auth.module';
+import { AuditLog, AuditLogSchema } from '../auth/schemas/audit-log.schema';
 import { AuthSession, AuthSessionSchema } from '../auth/schemas/auth-session.schema';
 import { Notification, NotificationSchema } from '../notifications/schemas/notification.schema';
 import { PlannedItem, PlannedItemSchema } from '../planned-items/schemas/planned-item.schema';
@@ -23,10 +25,14 @@ import { UsersModule } from '../users/users.module';
 import { AdminAiController } from './admin-ai.controller';
 import { AdminAnalyticsController } from './admin-analytics.controller';
 import { AdminAnalyticsService } from './admin-analytics.service';
+import { AdminAuditController } from './admin-audit.controller';
+import { AdminAuditService } from './admin-audit.service';
 import { AdminContentController } from './admin-content.controller';
 import { AdminContentService } from './admin-content.service';
 import { AdminNotificationsController } from './admin-notifications.controller';
 import { AdminNotificationsService } from './admin-notifications.service';
+import { AdminPaymentsController } from './admin-payments.controller';
+import { AdminPaymentsService } from './admin-payments.service';
 import { AdminPlatformController } from './admin-platform.controller';
 import { AdminSubscriptionsController } from './admin-subscriptions.controller';
 import { AdminSubscriptionsService } from './admin-subscriptions.service';
@@ -47,6 +53,7 @@ import { AdminUsersService } from './admin-users.service';
       { name: Subject.name, schema: SubjectSchema },
       { name: Notification.name, schema: NotificationSchema },
       { name: AuthSession.name, schema: AuthSessionSchema },
+      { name: AuditLog.name, schema: AuditLogSchema },
     ]),
     AuthModule,
     UsersModule,
@@ -61,6 +68,8 @@ import { AdminUsersService } from './admin-users.service';
     AdminContentController,
     AdminAiController,
     AdminPlatformController,
+    AdminPaymentsController,
+    AdminAuditController,
   ],
   providers: [
     AdminUsersService,
@@ -68,6 +77,9 @@ import { AdminUsersService } from './admin-users.service';
     AdminAnalyticsService,
     AdminNotificationsService,
     AdminContentService,
+    AdminPaymentsService,
+    AdminAuditService,
+    AdminAuditInterceptor,
   ],
 })
 export class AdminModule {}

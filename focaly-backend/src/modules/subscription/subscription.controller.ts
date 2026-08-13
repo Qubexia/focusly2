@@ -50,6 +50,8 @@ export class SubscriptionController {
       priceId: dto.productId,
       eventTimestamp: new Date(),
       rawPayload: { packageName: dto.packageName, productId: dto.productId },
+      // Google bills the user directly: the amount lives in Play Console, not here.
+      plan: planFromProductId(dto.productId),
     });
   }
 
@@ -77,6 +79,7 @@ export class SubscriptionController {
       priceId: verification.productId ?? null,
       eventTimestamp: new Date(),
       rawPayload: { receiptLength: dto.receiptData.length },
+      plan: planFromProductId(verification.productId),
     });
   }
 
@@ -84,4 +87,13 @@ export class SubscriptionController {
   async cancelSubscription(@CurrentUser() user: CurrentUserPayload) {
     return this.subscriptionsService.cancelSubscription(user.id);
   }
+}
+
+/** Best-effort billing period from a store product id (…_monthly / …_yearly). */
+function planFromProductId(productId?: string | null): 'monthly' | 'yearly' | null {
+  if (!productId) return null;
+  const id = productId.toLowerCase();
+  if (id.includes('year') || id.includes('annual')) return 'yearly';
+  if (id.includes('month')) return 'monthly';
+  return null;
 }

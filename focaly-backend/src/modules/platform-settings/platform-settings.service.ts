@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
@@ -15,6 +16,15 @@ export interface ResolvedPlatformSettings {
   maintenanceMessage: string | null;
 }
 
+/** Effective premium pricing: database value when set, env var otherwise. */
+export interface ResolvedPricing {
+  monthlyCents: number;
+  yearlyCents: number;
+  currency: string;
+  /** Where each price came from — surfaced in the admin UI so it is never a guess. */
+  source: { monthly: 'database' | 'env'; yearly: 'database' | 'env'; currency: 'database' | 'env' };
+}
+
 export interface UpdatePlatformSettingsInput {
   premiumGatingEnabled?: boolean;
   freeSubjectLimit?: number;
@@ -22,6 +32,9 @@ export interface UpdatePlatformSettingsInput {
   aiMonthlyLimit?: number;
   maintenanceMode?: boolean;
   maintenanceMessage?: string | null;
+  premiumMonthlyPriceCents?: number | null;
+  premiumYearlyPriceCents?: number | null;
+  currency?: string | null;
 }
 
 @Injectable()
@@ -29,6 +42,7 @@ export class PlatformSettingsService {
   constructor(
     @InjectModel(PlatformSetting.name)
     private readonly model: Model<PlatformSettingDocument>,
+    private readonly config: ConfigService,
   ) {}
 
   private async getOrCreate(): Promise<PlatformSetting> {
@@ -58,9 +72,39 @@ export class PlatformSettingsService {
     };
   }
 
-  /** Public config exposed to mobile/web clients (no secrets). */
-  async publicConfig(): Promise<ResolvedPlatformSettings & { updatedAt: Date | null }> {
+  /**
+   * Effective premium pricing. Every payment path reads prices through here so
+   * an admin price change takes effect without a redeploy, while a deployment
+   * that never touches the dashboard keeps using its env vars.
+   */
+  async resolvePricing(): Promise<ResolvedPricing> {
     const doc = await this.getOrCreate();
+
+    const envMonthly = this.config.get<number>('paymob.monthlyAmountCents') ?? 0;
+    const envYearly = this.config.get<number>('paymob.yearlyAmountCents') ?? 0;
+    const envCurrency = (this.config.get<string>('paymob.currency') ?? 'EGP').toUpperCase();
+
+    const monthlySet = typeof doc.premiumMonthlyPriceCents === 'number';
+    const yearlySet = typeof doc.premiumYearlyPriceCents === 'number';
+    const currencySet = Boolean(doc.currency);
+
+    return {
+      monthlyCents: monthlySet ? doc.premiumMonthlyPriceCents! : envMonthly,
+      yearlyCents: yearlySet ? doc.premiumYearlyPriceCents! : envYearly,
+      currency: currencySet ? doc.currency!.toUpperCase() : envCurrency,
+      source: {
+        monthly: monthlySet ? 'database' : 'env',
+        yearly: yearlySet ? 'database' : 'env',
+        currency: currencySet ? 'database' : 'env',
+      },
+    };
+  }
+
+  /** Public config exposed to mobile/web clients (no secrets). */
+  async publicConfig(): Promise<
+    ResolvedPlatformSettings & { pricing: ResolvedPricing; updatedAt: Date | null }
+  > {
+    const [doc, pricing] = await Promise.all([this.getOrCreate(), this.resolvePricing()]);
     return {
       premiumGatingEnabled: doc.premiumGatingEnabled,
       freeSubjectLimit: doc.freeSubjectLimit,
@@ -68,13 +112,14 @@ export class PlatformSettingsService {
       aiMonthlyLimit: doc.aiMonthlyLimit,
       maintenanceMode: doc.maintenanceMode,
       maintenanceMessage: doc.maintenanceMessage,
+      pricing,
       updatedAt: doc.updatedAt ?? null,
     };
   }
 
   async update(
     input: UpdatePlatformSettingsInput,
-  ): Promise<ResolvedPlatformSettings & { updatedAt: Date | null }> {
+  ): Promise<ResolvedPlatformSettings & { pricing: ResolvedPricing; updatedAt: Date | null }> {
     const set: Record<string, unknown> = {};
     if (input.premiumGatingEnabled !== undefined)
       set.premiumGatingEnabled = input.premiumGatingEnabled;
@@ -87,6 +132,16 @@ export class PlatformSettingsService {
         input.maintenanceMessage && input.maintenanceMessage.trim()
           ? input.maintenanceMessage.trim()
           : null;
+    }
+    // null clears the override and hands the price back to the env var.
+    if (input.premiumMonthlyPriceCents !== undefined) {
+      set.premiumMonthlyPriceCents = input.premiumMonthlyPriceCents;
+    }
+    if (input.premiumYearlyPriceCents !== undefined) {
+      set.premiumYearlyPriceCents = input.premiumYearlyPriceCents;
+    }
+    if (input.currency !== undefined) {
+      set.currency = input.currency ? input.currency.trim().toUpperCase() : null;
     }
 
     await this.model

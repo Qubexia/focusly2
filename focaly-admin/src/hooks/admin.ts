@@ -8,10 +8,14 @@ import type {
   AiSettings,
   AiTestResult,
   AnalyticsOverview,
+  AuditLogEntry,
   BroadcastRecord,
   Paginated,
+  PaymentDetail,
+  PaymentEvent,
   PlannedItem,
   PlatformSettings,
+  RevenueReport,
   RevenueSummary,
   Session,
   SignupSeries,
@@ -129,8 +133,10 @@ export function useSubscriptionActions() {
   const qc = useQueryClient();
   const invalidate = (): void => {
     void qc.invalidateQueries({ queryKey: ['subscriptions'] });
+    void qc.invalidateQueries({ queryKey: ['subscription'] });
     void qc.invalidateQueries({ queryKey: ['revenue'] });
     void qc.invalidateQueries({ queryKey: ['user'] });
+    void qc.invalidateQueries({ queryKey: ['audit-logs'] });
   };
   return {
     extend: useMutation({
@@ -143,6 +149,67 @@ export function useSubscriptionActions() {
       onSuccess: invalidate,
     }),
   };
+}
+
+/* --------------------------- Payments ---------------------------- */
+
+export interface PaymentsFilter {
+  provider?: string;
+  outcome?: string;
+  plan?: string;
+  userId?: string;
+  q?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+}
+
+export function usePayments(filter: PaymentsFilter) {
+  return useQuery({
+    queryKey: ['payments', filter],
+    queryFn: () => get<Paginated<PaymentEvent>>('/admin/payments', { ...filter, limit: 20 }),
+  });
+}
+
+export function usePayment(id: string | undefined) {
+  return useQuery({
+    queryKey: ['payment', id],
+    enabled: Boolean(id),
+    queryFn: () => get<PaymentDetail>(`/admin/payments/${id}`),
+  });
+}
+
+export function useRevenueReport(range: { from?: string; to?: string; interval?: 'day' | 'month' }) {
+  return useQuery({
+    queryKey: ['revenue-report', range],
+    queryFn: () => get<RevenueReport>('/admin/payments/revenue', range),
+  });
+}
+
+/* --------------------------- Audit log --------------------------- */
+
+export interface AuditFilter {
+  actor?: string;
+  eventType?: string;
+  userId?: string;
+  actorUserId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+}
+
+export function useAuditLogs(filter: AuditFilter) {
+  return useQuery({
+    queryKey: ['audit-logs', filter],
+    queryFn: () => get<Paginated<AuditLogEntry>>('/admin/audit-logs', { ...filter, limit: 20 }),
+  });
+}
+
+export function useAuditEventTypes() {
+  return useQuery({
+    queryKey: ['audit-event-types'],
+    queryFn: () => get<string[]>('/admin/audit-logs/event-types'),
+  });
 }
 
 /* --------------------------- Analytics --------------------------- */

@@ -17,7 +17,15 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePlatformSettings, useUpdatePlatformSettings } from '@/hooks/admin';
 import { apiErrorMessage } from '@/lib/api';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, formatMoney } from '@/lib/utils';
+
+/** Major units in the form, minor units on the wire; blank means "use the env var". */
+function toCents(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const amount = Number(trimmed);
+  return Number.isFinite(amount) ? Math.round(amount * 100) : null;
+}
 
 export function PlatformSettingsPage(): JSX.Element {
   const { data, isLoading } = usePlatformSettings();
@@ -29,6 +37,9 @@ export function PlatformSettingsPage(): JSX.Element {
   const [aiMonthlyLimit, setAiMonthlyLimit] = useState('30');
   const [maintenanceMode, setMaintenanceMode] = useState('false');
   const [maintenanceMessage, setMaintenanceMessage] = useState('');
+  const [monthlyPrice, setMonthlyPrice] = useState('');
+  const [yearlyPrice, setYearlyPrice] = useState('');
+  const [currency, setCurrency] = useState('EGP');
 
   useEffect(() => {
     if (data) {
@@ -38,6 +49,9 @@ export function PlatformSettingsPage(): JSX.Element {
       setAiMonthlyLimit(String(data.aiMonthlyLimit));
       setMaintenanceMode(String(data.maintenanceMode));
       setMaintenanceMessage(data.maintenanceMessage ?? '');
+      setMonthlyPrice((data.pricing.monthlyCents / 100).toFixed(2));
+      setYearlyPrice((data.pricing.yearlyCents / 100).toFixed(2));
+      setCurrency(data.pricing.currency);
     }
   }, [data]);
 
@@ -55,6 +69,10 @@ export function PlatformSettingsPage(): JSX.Element {
         aiMonthlyLimit: Number(aiMonthlyLimit),
         maintenanceMode: maintenanceMode === 'true',
         maintenanceMessage,
+        // Blank hands the price back to the env var rather than setting zero.
+        premiumMonthlyPriceCents: toCents(monthlyPrice),
+        premiumYearlyPriceCents: toCents(yearlyPrice),
+        currency: currency.trim() ? currency.trim().toUpperCase() : null,
       },
       {
         onSuccess: () => toast.success('Platform settings saved'),
@@ -91,9 +109,17 @@ export function PlatformSettingsPage(): JSX.Element {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Free subject limit</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">Premium price</CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold">{data.freeSubjectLimit}</CardContent>
+          <CardContent>
+            <div className="text-2xl font-semibold">
+              {formatMoney(data.pricing.monthlyCents, data.pricing.currency)}
+              <span className="text-sm font-normal text-muted-foreground"> /mo</span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {formatMoney(data.pricing.yearlyCents, data.pricing.currency)} /year
+            </p>
+          </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
@@ -144,6 +170,53 @@ export function PlatformSettingsPage(): JSX.Element {
                     max={100}
                     value={freeSubjectLimit}
                     onChange={(e) => setFreeSubjectLimit(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold">Premium pricing</h3>
+                <Badge variant={data.pricing.source.monthly === 'database' ? 'success' : 'outline'}>
+                  {data.pricing.source.monthly === 'database' ? 'Set here' : 'From env'}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Charged by Paymob at checkout. Clear a field to fall back to the server env var.
+                Store (Google Play / App Store) prices are set in their own consoles.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="monthlyPrice">Monthly price</Label>
+                  <Input
+                    id="monthlyPrice"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={monthlyPrice}
+                    onChange={(e) => setMonthlyPrice(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="yearlyPrice">Yearly price</Label>
+                  <Input
+                    id="yearlyPrice"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={yearlyPrice}
+                    onChange={(e) => setYearlyPrice(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Input
+                    id="currency"
+                    maxLength={3}
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                    placeholder="EGP"
                   />
                 </div>
               </div>

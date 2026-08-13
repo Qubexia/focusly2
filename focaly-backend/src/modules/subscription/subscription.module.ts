@@ -3,6 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuditLog, AuditLogSchema } from '../auth/schemas/audit-log.schema';
+import { PlatformSettingsModule } from '../platform-settings/platform-settings.module';
 import { UsersModule } from '../users/users.module';
 
 import { AppleIapService } from './apple-iap.service';
@@ -26,6 +27,7 @@ import { SubscriptionsService } from './subscriptions.service';
     ]),
     CqrsModule,
     UsersModule,
+    PlatformSettingsModule,
   ],
   controllers: [SubscriptionController, PaymobController],
   providers: [

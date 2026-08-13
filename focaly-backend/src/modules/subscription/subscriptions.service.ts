@@ -21,6 +21,10 @@ export interface ApplyEventInput {
   priceId?: string | null;
   eventTimestamp: Date;
   rawPayload: Record<string, unknown>;
+  /** Money paid, in the smallest currency unit. Omit when the provider gives no amount. */
+  amountCents?: number | null;
+  currency?: string | null;
+  plan?: string | null;
 }
 
 @Injectable()
@@ -41,6 +45,10 @@ export class SubscriptionsService {
       eventId: input.eventId,
       userId: input.userId,
       payload: input.rawPayload,
+      amountCents: input.amountCents ?? null,
+      currency: input.currency ?? null,
+      plan: input.plan ?? null,
+      providerTxId: input.providerSubId,
     });
 
     const paymentEventId = paymentEvent._id.toString();
@@ -161,6 +169,7 @@ export class SubscriptionsService {
     userId: string,
     plan: 'monthly' | 'yearly',
     transactionId?: string,
+    paid?: { amountCents: number | null; currency: string | null },
   ): Promise<{ outcome: string; currentPeriodEnd: Date }> {
     const normalizedTx = transactionId?.trim() || `sdk-${Date.now()}`;
     const periodEnd = new Date();
@@ -180,6 +189,9 @@ export class SubscriptionsService {
       priceId: plan,
       eventTimestamp: new Date(),
       rawPayload: { source: 'native_sdk', plan },
+      amountCents: paid?.amountCents ?? null,
+      currency: paid?.currency ?? null,
+      plan,
     });
 
     return { outcome: result.outcome, currentPeriodEnd: periodEnd };

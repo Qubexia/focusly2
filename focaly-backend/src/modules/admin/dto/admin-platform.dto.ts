@@ -1,5 +1,15 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  Length,
+  Max,
+  MaxLength,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 
 export class UpdatePlatformSettingsDto {
   @IsOptional()
@@ -35,4 +45,28 @@ export class UpdatePlatformSettingsDto {
   @IsString()
   @MaxLength(500)
   maintenanceMessage?: string | null;
+
+  /** Premium monthly price in the smallest currency unit. null → use the env var. */
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100_000_000)
+  premiumMonthlyPriceCents?: number | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100_000_000)
+  premiumYearlyPriceCents?: number | null;
+
+  /** ISO-4217 code, e.g. EGP. null → use the env var. */
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  @Length(3, 3)
+  currency?: string | null;
 }

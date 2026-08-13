@@ -35,9 +35,32 @@ export class PaymentEvent {
   @Prop({ type: String, default: null })
   error!: string | null;
 
+  /**
+   * Money actually moved, in the smallest currency unit, denormalised out of
+   * `payload` so revenue can be aggregated without parsing provider-specific
+   * blobs. Null when the event carries no amount (store IAP verifications,
+   * status-only changes).
+   */
+  @Prop({ type: Number, default: null })
+  amountCents!: number | null;
+
+  @Prop({ type: String, default: null, uppercase: true, trim: true })
+  currency!: string | null;
+
+  /** Billing period this payment bought. Null when the provider did not say. */
+  @Prop({ type: String, default: null })
+  plan!: string | null;
+
+  /** Provider-side transaction id, for reconciliation against their dashboard. */
+  @Prop({ type: String, default: null })
+  providerTxId!: string | null;
+
   createdAt!: Date;
 }
 
 export const PaymentEventSchema = SchemaFactory.createForClass(PaymentEvent);
 
 PaymentEventSchema.index({ provider: 1, eventId: 1 }, { unique: true });
+PaymentEventSchema.index({ createdAt: -1 });
+PaymentEventSchema.index({ outcome: 1, createdAt: -1 });
+PaymentEventSchema.index({ userId: 1, createdAt: -1 });

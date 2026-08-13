@@ -1,20 +1,9 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { AdminAuditInterceptor } from '../../common/interceptors/admin-audit.interceptor';
 
 import { AdminUsersService } from './admin-users.service';
 import { ListUsersQueryDto, UpdateUserAdminDto } from './dto/admin-users.dto';
@@ -23,6 +12,7 @@ import { ListUsersQueryDto, UpdateUserAdminDto } from './dto/admin-users.dto';
 @ApiBearerAuth('bearerAccess')
 @Roles('admin')
 @UseGuards(RolesGuard)
+@UseInterceptors(AdminAuditInterceptor)
 @Controller({ path: 'admin/users', version: '1' })
 export class AdminUsersController {
   constructor(private readonly service: AdminUsersService) {}

@@ -9,6 +9,10 @@ export interface CreatePaymentEventInput {
   eventId: string;
   userId?: string | null;
   payload: Record<string, unknown>;
+  amountCents?: number | null;
+  currency?: string | null;
+  plan?: string | null;
+  providerTxId?: string | null;
 }
 
 @Injectable()

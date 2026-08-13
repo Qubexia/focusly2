@@ -8,11 +8,16 @@ export type AuditLogDocument = HydratedDocument<AuditLog>;
   timestamps: { createdAt: true, updatedAt: false },
 })
 export class AuditLog {
+  /** Subject of the action — the account it was performed *on*. */
   @Prop({ type: SchemaTypes.ObjectId, default: null, index: true })
   userId!: string | null;
 
   @Prop({ type: String, enum: ['user', 'admin', 'system', 'webhook'], required: true })
   actor!: 'user' | 'admin' | 'system' | 'webhook';
+
+  /** Who performed it, when that differs from the subject (admin acting on a user). */
+  @Prop({ type: SchemaTypes.ObjectId, default: null, index: true })
+  actorUserId!: string | null;
 
   @Prop({ required: true, index: true })
   eventType!: string;
@@ -36,4 +41,6 @@ export const AuditLogSchema = SchemaFactory.createForClass(AuditLog);
 
 AuditLogSchema.index({ userId: 1, createdAt: -1 });
 AuditLogSchema.index({ eventType: 1, createdAt: -1 });
+AuditLogSchema.index({ actor: 1, createdAt: -1 });
+AuditLogSchema.index({ actorUserId: 1, createdAt: -1 });
 AuditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 31_536_000 });

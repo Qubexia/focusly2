@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
 import { UsersRepository } from '../users/users.repository';
 
 import { PaymobCardPayDto } from './dto/paymob-card-pay.dto';
@@ -51,6 +52,7 @@ export class PaymobService {
   constructor(
     private readonly config: ConfigService,
     private readonly usersRepo: UsersRepository,
+    private readonly platformSettings: PlatformSettingsService,
   ) {}
 
   private get apiKey(): string {
@@ -92,15 +94,19 @@ export class PaymobService {
     return this.hmacSecret;
   }
 
-  /** Configured price for a plan, in the smallest currency unit. */
-  planAmountCents(plan: PaymobPlan): number {
-    return plan === 'yearly'
-      ? (this.config.get<number>('paymob.yearlyAmountCents') ?? 0)
-      : (this.config.get<number>('paymob.monthlyAmountCents') ?? 0);
+  /**
+   * Configured price for a plan, in the smallest currency unit. Reads the
+   * admin-managed price first and falls back to the env var, so pricing can be
+   * changed from the dashboard without a redeploy.
+   */
+  async planAmountCents(plan: PaymobPlan): Promise<number> {
+    const pricing = await this.platformSettings.resolvePricing();
+    return plan === 'yearly' ? pricing.yearlyCents : pricing.monthlyCents;
   }
 
-  get currency(): string {
-    return (this.config.get<string>('paymob.currency') ?? 'EGP').toUpperCase();
+  async getCurrency(): Promise<string> {
+    const pricing = await this.platformSettings.resolvePricing();
+    return pricing.currency;
   }
 
   /**
@@ -108,8 +114,13 @@ export class PaymobService {
    * actually costs. Guards against a caller claiming a yearly plan after
    * paying the monthly price (or paying a token amount).
    */
-  assertAmountMatchesPlan(plan: PaymobPlan, amountCents: unknown, currency: unknown): void {
-    const expected = this.planAmountCents(plan);
+  async assertAmountMatchesPlan(
+    plan: PaymobPlan,
+    amountCents: unknown,
+    currency: unknown,
+  ): Promise<void> {
+    const pricing = await this.platformSettings.resolvePricing();
+    const expected = plan === 'yearly' ? pricing.yearlyCents : pricing.monthlyCents;
     if (!expected) {
       throw new ServiceUnavailableException({
         message: 'Paymob plan pricing is not configured.',
@@ -122,7 +133,7 @@ export class PaymobService {
     }
 
     const paidCurrency = typeof currency === 'string' ? currency.toUpperCase() : '';
-    if (paidCurrency && paidCurrency !== this.currency) {
+    if (paidCurrency && paidCurrency !== pricing.currency) {
       throw new BadRequestException({ message: 'Payment currency does not match the plan.' });
     }
   }
@@ -131,12 +142,12 @@ export class PaymobService {
    * Resolves the plan a transaction actually paid for, from its verified
    * amount. Returns null when the amount matches no configured plan.
    */
-  resolvePlanFromAmount(amountCents: unknown): PaymobPlan | null {
+  async resolvePlanFromAmount(amountCents: unknown): Promise<PaymobPlan | null> {
     const paid = Number(amountCents);
     if (!Number.isFinite(paid)) return null;
 
-    const yearly = this.planAmountCents('yearly');
-    const monthly = this.planAmountCents('monthly');
+    const { monthlyCents: monthly, yearlyCents: yearly } =
+      await this.platformSettings.resolvePricing();
 
     if (yearly && paid >= yearly) return 'yearly';
     if (monthly && paid >= monthly) return 'monthly';
@@ -181,7 +192,12 @@ export class PaymobService {
     userId: string,
     plan: PaymobPlan,
     transactionId: string,
-  ): Promise<{ transactionId: string; amountCents: number; plan: PaymobPlan }> {
+  ): Promise<{
+    transactionId: string;
+    amountCents: number;
+    currency: string;
+    plan: PaymobPlan;
+  }> {
     const tx = await this.fetchTransaction(transactionId.trim());
 
     const success = tx.success === true || tx.success === 'true';
@@ -213,7 +229,7 @@ export class PaymobService {
       throw new BadRequestException({ message: 'This payment does not belong to your account.' });
     }
 
-    this.assertAmountMatchesPlan(plan, tx.amount_cents, tx.currency);
+    await this.assertAmountMatchesPlan(plan, tx.amount_cents, tx.currency);
 
     const rawId = tx.id;
     const resolvedId =
@@ -222,7 +238,9 @@ export class PaymobService {
     return {
       transactionId: resolvedId,
       amountCents: Number(tx.amount_cents),
-      plan: this.resolvePlanFromAmount(tx.amount_cents) ?? plan,
+      currency:
+        typeof tx.currency === 'string' ? tx.currency.toUpperCase() : await this.getCurrency(),
+      plan: (await this.resolvePlanFromAmount(tx.amount_cents)) ?? plan,
     };
   }
 
@@ -250,11 +268,9 @@ export class PaymobService {
       throw new BadRequestException({ message: 'User not found.' });
     }
 
-    const amountCents =
-      plan === 'yearly'
-        ? this.config.get<number>('paymob.yearlyAmountCents')!
-        : this.config.get<number>('paymob.monthlyAmountCents')!;
-    const currency = this.config.get<string>('paymob.currency') ?? 'EGP';
+    const pricing = await this.platformSettings.resolvePricing();
+    const amountCents = plan === 'yearly' ? pricing.yearlyCents : pricing.monthlyCents;
+    const currency = pricing.currency;
     const specialReference = buildPaymobSpecialReference(userId);
     const billingData = this.buildBillingData(user.name, user.email);
 

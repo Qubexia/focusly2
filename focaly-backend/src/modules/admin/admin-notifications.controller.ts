@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { AdminAuditInterceptor } from '../../common/interceptors/admin-audit.interceptor';
 
 import { AdminNotificationsService } from './admin-notifications.service';
 import { BroadcastNotificationDto } from './dto/admin-notifications.dto';
@@ -11,6 +12,7 @@ import { BroadcastNotificationDto } from './dto/admin-notifications.dto';
 @ApiBearerAuth('bearerAccess')
 @Roles('admin')
 @UseGuards(RolesGuard)
+@UseInterceptors(AdminAuditInterceptor)
 @Controller({ path: 'admin/notifications', version: '1' })
 export class AdminNotificationsController {
   constructor(private readonly service: AdminNotificationsService) {}
